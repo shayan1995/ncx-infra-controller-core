@@ -37,7 +37,7 @@ fn driver_runs_and_emits_expected_lint() {
         std::fs::read_to_string(&stderr_fixture_path).expect("Could not read main.stderr");
 
     // Path to the just-built compiler driver binary
-    let driver = env!("CARGO_BIN_EXE_carbide-lints");
+    let driver = env!("CARGO_BIN_EXE_nico-lints");
 
     // Optionally isolate target dir so we don't fight with main workspace targets
     let target_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -64,7 +64,7 @@ fn driver_runs_and_emits_expected_lint() {
         .env("RUSTC", driver)
         .env("CARGO_TARGET_DIR", &target_dir)
         .output()
-        .expect("failed to run cargo check with carbide-lints");
+        .expect("failed to run cargo check with nico-lints");
 
     let stderr = String::from_utf8_lossy(&output.stderr);
     let relevant_stderr = stderr

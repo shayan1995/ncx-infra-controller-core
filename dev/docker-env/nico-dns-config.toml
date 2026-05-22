@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.4
-
 #
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
@@ -16,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+socket_permission = 777
+ns1_ip_address = "172.20.0.53"
 
-FROM runtime-container-localdev:latest as carbide
-
-WORKDIR /opt/carbide
-COPY .skaffold/target/carbide-admin-cli/debug/carbide-admin-cli /opt/carbide/
-RUN ln -s /opt/carbide/carbide-admin-cli /opt/carbide/forge-admin-cli
-
-ENV PATH="/opt/carbide:${PATH}"
+[nico-system]
+api-server = "https://172.20.0.14:1079"
+cert-path = "/app/code/dev/certs/server_identity.pem"
+key-path = "/app/code/dev/certs/server_identity.key"
+root-ca = "/app/code/dev/certs/nico_developer_local_only_root_cert_pem"

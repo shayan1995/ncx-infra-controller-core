@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM urm.nvidia.com/swngc-ngcc-docker-local/forge/carbide/x86-64/build-container:latest
+FROM urm.nvidia.com/swngc-ngcc-docker-local/nico/nico/x86-64/build-container:latest
 
 RUN mkdir /target
 RUN mkdir -p /cache/cargo
@@ -22,5 +22,5 @@ ENV SCCACHE_DIR /cache/sccache
 ENV CARGO_HOME /cache/cargo
 ENV CARGO_TARGET_HOME /target
 ENV RUSTC_WRAPPER /usr/local/cargo/bin/sccache
-WORKDIR ./carbide
+WORKDIR ./nico
 ENTRYPOINT ["cargo", "build", "-p"]
