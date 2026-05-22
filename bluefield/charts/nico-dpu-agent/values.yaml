@@ -10,7 +10,7 @@ exposedPorts:
   ports: {}
 
 ### Cert directory on the host (also used as the container mountPath).
-certsDir: /opt/forge
+certsDir: /opt/nico
 
 ### Service specific values ###
 image:

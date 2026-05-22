@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -p
 
-CERT_PATH=/opt/forge/machine_cert.pem
-KEY_PATH=/opt/forge/machine_cert.key
+CERT_PATH=/opt/nico/machine_cert.pem
+KEY_PATH=/opt/nico/machine_cert.key
 MAX_INTERVAL=30
 MAX_INTERVAL_REPEATED_COUNT=5
 

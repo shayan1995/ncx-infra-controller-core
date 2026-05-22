@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Runtime image for forge-dpu-agent on arm64 DPUs.
+# Runtime image for nico-dpu-agent on arm64 DPUs.
 #
 # The binary is cross-compiled externally using the
 # build-artifacts-container-cross-aarch64 image and copied into this
@@ -58,7 +58,7 @@ COPY --from=builder --chmod=755 /bin/bash /bin/bash
 COPY --from=builder --chmod=755 /extract/usr/bin/ /usr/bin/
 COPY --from=builder /deps/* /lib/
 
-# Copy forge-dpu-agent and set entry point
-COPY --chmod=755 target/aarch64-unknown-linux-gnu/release/forge-dpu-agent /usr/bin/forge-dpu-agent
+# Copy nico-dpu-agent and set entry point
+COPY --chmod=755 target/aarch64-unknown-linux-gnu/release/nico-dpu-agent /usr/bin/nico-dpu-agent
 
-ENTRYPOINT ["/usr/bin/forge-dpu-agent"]
+ENTRYPOINT ["/usr/bin/nico-dpu-agent"]
