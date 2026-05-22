@@ -15,22 +15,22 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-switch-controller"
+name = "nico-switch-controller"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
 [dependencies]
-carbide-api-db = { path = "../api-db", default-features = false }
-carbide-api-model = { path = "../api-model", default-features = false }
-carbide-health-metrics = { path = "../health-metrics" }
+nico-api-db = { path = "../api-db", default-features = false }
+nico-api-model = { path = "../api-model", default-features = false }
+nico-health-metrics = { path = "../health-metrics" }
 # TODO: probably this dependency is not necessary. It is only use for
 # one function that ultimately calls rms client. Weird dep.
-carbide-site-explorer = { path = "../site-explorer" }
-carbide-secrets = { path = "../secrets" }
-carbide-utils = { path = "../utils", default-features = false }
-carbide-uuid = { path = "../uuid", default-features = false }
+nico-site-explorer = { path = "../site-explorer" }
+nico-secrets = { path = "../secrets" }
+nico-utils = { path = "../utils", default-features = false }
+nico-uuid = { path = "../uuid", default-features = false }
 config-version = { path = "../config-version", default-features = false }
 state-controller = { path = "../state-controller" }
 

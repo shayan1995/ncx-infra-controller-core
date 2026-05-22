@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-measured-boot"
+name = "nico-measured-boot"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
@@ -25,12 +25,12 @@ authors.workspace = true
 name = "measured_boot"
 
 [features]
-sqlx = ["dep:sqlx", "carbide-uuid/sqlx"]
+sqlx = ["dep:sqlx", "nico-uuid/sqlx"]
 cli = ["dep:prettytable-rs", "dep:eyre", "dep:clap"]
 
 [dependencies]
 # workspace dependencies
-carbide-uuid = { path = "../uuid" }
+nico-uuid = { path = "../uuid" }
 
 thiserror = { workspace = true }
 sqlx = { workspace = true, optional = true }
