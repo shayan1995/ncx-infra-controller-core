@@ -1,26 +1,26 @@
 [package]
-name = "carbide-ib-fabric"
+name = "nico-ib-fabric"
 version = "0.0.1"
 edition.workspace = true
-description = "Carbide IB fabric"
+description = "NICo IB fabric"
 license.workspace = true
 authors.workspace = true
 
 [lib]
-name = "carbide_ib_fabric"
+name = "nico_ib_fabric"
 
 [features]
 default = []
 test-support = []
 
 [dependencies]
-carbide-api-db = { path = "../api-db" }
-carbide-api-model = { path = "../api-model" }
-carbide-health-report = { path = "../health-report" }
-carbide-secrets = { path = "../secrets" }
-carbide-tls = { path = "../tls" }
-carbide-utils = { path = "../utils" }
-carbide-uuid = { path = "../uuid" }
+nico-api-db = { path = "../api-db" }
+nico-api-model = { path = "../api-model" }
+nico-health-report = { path = "../health-report" }
+nico-secrets = { path = "../secrets" }
+nico-tls = { path = "../tls" }
+nico-utils = { path = "../utils" }
+nico-uuid = { path = "../uuid" }
 
 # these are alphabetized
 async-trait = { workspace = true }

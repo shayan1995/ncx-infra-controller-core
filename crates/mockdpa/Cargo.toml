@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-mockdpa"
+name = "nico-mockdpa"
 version = "0.0.1"
 edition.workspace = true
 license.workspace = true
@@ -37,7 +37,7 @@ tokio = { features = ["full"], workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 mqttea = { path = "../mqttea" }
-carbide-dpa-interface-controller = { path = "../dpa-interface-controller" }
+nico-dpa-interface-controller = { path = "../dpa-interface-controller" }
 
 [build-dependencies]
 prost-build = "0.14"

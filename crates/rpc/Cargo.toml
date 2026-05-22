@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-rpc"
+name = "nico-rpc"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
@@ -27,25 +27,25 @@ name = "rpc"
 [features]
 sqlx = ["dep:sqlx"]
 cli = ["dep:clap", "dep:prettytable-rs", "dep:serde_yaml", "dep:csv"]
-model = ["dep:carbide-api-model", "dep:once_cell", "dep:itertools", "dep:itertools", "dep:regex", "dep:base64" ]
+model = ["dep:nico-api-model", "dep:once_cell", "dep:itertools", "dep:itertools", "dep:regex", "dep:base64" ]
 
 [dependencies]
 
 # [local-dependencies]
-carbide-api-model = { path = "../api-model", optional = true }
-carbide-http-connector = { path = "../http-connector" }
-carbide-ipxe-renderer = { path = "../ipxe-renderer" }
-carbide-tls = { path = "../tls" }
-carbide-health-report = { path = "../health-report" }
-carbide-libmlx-model = { path = "../libmlx-model" }
-carbide-measured-boot = { path = "../measured-boot", default-features = false }
-carbide-secrets = { path = "../secrets" }
-carbide-network = { path = "../network" }
-carbide-utils = { path = "../utils" }
+nico-api-model = { path = "../api-model", optional = true }
+nico-http-connector = { path = "../http-connector" }
+nico-ipxe-renderer = { path = "../ipxe-renderer" }
+nico-tls = { path = "../tls" }
+nico-health-report = { path = "../health-report" }
+nico-libmlx-model = { path = "../libmlx-model" }
+nico-measured-boot = { path = "../measured-boot", default-features = false }
+nico-secrets = { path = "../secrets" }
+nico-network = { path = "../network" }
+nico-utils = { path = "../utils" }
 config-version = { path = "../config-version" }
 tonic-client-wrapper = { path = "../tonic-client-wrapper", default-features = false }
 dns-record = { path = "../dns-record" }
-carbide-uuid = { path = "../uuid" }
+nico-uuid = { path = "../uuid" }
 
 chrono = { features = ["serde"], workspace = true }
 eyre = { workspace = true }
@@ -109,7 +109,7 @@ regex = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 
 [dev-dependencies]
-carbide-libmlx-model = { path = "../libmlx-model", features = ["test-support"] }
+nico-libmlx-model = { path = "../libmlx-model", features = ["test-support"] }
 
 [build-dependencies]
 tonic-prost-build = "0.14"

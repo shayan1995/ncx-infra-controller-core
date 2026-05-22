@@ -833,8 +833,8 @@ dependencies = [
  "axum",
  "bmc-mock",
  "bmc-vendor",
- "carbide-api-model",
- "carbide-network",
+ "nico-api-model",
+ "nico-network",
  "itertools 0.14.0",
  "lazy_static",
  "mac_address",
@@ -849,10 +849,10 @@ name = "bmc-explorer-cli"
 version = "0.1.0"
 dependencies = [
  "arc-swap",
- "carbide-ipmi",
- "carbide-redfish",
- "carbide-secrets",
- "carbide-site-explorer",
+ "nico-ipmi",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-site-explorer",
  "clap",
  "libredfish",
  "mac_address",
@@ -871,8 +871,8 @@ dependencies = [
  "axum-server",
  "bmc-vendor",
  "bytes",
- "carbide-rpc",
- "carbide-utils",
+ "nico-rpc",
+ "nico-utils",
  "chrono",
  "clap",
  "duration-str",
@@ -1014,24 +1014,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
-name = "carbide-admin-cli"
+name = "nico-admin-cli"
 version = "0.0.1"
 dependencies = [
  "bmc-vendor",
- "carbide-health-report",
- "carbide-libmlx",
- "carbide-libmlx-model",
- "carbide-macros",
- "carbide-measured-boot",
- "carbide-network",
- "carbide-rpc",
- "carbide-rpc-utils",
- "carbide-secrets",
- "carbide-ssh",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-health-report",
+ "nico-libmlx",
+ "nico-libmlx-model",
+ "nico-macros",
+ "nico-measured-boot",
+ "nico-network",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-secrets",
+ "nico-ssh",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "clap",
  "clap_complete",
@@ -1061,7 +1061,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-agent"
+name = "nico-agent"
 version = "0.1.0"
 dependencies = [
  "arc-swap",
@@ -1070,22 +1070,22 @@ dependencies = [
  "axum-server",
  "backon",
  "blake3",
- "carbide-certs",
- "carbide-dpu-agent-utils",
- "carbide-dpu-fmds-shared",
- "carbide-dpu-remediation",
- "carbide-health-report",
- "carbide-host-support",
- "carbide-http-connector",
- "carbide-metrics-utils",
- "carbide-network",
- "carbide-rpc",
- "carbide-rpc-utils",
- "carbide-systemd",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-certs",
+ "nico-dpu-agent-utils",
+ "nico-dpu-fmds-shared",
+ "nico-dpu-remediation",
+ "nico-health-report",
+ "nico-host-support",
+ "nico-http-connector",
+ "nico-metrics-utils",
+ "nico-network",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-systemd",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "clap",
  "colored",
@@ -1152,7 +1152,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-api"
+name = "nico-api"
 version = "0.0.1"
 dependencies = [
  "ansi-to-html",
@@ -1167,44 +1167,44 @@ dependencies = [
  "bmc-vendor",
  "byteorder",
  "bytes",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-authn",
- "carbide-dpa-interface-controller",
- "carbide-dpf",
- "carbide-firmware",
- "carbide-health-report",
- "carbide-host-support",
- "carbide-ib-fabric",
- "carbide-ib-partition-controller",
- "carbide-ipmi",
- "carbide-ipxe-renderer",
- "carbide-libmlx",
- "carbide-machine-controller",
- "carbide-macros",
- "carbide-measured-boot",
- "carbide-metrics-utils",
- "carbide-mqtt-common",
- "carbide-network",
- "carbide-network-segment-controller",
- "carbide-nvlink-manager",
- "carbide-power-shelf-controller",
- "carbide-preingestion-manager",
- "carbide-prost-builder",
- "carbide-rack",
- "carbide-rack-controller",
- "carbide-redfish",
- "carbide-rpc",
- "carbide-rpc-utils",
- "carbide-secrets",
- "carbide-site-explorer",
- "carbide-spdm-controller",
- "carbide-sqlx-testing",
- "carbide-state-controller-common",
- "carbide-switch-controller",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-authn",
+ "nico-dpa-interface-controller",
+ "nico-dpf",
+ "nico-firmware",
+ "nico-health-report",
+ "nico-host-support",
+ "nico-ib-fabric",
+ "nico-ib-partition-controller",
+ "nico-ipmi",
+ "nico-ipxe-renderer",
+ "nico-libmlx",
+ "nico-machine-controller",
+ "nico-macros",
+ "nico-measured-boot",
+ "nico-metrics-utils",
+ "nico-mqtt-common",
+ "nico-network",
+ "nico-network-segment-controller",
+ "nico-nvlink-manager",
+ "nico-power-shelf-controller",
+ "nico-preingestion-manager",
+ "nico-prost-builder",
+ "nico-rack",
+ "nico-rack-controller",
+ "nico-redfish",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-secrets",
+ "nico-site-explorer",
+ "nico-spdm-controller",
+ "nico-sqlx-testing",
+ "nico-state-controller-common",
+ "nico-switch-controller",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "casbin",
  "chrono",
  "clap",
@@ -1294,23 +1294,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-api-db"
+name = "nico-api-db"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "base64",
- "carbide-api-model",
- "carbide-health-report",
- "carbide-ipxe-renderer",
- "carbide-libmlx-model",
- "carbide-macros",
- "carbide-measured-boot",
- "carbide-network",
- "carbide-secrets",
- "carbide-sqlx-testing",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-ipxe-renderer",
+ "nico-libmlx-model",
+ "nico-macros",
+ "nico-measured-boot",
+ "nico-network",
+ "nico-secrets",
+ "nico-sqlx-testing",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "config-version",
  "ctor",
@@ -1343,15 +1343,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-api-integration-tests"
+name = "nico-api-integration-tests"
 version = "0.0.0"
 dependencies = [
  "askama_escape",
  "bmc-mock",
- "carbide-api-test-helper",
- "carbide-machine-a-tron",
- "carbide-secrets",
- "carbide-utils",
+ "nico-api-test-helper",
+ "nico-machine-a-tron",
+ "nico-secrets",
+ "nico-utils",
  "ctor",
  "eyre",
  "futures",
@@ -1368,21 +1368,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-api-model"
+name = "nico-api-model"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "base64",
  "bmc-vendor",
- "carbide-health-report",
- "carbide-ipxe-renderer",
- "carbide-libmlx-model",
- "carbide-network",
- "carbide-secrets",
- "carbide-sqlx-testing",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-health-report",
+ "nico-ipxe-renderer",
+ "nico-libmlx-model",
+ "nico-network",
+ "nico-secrets",
+ "nico-sqlx-testing",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "config-version",
  "dns-record",
@@ -1417,19 +1417,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-api-test-helper"
+name = "nico-api-test-helper"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "bmc-mock",
- "carbide-api",
- "carbide-machine-a-tron",
- "carbide-rpc",
- "carbide-secrets",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-api",
+ "nico-machine-a-tron",
+ "nico-rpc",
+ "nico-secrets",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "ctor",
  "eyre",
@@ -1455,7 +1455,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-authn"
+name = "nico-authn"
 version = "0.0.0"
 dependencies = [
  "hyper",
@@ -1468,17 +1468,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-bmc-proxy"
+name = "nico-bmc-proxy"
 version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
  "bytes",
- "carbide-authn",
- "carbide-rpc",
- "carbide-tls",
- "carbide-utils",
- "carbide-version",
+ "nico-authn",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-version",
  "casbin",
  "clap",
  "figment",
@@ -1522,12 +1522,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-certs"
+name = "nico-certs"
 version = "0.0.0"
 dependencies = [
- "carbide-host-support",
- "carbide-rpc",
- "carbide-tls",
+ "nico-host-support",
+ "nico-rpc",
+ "nico-tls",
  "eyre",
  "rand 0.10.1",
  "tonic",
@@ -1535,11 +1535,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dhcp"
+name = "nico-dhcp"
 version = "0.0.0"
 dependencies = [
- "carbide-rpc",
- "carbide-tls",
+ "nico-rpc",
+ "nico-tls",
  "cbindgen",
  "cc",
  "chrono",
@@ -1569,13 +1569,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dhcp-server"
+name = "nico-dhcp-server"
 version = "0.1.0"
 dependencies = [
- "carbide-rpc",
- "carbide-rpc-utils",
- "carbide-tls",
- "carbide-uuid",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-tls",
+ "nico-uuid",
  "chrono",
  "clap",
  "dhcproto",
@@ -1599,13 +1599,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dns"
+name = "nico-dns"
 version = "0.0.1"
 dependencies = [
  "async-trait",
- "carbide-rpc",
- "carbide-tls",
- "carbide-version",
+ "nico-rpc",
+ "nico-tls",
+ "nico-version",
  "clap",
  "dns-record",
  "eyre",
@@ -1626,14 +1626,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dpa-interface-controller"
+name = "nico-dpa-interface-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "config-version",
  "duration-str",
@@ -1650,12 +1650,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dpf"
+name = "nico-dpf"
 version = "0.0.1"
 dependencies = [
  "anyhow",
  "async-trait",
- "carbide-uuid",
+ "nico-uuid",
  "clap",
  "dashmap",
  "eyre",
@@ -1686,21 +1686,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dpu-agent-utils"
+name = "nico-dpu-agent-utils"
 version = "0.0.0"
 dependencies = [
- "carbide-rpc",
+ "nico-rpc",
  "eyre",
 ]
 
 [[package]]
-name = "carbide-dpu-fmds-shared"
+name = "nico-dpu-fmds-shared"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "axum",
- "carbide-dpu-agent-utils",
- "carbide-rpc",
+ "nico-dpu-agent-utils",
+ "nico-rpc",
  "governor",
  "http-body-util",
  "reqwest 0.13.3",
@@ -1713,14 +1713,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dpu-otel-agent"
+name = "nico-dpu-otel-agent"
 version = "0.0.1"
 dependencies = [
- "carbide-certs",
- "carbide-host-support",
- "carbide-rpc",
- "carbide-systemd",
- "carbide-tls",
+ "nico-certs",
+ "nico-host-support",
+ "nico-rpc",
+ "nico-systemd",
+ "nico-tls",
  "clap",
  "ctor",
  "eyre",
@@ -1740,13 +1740,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dpu-remediation"
+name = "nico-dpu-remediation"
 version = "0.0.0"
 dependencies = [
- "carbide-dpu-agent-utils",
- "carbide-rpc",
- "carbide-tls",
- "carbide-uuid",
+ "nico-dpu-agent-utils",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
  "eyre",
  "rand 0.10.1",
  "serde",
@@ -1759,16 +1759,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-dsx-exchange-consumer"
+name = "nico-dsx-exchange-consumer"
 version = "0.0.1"
 dependencies = [
  "async-trait",
- "carbide-health-report",
- "carbide-rpc",
- "carbide-secrets",
- "carbide-tls",
- "carbide-uuid",
- "carbide-version",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-secrets",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "figment",
  "humantime-serde",
@@ -1788,14 +1788,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-firmware"
+name = "nico-firmware"
 version = "0.0.1"
 dependencies = [
  "bmc-vendor",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-macros",
- "carbide-sqlx-testing",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-macros",
+ "nico-sqlx-testing",
  "eyre",
  "futures-util",
  "hex",
@@ -1809,19 +1809,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-fmds"
+name = "nico-fmds"
 version = "0.0.1"
 dependencies = [
  "arc-swap",
  "async-trait",
  "axum",
  "axum-server",
- "carbide-dpu-agent-utils",
- "carbide-dpu-fmds-shared",
- "carbide-rpc",
- "carbide-tls",
- "carbide-uuid",
- "carbide-version",
+ "nico-dpu-agent-utils",
+ "nico-dpu-fmds-shared",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
  "clap",
  "eyre",
  "futures-util",
@@ -1852,17 +1852,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-health"
+name = "nico-health"
 version = "0.0.1"
 dependencies = [
  "async-trait",
  "base64",
- "carbide-health-report",
- "carbide-rpc",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "criterion",
  "dashmap",
@@ -1897,17 +1897,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-health-metrics"
+name = "nico-health-metrics"
 version = "0.0.0"
 dependencies = [
- "carbide-api-model",
- "carbide-health-report",
- "carbide-utils",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-utils",
  "opentelemetry",
 ]
 
 [[package]]
-name = "carbide-health-report"
+name = "nico-health-report"
 version = "0.0.0"
 dependencies = [
  "chrono",
@@ -1917,17 +1917,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-host-support"
+name = "nico-host-support"
 version = "0.0.0"
 dependencies = [
  "base64",
- "carbide-dpu-agent-utils",
- "carbide-libmlx",
- "carbide-rpc",
- "carbide-rpc-utils",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
+ "nico-dpu-agent-utils",
+ "nico-libmlx",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
  "csv",
  "eyre",
  "ipnetwork",
@@ -1956,7 +1956,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-http-connector"
+name = "nico-http-connector"
 version = "0.0.0"
 dependencies = [
  "futures-util",
@@ -1972,18 +1972,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-ib-fabric"
+name = "nico-ib-fabric"
 version = "0.0.1"
 dependencies = [
  "async-trait",
  "base64",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-health-report",
- "carbide-secrets",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-secrets",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "duration-str",
  "eyre",
@@ -2009,14 +2009,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-ib-partition-controller"
+name = "nico-ib-partition-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-ib-fabric",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-ib-fabric",
+ "nico-uuid",
  "config-version",
  "eyre",
  "sqlx",
@@ -2025,14 +2025,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-ipmi"
+name = "nico-ipmi"
 version = "0.0.1"
 dependencies = [
  "arc-swap",
  "async-trait",
- "carbide-secrets",
- "carbide-utils",
- "carbide-uuid",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
  "eyre",
  "reqwest 0.13.3",
  "serde",
@@ -2041,7 +2041,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-ipxe-renderer"
+name = "nico-ipxe-renderer"
 version = "0.0.1"
 dependencies = [
  "hex",
@@ -2052,7 +2052,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-kms-provider"
+name = "nico-kms-provider"
 version = "0.0.1"
 dependencies = [
  "aes-gcm 0.10.3",
@@ -2072,16 +2072,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-libmlx"
+name = "nico-libmlx"
 version = "0.0.1"
 dependencies = [
  "async-trait",
  "backon",
  "base64",
- "carbide-libmlx-model",
- "carbide-rpc",
- "carbide-ssh",
- "carbide-uuid",
+ "nico-libmlx-model",
+ "nico-rpc",
+ "nico-ssh",
+ "nico-uuid",
  "chrono",
  "clap",
  "hex",
@@ -2109,7 +2109,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-libmlx-model"
+name = "nico-libmlx-model"
 version = "0.0.0"
 dependencies = [
  "mac_address",
@@ -2117,14 +2117,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-log-parser"
+name = "nico-log-parser"
 version = "0.0.2"
 dependencies = [
  "anyhow",
- "carbide-health-report",
- "carbide-rpc",
- "carbide-tls",
- "carbide-uuid",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
  "chrono",
  "getopts",
  "regex",
@@ -2136,17 +2136,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-machine-a-tron"
+name = "nico-machine-a-tron"
 version = "0.0.0"
 dependencies = [
  "axum",
  "base64",
  "bmc-mock",
- "carbide-network",
- "carbide-rpc",
- "carbide-tls",
- "carbide-uuid",
- "carbide-version",
+ "nico-network",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "clap",
  "crossterm",
@@ -2174,24 +2174,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-machine-controller"
+name = "nico-machine-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "bmc-vendor",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-dpf",
- "carbide-firmware",
- "carbide-health-metrics",
- "carbide-health-report",
- "carbide-ipmi",
- "carbide-measured-boot",
- "carbide-redfish",
- "carbide-secrets",
- "carbide-state-controller-common",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-dpf",
+ "nico-firmware",
+ "nico-health-metrics",
+ "nico-health-report",
+ "nico-ipmi",
+ "nico-measured-boot",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-state-controller-common",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "config-version",
  "duration-str",
@@ -2220,13 +2220,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-machine-validation"
+name = "nico-machine-validation"
 version = "0.0.0"
 dependencies = [
- "carbide-rpc",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "futures-util",
  "reqwest 0.13.3",
@@ -2239,7 +2239,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-macros"
+name = "nico-macros"
 version = "0.0.0"
 dependencies = [
  "eyre",
@@ -2251,10 +2251,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-measured-boot"
+name = "nico-measured-boot"
 version = "0.0.0"
 dependencies = [
- "carbide-uuid",
+ "nico-uuid",
  "chrono",
  "clap",
  "eyre",
@@ -2265,7 +2265,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-metrics-utils"
+name = "nico-metrics-utils"
 version = "0.0.0"
 dependencies = [
  "glob",
@@ -2275,10 +2275,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-mockdpa"
+name = "nico-mockdpa"
 version = "0.0.1"
 dependencies = [
- "carbide-dpa-interface-controller",
+ "nico-dpa-interface-controller",
  "chrono",
  "clap",
  "mqttea",
@@ -2294,7 +2294,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-mqtt-common"
+name = "nico-mqtt-common"
 version = "0.1.0"
 dependencies = [
  "async-trait",
@@ -2306,7 +2306,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-network"
+name = "nico-network"
 version = "0.0.0"
 dependencies = [
  "eyre",
@@ -2320,14 +2320,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-network-segment-controller"
+name = "nico-network-segment-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "config-version",
  "eyre",
@@ -2339,15 +2339,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-nvlink-manager"
+name = "nico-nvlink-manager"
 version = "0.0.1"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-secrets",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "config-version",
  "duration-str",
@@ -2368,17 +2368,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-power-shelf-controller"
+name = "nico-power-shelf-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-health-metrics",
- "carbide-rack",
- "carbide-secrets",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-metrics",
+ "nico-rack",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
  "config-version",
  "eyre",
  "librms",
@@ -2390,17 +2390,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-preingestion-manager"
+name = "nico-preingestion-manager"
 version = "0.0.1"
 dependencies = [
  "bmc-vendor",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-firmware",
- "carbide-redfish",
- "carbide-secrets",
- "carbide-ssh",
- "carbide-utils",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-firmware",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-ssh",
+ "nico-utils",
  "chrono",
  "futures-util",
  "libredfish",
@@ -2416,7 +2416,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-prost-builder"
+name = "nico-prost-builder"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
@@ -2425,7 +2425,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-pxe"
+name = "nico-pxe"
 version = "0.0.1"
 dependencies = [
  "axum",
@@ -2433,11 +2433,11 @@ dependencies = [
  "axum-template",
  "base64",
  "bytes",
- "carbide-host-support",
- "carbide-rpc",
- "carbide-tls",
- "carbide-uuid",
- "carbide-version",
+ "nico-host-support",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
  "clap",
  "http-body",
  "metrics",
@@ -2458,17 +2458,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-rack"
+name = "nico-rack"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "bms-dsx-exchange",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-health-report",
- "carbide-mqtt-common",
- "carbide-secrets",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-mqtt-common",
+ "nico-secrets",
+ "nico-uuid",
  "chrono",
  "eyre",
  "librms",
@@ -2485,17 +2485,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-rack-controller"
+name = "nico-rack-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-health-metrics",
- "carbide-rack",
- "carbide-secrets",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-metrics",
+ "nico-rack",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "config-version",
  "duration-str",
@@ -2512,16 +2512,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-redfish"
+name = "nico-redfish"
 version = "0.0.1"
 dependencies = [
  "arc-swap",
  "async-trait",
  "bmc-vendor",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-secrets",
- "carbide-utils",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-secrets",
+ "nico-utils",
  "chrono",
  "http",
  "libredfish",
@@ -2538,22 +2538,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-rpc"
+name = "nico-rpc"
 version = "0.0.0"
 dependencies = [
  "async-trait",
  "base64",
- "carbide-api-model",
- "carbide-health-report",
- "carbide-http-connector",
- "carbide-ipxe-renderer",
- "carbide-libmlx-model",
- "carbide-measured-boot",
- "carbide-network",
- "carbide-secrets",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-http-connector",
+ "nico-ipxe-renderer",
+ "nico-libmlx-model",
+ "nico-measured-boot",
+ "nico-network",
+ "nico-secrets",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "clap",
  "config-version",
@@ -2598,13 +2598,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-rpc-utils"
+name = "nico-rpc-utils"
 version = "0.0.0"
 dependencies = [
  "byte-unit",
- "carbide-health-report",
- "carbide-rpc",
- "carbide-uuid",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-uuid",
  "chrono",
  "config-version",
  "eyre",
@@ -2618,12 +2618,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-rvs"
+name = "nico-rvs"
 version = "0.0.1"
 dependencies = [
- "carbide-rpc",
- "carbide-tls",
- "carbide-uuid",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
  "figment",
  "logfmt",
  "serde",
@@ -2638,18 +2638,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-scout"
+name = "nico-scout"
 version = "0.0.1"
 dependencies = [
  "axum",
- "carbide-host-support",
- "carbide-libmlx",
- "carbide-machine-validation",
- "carbide-rpc",
- "carbide-tls",
- "carbide-utils",
- "carbide-uuid",
- "carbide-version",
+ "nico-host-support",
+ "nico-libmlx",
+ "nico-machine-validation",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
  "chrono",
  "clap",
  "efivar",
@@ -2679,7 +2679,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-secrets"
+name = "nico-secrets"
 version = "0.0.0"
 dependencies = [
  "aes-gcm 0.10.3",
@@ -2687,7 +2687,7 @@ dependencies = [
  "async-trait",
  "base64",
  "bmc-vendor",
- "carbide-uuid",
+ "nico-uuid",
  "eyre",
  "figment",
  "hex",
@@ -2710,22 +2710,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-site-explorer"
+name = "nico-site-explorer"
 version = "0.0.1"
 dependencies = [
  "arc-swap",
  "async-trait",
  "bmc-explorer",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-firmware",
- "carbide-health-report",
- "carbide-ipmi",
- "carbide-network",
- "carbide-redfish",
- "carbide-secrets",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-firmware",
+ "nico-health-report",
+ "nico-ipmi",
+ "nico-network",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "config-version",
  "duration-str",
@@ -2749,14 +2749,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-spdm-controller"
+name = "nico-spdm-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-redfish",
- "carbide-utils",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-redfish",
+ "nico-utils",
  "config-version",
  "itertools 0.14.0",
  "libredfish",
@@ -2768,17 +2768,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-sqlx-testing"
+name = "nico-sqlx-testing"
 version = "0.0.0"
 dependencies = [
- "carbide-api-db",
+ "nico-api-db",
  "sqlx",
  "sqlx-core",
  "tokio",
 ]
 
 [[package]]
-name = "carbide-ssh"
+name = "nico-ssh"
 version = "0.0.0"
 dependencies = [
  "russh",
@@ -2789,18 +2789,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-ssh-console"
+name = "nico-ssh-console"
 version = "0.1.0"
 dependencies = [
  "bmc-mock",
  "bmc-vendor",
  "bytes",
- "carbide-api-test-helper",
- "carbide-machine-a-tron",
- "carbide-rpc",
- "carbide-ssh-console-mock-api-server",
- "carbide-tls",
- "carbide-uuid",
+ "nico-api-test-helper",
+ "nico-machine-a-tron",
+ "nico-rpc",
+ "nico-ssh-console-mock-api-server",
+ "nico-tls",
+ "nico-uuid",
  "chrono",
  "clap",
  "ctor",
@@ -2838,21 +2838,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-ssh-console-fuzz"
+name = "nico-ssh-console-fuzz"
 version = "0.0.1"
 dependencies = [
- "carbide-ssh-console",
+ "nico-ssh-console",
  "libfuzzer-sys",
 ]
 
 [[package]]
-name = "carbide-ssh-console-mock-api-server"
+name = "nico-ssh-console-mock-api-server"
 version = "0.0.1"
 dependencies = [
- "carbide-api-test-helper",
- "carbide-rpc",
- "carbide-uuid",
- "carbide-version",
+ "nico-api-test-helper",
+ "nico-rpc",
+ "nico-uuid",
+ "nico-version",
  "eyre",
  "prost",
  "prost-types",
@@ -2867,27 +2867,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-state-controller-common"
+name = "nico-state-controller-common"
 version = "0.0.0"
 dependencies = [
- "carbide-utils",
+ "nico-utils",
  "duration-str",
  "serde",
  "state-controller",
 ]
 
 [[package]]
-name = "carbide-switch-controller"
+name = "nico-switch-controller"
 version = "0.0.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-health-metrics",
- "carbide-secrets",
- "carbide-site-explorer",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-metrics",
+ "nico-secrets",
+ "nico-site-explorer",
+ "nico-utils",
+ "nico-uuid",
  "config-version",
  "eyre",
  "librms",
@@ -2899,7 +2899,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-systemd"
+name = "nico-systemd"
 version = "0.0.0"
 dependencies = [
  "eyre",
@@ -2908,7 +2908,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-tls"
+name = "nico-tls"
 version = "0.0.0"
 dependencies = [
  "rustls",
@@ -2919,11 +2919,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-utils"
+name = "nico-utils"
 version = "0.0.0"
 dependencies = [
  "byte-unit",
- "carbide-network",
+ "nico-network",
  "chrono",
  "clap",
  "ipnetwork",
@@ -2938,7 +2938,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-uuid"
+name = "nico-uuid"
 version = "0.0.0"
 dependencies = [
  "data-encoding",
@@ -2953,7 +2953,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "carbide-version"
+name = "nico-version"
 version = "0.0.0"
 
 [[package]]
@@ -3326,14 +3326,14 @@ name = "component-manager"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-api-test-helper",
- "carbide-macros",
- "carbide-redfish",
- "carbide-secrets",
- "carbide-sqlx-testing",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-api-test-helper",
+ "nico-macros",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-sqlx-testing",
+ "nico-uuid",
  "chrono",
  "libredfish",
  "librms",
@@ -6709,7 +6709,7 @@ name = "metrics-endpoint"
 version = "0.1.0"
 dependencies = [
  "bytes",
- "carbide-metrics-utils",
+ "nico-metrics-utils",
  "eyre",
  "http-body-util",
  "hyper",
@@ -10554,12 +10554,12 @@ name = "state-controller"
 version = "0.0.1"
 dependencies = [
  "async-trait",
- "carbide-api-db",
- "carbide-api-model",
- "carbide-macros",
- "carbide-sqlx-testing",
- "carbide-utils",
- "carbide-uuid",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-macros",
+ "nico-sqlx-testing",
+ "nico-utils",
+ "nico-uuid",
  "chrono",
  "config-version",
  "eyre",

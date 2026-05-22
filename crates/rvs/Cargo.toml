@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-rvs"
+name = "nico-rvs"
 version = "0.0.1"
 description = "Rack Validation Service -- external validation orchestrator for NICC"
 edition.workspace = true
@@ -23,13 +23,13 @@ license.workspace = true
 authors.workspace = true
 
 [[bin]]
-name = "carbide-rvs"
+name = "nico-rvs"
 path = "src/main.rs"
 
 [dependencies]
-carbide-uuid = { path = "../uuid" }
-carbide-rpc = { path = "../rpc" }
-carbide-tls = { path = "../tls" }
+nico-uuid = { path = "../uuid" }
+nico-rpc = { path = "../rpc" }
+nico-tls = { path = "../tls" }
 figment = { workspace = true, features = ["toml", "env"] }
 uuid = { workspace = true, features = ["v4"] }
 logfmt = { path = "../logfmt" }
