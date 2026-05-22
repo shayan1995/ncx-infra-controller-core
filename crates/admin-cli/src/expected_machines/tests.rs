@@ -541,7 +541,7 @@ fn parse_add_with_dpu_mode_nic() {
 
     match cmd {
         Cmd::Add(args) => {
-            assert!(matches!(args.dpu_mode, Some(rpc::forge::DpuMode::NicMode)));
+            assert!(matches!(args.dpu_mode, Some(rpc::nico::DpuMode::NicMode)));
         }
         _ => panic!("expected Add variant"),
     }
@@ -569,7 +569,7 @@ fn parse_add_with_dpu_mode_no_dpu() {
 
     match cmd {
         Cmd::Add(args) => {
-            assert!(matches!(args.dpu_mode, Some(rpc::forge::DpuMode::NoDpu)));
+            assert!(matches!(args.dpu_mode, Some(rpc::nico::DpuMode::NoDpu)));
         }
         _ => panic!("expected Add variant"),
     }
@@ -596,7 +596,7 @@ fn parse_add_with_dpu_mode_dpu() {
 
     match cmd {
         Cmd::Add(args) => {
-            assert!(matches!(args.dpu_mode, Some(rpc::forge::DpuMode::DpuMode)));
+            assert!(matches!(args.dpu_mode, Some(rpc::nico::DpuMode::DpuMode)));
         }
         _ => panic!("expected Add variant"),
     }
@@ -643,7 +643,7 @@ fn parse_patch_with_dpu_mode_nic() {
 
     match cmd {
         Cmd::Patch(args) => {
-            assert!(matches!(args.dpu_mode, Some(rpc::forge::DpuMode::NicMode)));
+            assert!(matches!(args.dpu_mode, Some(rpc::nico::DpuMode::NicMode)));
         }
         _ => panic!("expected Patch variant"),
     }
@@ -665,7 +665,7 @@ fn parse_patch_with_dpu_mode_no_dpu() {
 
     match cmd {
         Cmd::Patch(args) => {
-            assert!(matches!(args.dpu_mode, Some(rpc::forge::DpuMode::NoDpu)));
+            assert!(matches!(args.dpu_mode, Some(rpc::nico::DpuMode::NoDpu)));
         }
         _ => panic!("expected Patch variant"),
     }
@@ -688,7 +688,7 @@ fn parse_patch_with_dpu_mode_dpu() {
 
     match cmd {
         Cmd::Patch(args) => {
-            assert!(matches!(args.dpu_mode, Some(rpc::forge::DpuMode::DpuMode)));
+            assert!(matches!(args.dpu_mode, Some(rpc::nico::DpuMode::DpuMode)));
         }
         _ => panic!("expected Patch variant"),
     }

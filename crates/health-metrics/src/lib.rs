@@ -20,7 +20,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::sync::Arc;
 
-use carbide_utils::metrics::SharedMetricsHolder;
+use nico_utils::metrics::SharedMetricsHolder;
 use health_report::{HealthAlertClassification, HealthProbeId, HealthReport};
 use model::health::HealthReportSources;
 use opentelemetry::KeyValue;

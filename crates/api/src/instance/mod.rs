@@ -18,13 +18,13 @@
 use std::collections::{HashMap, HashSet};
 
 use ::rpc::errors::RpcDataConversionError;
-use ::rpc::forge as rpc;
-use carbide_network::virtualization::VpcVirtualizationType;
-use carbide_uuid::infiniband::IBPartitionId;
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::instance_type::InstanceTypeId;
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::vpc::VpcPrefixId;
+use ::rpc::nico as rpc;
+use nico_network::virtualization::VpcVirtualizationType;
+use nico_uuid::infiniband::IBPartitionId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::instance_type::InstanceTypeId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::vpc::VpcPrefixId;
 use config_version::ConfigVersion;
 use db::{
     self, ObjectColumnFilter, ObjectFilter, compute_allocation, extension_service, ib_partition,
@@ -61,23 +61,23 @@ use crate::network_segment::allocate::PrefixAllocator;
 fn build_requested_linknet_prefix(
     ip: std::net::IpAddr,
     linknet_prefix_len: u8,
-) -> CarbideResult<IpNetwork> {
+) -> NicoResult<IpNetwork> {
     let host_bit_is_zero = match ip {
         std::net::IpAddr::V4(v4) => v4.to_bits() & 1 == 0,
         std::net::IpAddr::V6(v6) => v6.to_bits() & 1 == 0,
     };
     if host_bit_is_zero {
-        return Err(CarbideError::InvalidConfiguration(
+        return Err(NicoError::InvalidConfiguration(
             ConfigValidationError::InvalidValue(format!(
                 "requested IP address must not have final host bit of 0: {ip}",
             )),
         ));
     }
-    IpNetwork::new(ip.to_canonical(), linknet_prefix_len).map_err(|e| CarbideError::Internal {
+    IpNetwork::new(ip.to_canonical(), linknet_prefix_len).map_err(|e| NicoError::Internal {
         message: format!("unable to create IP network for {ip}: {e}"),
     })
 }
-use crate::{CarbideError, CarbideResult};
+use crate::{NicoError, NicoResult};
 
 /// Validates that an operating system definition referenced by ID exists, is active,
 /// and has status READY.  Returns `Ok(())` when the OS variant is not
@@ -85,25 +85,25 @@ use crate::{CarbideError, CarbideResult};
 pub async fn validate_os_definition_usable(
     txn: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
     os: &model::os::OperatingSystem,
-) -> Result<(), CarbideError> {
+) -> Result<(), NicoError> {
     let os_id = match os.variant {
         OperatingSystemVariant::OperatingSystemId(id) => id,
         _ => return Ok(()),
     };
     let row = db::operating_system::get(txn, os_id).await.map_err(|e| {
         if e.is_not_found() {
-            CarbideError::FailedPrecondition(format!("Operating system `{os_id}` does not exist"))
+            NicoError::FailedPrecondition(format!("Operating system `{os_id}` does not exist"))
         } else {
-            CarbideError::internal(format!("Failed to get operating system: {e}"))
+            NicoError::internal(format!("Failed to get operating system: {e}"))
         }
     })?;
     if !row.is_active {
-        return Err(CarbideError::FailedPrecondition(format!(
+        return Err(NicoError::FailedPrecondition(format!(
             "Operating system `{os_id}` is not active"
         )));
     }
     if row.status != db::operating_system::OS_STATUS_READY {
-        return Err(CarbideError::FailedPrecondition(format!(
+        return Err(NicoError::FailedPrecondition(format!(
             "Operating system `{os_id}` is not ready (status: {})",
             row.status
         )));
@@ -134,7 +134,7 @@ pub struct InstanceAllocationRequest {
 }
 
 impl TryFrom<rpc::InstanceAllocationRequest> for InstanceAllocationRequest {
-    type Error = CarbideError;
+    type Error = NicoError;
 
     fn try_from(request: rpc::InstanceAllocationRequest) -> Result<Self, Self::Error> {
         let machine_id = request
@@ -146,7 +146,7 @@ impl TryFrom<rpc::InstanceAllocationRequest> for InstanceAllocationRequest {
             .map(|i| i.parse::<InstanceTypeId>())
             .transpose()
             .map_err(|e| {
-                CarbideError::from(RpcDataConversionError::InvalidInstanceTypeId(e.value()))
+                NicoError::from(RpcDataConversionError::InvalidInstanceTypeId(e.value()))
             })?;
 
         let config = request
@@ -183,7 +183,7 @@ impl TryFrom<rpc::InstanceAllocationRequest> for InstanceAllocationRequest {
 pub async fn allocate_network(
     network_config: &mut InstanceNetworkConfig,
     txn: &mut PgConnection,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     // Take ROW LEVEL lock on all the vpc_prefix taken.
     // This is needed so that last_used_prefix is not modified by multiple clients at same time.
     // Keep values in mut Hashmap and update last_used_prefix in the end of this function.
@@ -219,7 +219,7 @@ pub async fn allocate_network(
             .map(|x| (x.id, x.clone()))
             .collect::<HashMap<VpcPrefixId, VpcPrefix>>();
 
-    // This can be empty also if vpc_prefix_id is not configured at carbide.
+    // This can be empty also if vpc_prefix_id is not configured at nico.
     // In this case error 'Unknown VPC prefix id' will be thrown.
     let vpc_ids = vpc_prefixes
         .values()
@@ -238,7 +238,7 @@ pub async fn allocate_network(
                 .iter()
                 .any(|x| x.network_virtualization_type != VpcVirtualizationType::Fnn)
         {
-            return Err(CarbideError::InvalidConfiguration(
+            return Err(NicoError::InvalidConfiguration(
                 ConfigValidationError::InvalidValue(format!(
                     "Interface config contains interfaces from multiple VPCs, which is only supported when all VPCs use FNN: prefixes={:?}, vpcs={:?}.",
                     vpc_prefixes
@@ -275,7 +275,7 @@ pub async fn allocate_network(
                         .get(vpc_prefix_id)
                         .map(|vpc| (vpc.vpc_id, vpc.config.prefix, vpc.status.last_used_prefix))
                         .ok_or_else(|| {
-                            CarbideError::internal(format!(
+                            NicoError::internal(format!(
                                 "Unknown VPC prefix id: {vpc_prefix_id}"
                             ))
                         })?
@@ -285,7 +285,7 @@ pub async fn allocate_network(
                 // ipv6_interface_config is also set, we'd create two v6 linknets
                 // on the same segment.
                 if vpc_prefix.is_ipv6() && interface.ipv6_interface_config.is_some() {
-                    return Err(CarbideError::InvalidConfiguration(
+                    return Err(NicoError::InvalidConfiguration(
                         ConfigValidationError::InvalidValue(
                             "vpc_prefix_id points to an IPv6 prefix but ipv6_interface_config is also set -- use one or the other for IPv6".to_string(),
                         ),
@@ -321,14 +321,14 @@ pub async fn allocate_network(
                             .get(v6_prefix_id)
                             .map(|vpc| (vpc.vpc_id, vpc.config.prefix, vpc.status.last_used_prefix))
                             .ok_or_else(|| {
-                                CarbideError::internal(format!(
+                                NicoError::internal(format!(
                                     "Unknown VPC prefix id: {v6_prefix_id}"
                                 ))
                             })?
                     };
 
                     if v6_vpc_id != vpc_id {
-                        return Err(CarbideError::InvalidConfiguration(
+                        return Err(NicoError::InvalidConfiguration(
                             ConfigValidationError::InvalidValue(format!(
                                 "dual-stack VPC prefixes must belong to the same VPC: primary_vpc_prefix_id={vpc_prefix_id}, primary_vpc_id={vpc_id}, ipv6_vpc_prefix_id={v6_prefix_id}, ipv6_vpc_id={v6_vpc_id}",
                             )),
@@ -376,13 +376,13 @@ pub async fn allocate_network(
 pub fn allocate_ib_port_guid(
     ib_config: &InstanceInfinibandConfig,
     machine: &Machine,
-) -> CarbideResult<InstanceInfinibandConfig> {
+) -> NicoResult<InstanceInfinibandConfig> {
     let mut updated_ib_config = ib_config.clone();
 
     let ib_hw_info = machine
         .hardware_info
         .as_ref()
-        .ok_or(CarbideError::MissingArgument("no hardware info in machine"))?
+        .ok_or(NicoError::MissingArgument("no hardware info in machine"))?
         .infiniband_interfaces
         .as_ref();
 
@@ -400,7 +400,7 @@ pub fn allocate_ib_port_guid(
 
         // TOTO: will support VF in the future. Currently, it will return err when the function_id is not PF.
         if let InterfaceFunctionId::Virtual { .. } = request.function_id {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "Not support VF {} (machine {})",
                 request.device, machine.id
             )));
@@ -413,13 +413,13 @@ pub fn allocate_ib_port_guid(
                 guids.push(ib.guid.clone());
                 tracing::debug!("select IB device GUID {}", ib.guid.clone());
             } else {
-                return Err(CarbideError::InvalidArgument(format!(
+                return Err(NicoError::InvalidArgument(format!(
                     "not enough ib device {} (machine {})",
                     request.device, machine.id
                 )));
             }
         } else {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "no ib device {} (machine {})",
                 request.device, machine.id
             )));
@@ -432,7 +432,7 @@ pub fn allocate_ib_port_guid(
             for guid in guids.iter() {
                 for ib_status in ib_interfaces_status.ib_interfaces.iter() {
                     if *guid == ib_status.guid && ib_status.lid == 0xffff_u16 {
-                        return Err(CarbideError::InvalidArgument(format!(
+                        return Err(NicoError::InvalidArgument(format!(
                             "UFM detected inactive state for GUID: {guid} (machine {})",
                             machine.id
                         )));
@@ -440,7 +440,7 @@ pub fn allocate_ib_port_guid(
                 }
             }
         } else {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "Infiniband status information is not found (machine {})",
                 machine.id
             )));
@@ -481,12 +481,12 @@ pub async fn allocate_instance(
     api: &Api,
     request: InstanceAllocationRequest,
     host_health_config: HostHealthConfig,
-) -> Result<ManagedHostStateSnapshot, CarbideError> {
+) -> Result<ManagedHostStateSnapshot, NicoError> {
     let mut results = batch_allocate_instances(api, vec![request], host_health_config).await?;
 
     results
         .pop()
-        .ok_or_else(|| CarbideError::internal("Instance allocation returned no result".to_string()))
+        .ok_or_else(|| NicoError::internal("Instance allocation returned no result".to_string()))
 }
 
 /// Allocates multiple instances in a single transaction.
@@ -503,9 +503,9 @@ pub async fn batch_allocate_instances(
     api: &Api,
     requests: Vec<InstanceAllocationRequest>,
     host_health_config: HostHealthConfig,
-) -> Result<Vec<ManagedHostStateSnapshot>, CarbideError> {
+) -> Result<Vec<ManagedHostStateSnapshot>, NicoError> {
     if requests.is_empty() {
-        return Err(CarbideError::InvalidArgument(
+        return Err(NicoError::InvalidArgument(
             "Batch request must contain at least one instance".to_string(),
         ));
     }
@@ -520,7 +520,7 @@ pub async fn batch_allocate_instances(
     for request in &requests {
         // Validate machine type
         if !request.machine_id.machine_type().is_host() {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "Machine with UUID {} is of type {} and can not be converted into an instance",
                 request.machine_id,
                 request.machine_id.machine_type()
@@ -550,7 +550,7 @@ pub async fn batch_allocate_instances(
                 ))
             })
         })
-        .collect::<Result<Vec<_>, CarbideError>>()?
+        .collect::<Result<Vec<_>, NicoError>>()?
         .into_iter()
         .counts();
 
@@ -601,7 +601,7 @@ pub async fn batch_allocate_instances(
             ) {
                 (_, ComputeAllocationEnforcement::Always)
                 | (true, ComputeAllocationEnforcement::EnforceIfPresent) => {
-                    return Err(CarbideError::FailedPrecondition(
+                    return Err(NicoError::FailedPrecondition(
                         "request to allocate instance would exceed current tenant allocation limit"
                             .to_string(),
                     ));
@@ -637,7 +637,7 @@ pub async fn batch_allocate_instances(
     // Verify all machines were found
     for request in &requests {
         if !machine_map.contains_key(&request.machine_id) {
-            return Err(CarbideError::NotFoundError {
+            return Err(NicoError::NotFoundError {
                 kind: "Machine",
                 id: request.machine_id.to_string(),
             });
@@ -657,7 +657,7 @@ pub async fn batch_allocate_instances(
         let machine_id = request.machine_id;
         let mh_snapshot = snapshot_map
             .get(&machine_id)
-            .ok_or(CarbideError::NotFoundError {
+            .ok_or(NicoError::NotFoundError {
                 kind: "machine",
                 id: machine_id.to_string(),
             })?;
@@ -665,19 +665,19 @@ pub async fn batch_allocate_instances(
         if let Err(e) = mh_snapshot.is_usable_as_instance(request.allow_unhealthy_machine) {
             tracing::error!(%machine_id, "Host can not be used as instance due to reason: {}", e);
             return Err(match e {
-                NotAllocatableReason::InvalidState(s) => CarbideError::InvalidArgument(format!(
+                NotAllocatableReason::InvalidState(s) => NicoError::InvalidArgument(format!(
                     "Could not create instance on machine {machine_id} given machine state {s:?}"
                 )),
                 NotAllocatableReason::PendingInstanceCreation => {
-                    CarbideError::InvalidArgument(format!(
+                    NicoError::InvalidArgument(format!(
                         "Could not create instance on machine {machine_id}. Machine is already used by another Instance creation request.",
                     ))
                 }
-                NotAllocatableReason::NoDpuSnapshots => CarbideError::internal(format!(
+                NotAllocatableReason::NoDpuSnapshots => NicoError::internal(format!(
                     "Machine {machine_id} has no DPU. Cannot allocate."
                 )),
-                NotAllocatableReason::MaintenanceMode => CarbideError::MaintenanceMode,
-                NotAllocatableReason::HealthAlert(_) => CarbideError::UnhealthyHost,
+                NotAllocatableReason::MaintenanceMode => NicoError::MaintenanceMode,
+                NotAllocatableReason::HealthAlert(_) => NicoError::UnhealthyHost,
             });
         }
     }
@@ -707,7 +707,7 @@ pub async fn batch_allocate_instances(
         .pop()
         .is_none()
         {
-            return Err(CarbideError::FailedPrecondition(format!(
+            return Err(NicoError::FailedPrecondition(format!(
                 "NetworkSecurityGroup `{}` does not exist or is not owned by Tenant `{}`",
                 nsg_id, tenant_org_id
             )));
@@ -732,7 +732,7 @@ pub async fn batch_allocate_instances(
                 .collect();
             let unique_service_ids: HashSet<_> = service_ids.iter().collect();
             if service_ids.len() != unique_service_ids.len() {
-                return Err(CarbideError::InvalidArgument(format!(
+                return Err(NicoError::InvalidArgument(format!(
                     "Duplicate extension services in configuration. Only one version of each service is allowed. (machine {})",
                     request.machine_id
                 )));
@@ -755,7 +755,7 @@ pub async fn batch_allocate_instances(
         // Validate each service config
         for service in all_service_configs {
             if !services.contains_key(&service.service_id) {
-                return Err(CarbideError::FailedPrecondition(format!(
+                return Err(NicoError::FailedPrecondition(format!(
                     "Extension service {} does not exist",
                     service.service_id,
                 )));
@@ -765,7 +765,7 @@ pub async fn batch_allocate_instances(
                 .unwrap()
                 .contains(&service.version)
             {
-                return Err(CarbideError::FailedPrecondition(format!(
+                return Err(NicoError::FailedPrecondition(format!(
                     "Extension service {} version {} does not exist or is deleted",
                     service.service_id, service.version,
                 )));
@@ -788,18 +788,18 @@ pub async fn batch_allocate_instances(
     // Validate each unique OS image
     for os_image_id in &os_image_ids {
         if os_image_id.is_nil() {
-            return Err(CarbideError::InvalidArgument(
+            return Err(NicoError::InvalidArgument(
                 "Image ID is required for image based storage".to_string(),
             ));
         }
         if let Err(e) = db::os_image::get(&mut txn, *os_image_id).await {
             return if e.is_not_found() {
-                Err(CarbideError::FailedPrecondition(format!(
+                Err(NicoError::FailedPrecondition(format!(
                     "Image OS `{}` does not exist",
                     os_image_id
                 )))
             } else {
-                Err(CarbideError::internal(format!(
+                Err(NicoError::internal(format!(
                     "Failed to get OS image error: {e}"
                 )))
             };
@@ -842,7 +842,7 @@ pub async fn batch_allocate_instances(
         let machine_id = request.machine_id;
         let mh_snapshot = snapshot_map
             .remove(&machine_id)
-            .ok_or(CarbideError::NotFoundError {
+            .ok_or(NicoError::NotFoundError {
                 kind: "machine",
                 id: machine_id.to_string(),
             })?;
@@ -866,7 +866,7 @@ pub async fn batch_allocate_instances(
         // `auto`, and are expected to enumerate their interfaces explicitly.
         if mh_snapshot.is_zero_dpu() {
             if !request.config.network.auto {
-                return Err(CarbideError::InvalidArgument(format!(
+                return Err(NicoError::InvalidArgument(format!(
                     "zero-DPU host {} requires `InstanceNetworkConfig.auto = true`; cannot allocate an instance with explicitly-listed interfaces or with `auto = false`",
                     mh_snapshot.host_snapshot.id,
                 )));
@@ -895,7 +895,7 @@ pub async fn batch_allocate_instances(
                 if let Some(ns_id) = iface.network_segment_id
                     && !allowed_segment_ids.contains(&ns_id)
                 {
-                    return Err(CarbideError::InvalidArgument(format!(
+                    return Err(NicoError::InvalidArgument(format!(
                         "zero-DPU host {} cannot serve an instance interface on network segment {ns_id}. must be a HostInband segment only (allowed: {allowed_segment_ids:?}).",
                         mh_snapshot.host_snapshot.id,
                     )));
@@ -906,13 +906,13 @@ pub async fn batch_allocate_instances(
             // place to schedule them. We need to check, otherwise the status
             // would just report "Unknown" forever.
             if !request.config.extension_services.service_configs.is_empty() {
-                return Err(CarbideError::InvalidArgument(format!(
+                return Err(NicoError::InvalidArgument(format!(
                     "zero-DPU host {} cannot serve extension services; remove `dpu_extension_services` from the instance config.",
                     mh_snapshot.host_snapshot.id,
                 )));
             }
         } else if request.config.network.auto {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "host {} has DPUs; `InstanceNetworkConfig.auto` is only valid on zero-DPU hosts",
                 mh_snapshot.host_snapshot.id,
             )));
@@ -950,17 +950,17 @@ pub async fn batch_allocate_instances(
     // These need to be done per-instance but we collect results for batch update
     // Tuple format: (instance_id, expected_version, config)
     let mut network_config_updates: Vec<(
-        carbide_uuid::instance::InstanceId,
+        nico_uuid::instance::InstanceId,
         ConfigVersion,
         model::instance::config::network::InstanceNetworkConfig,
     )> = Vec::with_capacity(request_count);
     let mut ib_config_updates: Vec<(
-        carbide_uuid::instance::InstanceId,
+        nico_uuid::instance::InstanceId,
         ConfigVersion,
         model::instance::config::infiniband::InstanceInfinibandConfig,
     )> = Vec::with_capacity(request_count);
     let mut nvlink_config_updates: Vec<(
-        carbide_uuid::instance::InstanceId,
+        nico_uuid::instance::InstanceId,
         ConfigVersion,
         model::instance::config::nvlink::InstanceNvLinkConfig,
     )> = Vec::with_capacity(request_count);
@@ -988,7 +988,7 @@ pub async fn batch_allocate_instances(
         .await?;
 
         if updated_network_config.interfaces.is_empty() {
-            return Err(CarbideError::InvalidConfiguration(
+            return Err(NicoError::InvalidConfiguration(
                 ConfigValidationError::InvalidValue(format!(
                     "InstanceNetworkConfig.interfaces is empty (machine {})",
                     request.machine_id
@@ -1047,7 +1047,7 @@ pub async fn batch_allocate_instances(
     for (request, mut mh_snapshot) in processed_requests {
         let machine_id = request.machine_id;
         mh_snapshot.instance = Some(final_instance_map.remove(&machine_id).ok_or_else(|| {
-            CarbideError::internal(format!(
+            NicoError::internal(format!(
                 "Newly created instance for {machine_id} was not found"
             ))
         })?);
@@ -1069,7 +1069,7 @@ pub async fn batch_allocate_instances(
 pub async fn batch_validate_ib_partition_ownership(
     txn: &mut PgConnection,
     validations: &[(IBPartitionId, &TenantOrganizationId)],
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     if validations.is_empty() {
         return Ok(());
     }
@@ -1099,7 +1099,7 @@ pub async fn batch_validate_ib_partition_ownership(
         })?;
 
         if &partition.config.tenant_organization_id != *expected_tenant {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "IB Partition {partition_id} is not owned by the tenant {expected_tenant}",
             )));
         }
@@ -1112,7 +1112,7 @@ pub async fn validate_ib_partition_ownership(
     txn: &mut PgConnection,
     instance_tenant: &TenantOrganizationId,
     ib_config: &InstanceInfinibandConfig,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let validations: Vec<_> = ib_config
         .ib_interfaces
         .iter()

@@ -19,16 +19,16 @@ use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
 
 use ::rpc::common::SystemPowerControl;
-use ::rpc::forge::{self as rpc};
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::switch::SwitchId;
+use ::rpc::nico::{self as rpc};
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::switch::SwitchId;
 use component_manager::component_manager::ComponentManager;
 use component_manager::compute_tray_manager::{ComputeTrayEndpoint, ComputeTrayVendor};
 use component_manager::error::ComponentManagerError;
 use component_manager::nv_switch_manager::SwitchEndpoint;
 use component_manager::power_shelf_manager::{PowerShelfEndpoint, PowerShelfVendor};
 use db::{self, WithTransaction};
-use forge_secrets::credentials::{
+use nico_secrets::credentials::{
     BmcCredentialType, CredentialKey, CredentialManager, Credentials,
 };
 use futures_util::FutureExt;
@@ -317,10 +317,10 @@ fn firmware_component_type_to_proto(fct: &FirmwareComponentType) -> rpc::Compute
 }
 
 fn get_compute_tray_firmware_version(
-    compute_machine_id: &carbide_uuid::machine::MachineId,
+    compute_machine_id: &nico_uuid::machine::MachineId,
     bmc_info: &model::bmc_info::BmcInfo,
     endpoint_by_ip: &HashMap<IpAddr, model::site_explorer::ExploredEndpoint>,
-    fw_snapshot: &carbide_firmware::FirmwareConfigSnapshot,
+    fw_snapshot: &nico_firmware::FirmwareConfigSnapshot,
 ) -> rpc::DeviceFirmwareVersions {
     let id_str = compute_machine_id.to_string();
 
@@ -734,17 +734,17 @@ fn map_bmc_vendor_to_compute_tray(vendor: bmc_vendor::BMCVendor) -> ComputeTrayV
 
 struct ResolvedComputeTrayEndpoints {
     endpoints: Vec<ComputeTrayEndpoint>,
-    ip_to_machine_id: HashMap<IpAddr, carbide_uuid::machine::MachineId>,
+    ip_to_machine_id: HashMap<IpAddr, nico_uuid::machine::MachineId>,
 }
 
 struct ComputeTrayEndpoints {
     resolved: ResolvedComputeTrayEndpoints,
-    unresolved: Vec<UnresolvedDevice<carbide_uuid::machine::MachineId>>,
+    unresolved: Vec<UnresolvedDevice<nico_uuid::machine::MachineId>>,
 }
 
 async fn resolve_compute_tray_endpoints(
     api: &Api,
-    machine_ids: &[carbide_uuid::machine::MachineId],
+    machine_ids: &[nico_uuid::machine::MachineId],
 ) -> Result<ComputeTrayEndpoints, Status> {
     let machines = db::machine::find(
         api.db_reader().as_mut(),
@@ -1076,7 +1076,7 @@ pub(crate) async fn component_power_control(
 /// Returns `true` when the operation succeeded.
 async fn power_control_health_override(
     api: &Api,
-    machine_id: carbide_uuid::machine::MachineId,
+    machine_id: nico_uuid::machine::MachineId,
     insert: bool,
 ) -> bool {
     let result = if insert {
@@ -1287,7 +1287,7 @@ pub(crate) async fn update_component_firmware(
 
     let mut rack_machine_ids: Vec<String> = Vec::new();
     let mut rack_switch_ids: Vec<String> = Vec::new();
-    let mut rack_id: Option<carbide_uuid::rack::RackId> = None;
+    let mut rack_id: Option<nico_uuid::rack::RackId> = None;
     let mut power_shelf_results: Option<Vec<rpc::ComponentResult>> = None;
     let mut rack_results: Option<Vec<rpc::ComponentResult>> = None;
     let mut component_names: Vec<String> = Vec::new();
@@ -2368,12 +2368,12 @@ mod tests {
     }
 
     fn test_switch_id() -> SwitchId {
-        use carbide_uuid::switch::{SwitchIdSource, SwitchType};
+        use nico_uuid::switch::{SwitchIdSource, SwitchType};
         SwitchId::new(SwitchIdSource::Tpm, [0u8; 32], SwitchType::NvLink)
     }
 
     fn test_power_shelf_id() -> PowerShelfId {
-        use carbide_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
+        use nico_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
         PowerShelfId::new(PowerShelfIdSource::Tpm, [0u8; 32], PowerShelfType::Rack)
     }
 
@@ -2487,12 +2487,12 @@ mod tests {
 
     // ---- get_compute_tray_firmware_version tests ----
 
-    use carbide_uuid::machine::{MachineIdSource, MachineType};
+    use nico_uuid::machine::{MachineIdSource, MachineType};
     use model::bmc_info::BmcInfo;
     use model::site_explorer::ExploredEndpoint;
 
-    fn test_machine_id() -> carbide_uuid::machine::MachineId {
-        carbide_uuid::machine::MachineId::new(MachineIdSource::Tpm, [0u8; 32], MachineType::Host)
+    fn test_machine_id() -> nico_uuid::machine::MachineId {
+        nico_uuid::machine::MachineId::new(MachineIdSource::Tpm, [0u8; 32], MachineType::Host)
     }
 
     fn stub_endpoint(ip: IpAddr) -> ExploredEndpoint {
@@ -2515,12 +2515,12 @@ mod tests {
 
     fn fw_snapshot_from(
         models: HashMap<String, model::firmware::Firmware>,
-    ) -> carbide_firmware::FirmwareConfigSnapshot {
-        carbide_firmware::FirmwareConfig::new(std::path::PathBuf::new(), &models, &HashMap::new())
+    ) -> nico_firmware::FirmwareConfigSnapshot {
+        nico_firmware::FirmwareConfig::new(std::path::PathBuf::new(), &models, &HashMap::new())
             .create_snapshot()
     }
 
-    fn empty_fw_snapshot() -> carbide_firmware::FirmwareConfigSnapshot {
+    fn empty_fw_snapshot() -> nico_firmware::FirmwareConfigSnapshot {
         fw_snapshot_from(HashMap::new())
     }
 

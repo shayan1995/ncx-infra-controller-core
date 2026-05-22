@@ -18,7 +18,7 @@
 use std::process::Command;
 use std::str::FromStr;
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
 use mac_address::MacAddress;
 use quick_xml::de::from_str;
 use serde::Deserialize;

@@ -16,7 +16,7 @@
  */
 use std::str::FromStr;
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
 use libmlx::device::filters::{DeviceField, DeviceFilter, DeviceFilterSet, MatchMode};
 
 #[test]

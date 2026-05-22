@@ -17,9 +17,9 @@
 use std::backtrace::{Backtrace, BacktraceStatus};
 
 use ::rpc::errors::RpcDataConversionError;
-use carbide_ib_fabric::errors::IbError;
-use carbide_redfish::libredfish::RedfishClientCreationError;
-use carbide_uuid::machine::MachineId;
+use nico_ib_fabric::errors::IbError;
+use nico_redfish::libredfish::RedfishClientCreationError;
+use nico_uuid::machine::MachineId;
 use config_version::ConfigVersionParseError;
 use db::ip_allocator::DhcpError;
 use db::machine_interface_address::AddressAlreadyInUseError;
@@ -36,12 +36,12 @@ use tonic::Status;
 
 /// Represents various Errors that can occur throughout the system.
 ///
-/// CarbideError is a way to represent and enrich lower-level errors with specific business logic
+/// NicoError is a way to represent and enrich lower-level errors with specific business logic
 /// that can be handled.
 ///
 /// It uses `thiserror` to adapt lower-level errors to this type.
 #[derive(thiserror::Error, Debug)]
-pub enum CarbideError {
+pub enum NicoError {
     #[error("Generic error from report: {0}")]
     GenericErrorFromReport(#[from] eyre::ErrReport),
 
@@ -58,7 +58,7 @@ pub enum CarbideError {
     UuidConversionError(#[from] uuid::Error),
 
     #[error("RPC Uuid type conversion error: {0}")]
-    RpcUuidConversionError(#[from] carbide_uuid::UuidConversionError),
+    RpcUuidConversionError(#[from] nico_uuid::UuidConversionError),
 
     #[error("{kind} already exists: {id}")]
     AlreadyFoundError {
@@ -230,7 +230,7 @@ pub enum CarbideError {
     MaxOneInterfaceAssociation,
 
     #[error("DPF error: {0}")]
-    DpfError(#[from] carbide_dpf::DpfError),
+    DpfError(#[from] nico_dpf::DpfError),
 
     #[error("Service unavailable: {0}")]
     UnavailableError(String),
@@ -245,16 +245,16 @@ pub enum CarbideError {
     AttestationError(String),
 }
 
-impl From<libnmxc::NmxcError> for CarbideError {
+impl From<libnmxc::NmxcError> for NicoError {
     fn from(e: libnmxc::NmxcError) -> Self {
         match e {
-            libnmxc::NmxcError::Status(s) => CarbideError::internal(s.to_string()),
-            other => CarbideError::internal(other.to_string()),
+            libnmxc::NmxcError::Status(s) => NicoError::internal(s.to_string()),
+            other => NicoError::internal(other.to_string()),
         }
     }
 }
 
-impl From<ModelError> for CarbideError {
+impl From<ModelError> for NicoError {
     fn from(e: ModelError) -> Self {
         match e {
             ModelError::DpuMappingError(e) => Self::DpuMappingError(e),
@@ -267,9 +267,9 @@ impl From<ModelError> for CarbideError {
     }
 }
 
-impl From<DatabaseError> for CarbideError {
+impl From<DatabaseError> for NicoError {
     fn from(e: DatabaseError) -> Self {
-        use CarbideError::*;
+        use NicoError::*;
         match e {
             DatabaseError::AddressAlreadyInUse(e) => AddressAlreadyInUse(e),
             DatabaseError::AddressParseError(e) => AddressParseError(e),
@@ -312,7 +312,7 @@ impl From<DatabaseError> for CarbideError {
     }
 }
 
-impl From<IbError> for CarbideError {
+impl From<IbError> for NicoError {
     fn from(e: IbError) -> Self {
         match e {
             IbError::DatabaseError(e) => e.into(),
@@ -326,30 +326,30 @@ impl From<IbError> for CarbideError {
     }
 }
 
-impl CarbideError {
+impl NicoError {
     /// Creates a `Internal` error with the given error message
     pub fn internal(message: String) -> Self {
-        CarbideError::Internal { message }
+        NicoError::Internal { message }
     }
 }
 
 #[test]
-fn test_carbide_error() {
-    let error = crate::CarbideError::internal(String::from("unable to yeet foo into the sun"));
+fn test_nico_error() {
+    let error = crate::NicoError::internal(String::from("unable to yeet foo into the sun"));
     assert_eq!(
         error.to_string(),
         "Internal error: unable to yeet foo into the sun"
     );
 }
 
-impl From<::measured_boot::Error> for CarbideError {
+impl From<::measured_boot::Error> for NicoError {
     fn from(value: measured_boot::Error) -> Self {
-        CarbideError::internal(value.to_string())
+        NicoError::internal(value.to_string())
     }
 }
 
-impl From<CarbideError> for tonic::Status {
-    fn from(from: CarbideError) -> Self {
+impl From<NicoError> for tonic::Status {
+    fn from(from: NicoError) -> Self {
         // If env RUST_BACKTRACE is set extract handler and err location
         // If it's not set `Backtrace::capture()` is very cheap to call
         let mut printed = false;
@@ -359,7 +359,7 @@ impl From<CarbideError> for tonic::Status {
             let f = b_str
                 .lines()
                 .skip(1)
-                .skip_while(|l| !l.contains("carbide"))
+                .skip_while(|l| !l.contains("nico"))
                 .take(2)
                 .collect::<Vec<&str>>();
             if f.len() == 2 {
@@ -371,7 +371,7 @@ impl From<CarbideError> for tonic::Status {
         }
         if !printed {
             match from {
-                CarbideError::NotImplemented => {}
+                NicoError::NotImplemented => {}
                 _ => tracing::error!("{from}"),
             }
         }
@@ -379,63 +379,63 @@ impl From<CarbideError> for tonic::Status {
         // TODO: There's many more mapped to `Status::internal` which are likely
         // user errors instead
         match &from {
-            e @ CarbideError::Internal { .. } => Status::internal(e.to_string()),
-            CarbideError::InvalidArgument(msg) => Status::invalid_argument(msg),
-            CarbideError::InvalidConfiguration(e) => Status::invalid_argument(e.to_string()),
-            CarbideError::RpcDataConversionError(e) => Status::invalid_argument(e.to_string()),
-            e @ CarbideError::DhcpError(_) => Status::resource_exhausted(e.to_string()),
-            CarbideError::MissingArgument(msg) => Status::invalid_argument(*msg),
-            CarbideError::NetworkSegmentDelete(msg) => Status::invalid_argument(msg),
-            CarbideError::NotFoundError { kind, id } => {
+            e @ NicoError::Internal { .. } => Status::internal(e.to_string()),
+            NicoError::InvalidArgument(msg) => Status::invalid_argument(msg),
+            NicoError::InvalidConfiguration(e) => Status::invalid_argument(e.to_string()),
+            NicoError::RpcDataConversionError(e) => Status::invalid_argument(e.to_string()),
+            e @ NicoError::DhcpError(_) => Status::resource_exhausted(e.to_string()),
+            NicoError::MissingArgument(msg) => Status::invalid_argument(*msg),
+            NicoError::NetworkSegmentDelete(msg) => Status::invalid_argument(msg),
+            NicoError::NotFoundError { kind, id } => {
                 Status::not_found(format!("{kind} not found: {id}"))
             }
-            CarbideError::AlreadyFoundError { kind, id } => {
+            NicoError::AlreadyFoundError { kind, id } => {
                 Status::already_exists(format!("{kind} already exists: {id}"))
             }
-            CarbideError::MaintenanceMode => {
+            NicoError::MaintenanceMode => {
                 Status::failed_precondition("MaintenanceMode".to_string())
             }
-            e @ CarbideError::BmcMacIpMismatch { .. } => Status::invalid_argument(e.to_string()),
-            CarbideError::UnhealthyHost => Status::failed_precondition(from.to_string()),
-            CarbideError::ResourceExhausted(kind) => Status::resource_exhausted(kind),
-            error @ CarbideError::ConcurrentModificationError(_, _) => {
+            e @ NicoError::BmcMacIpMismatch { .. } => Status::invalid_argument(e.to_string()),
+            NicoError::UnhealthyHost => Status::failed_precondition(from.to_string()),
+            NicoError::ResourceExhausted(kind) => Status::resource_exhausted(kind),
+            error @ NicoError::ConcurrentModificationError(_, _) => {
                 Status::failed_precondition(error.to_string())
             }
-            error @ CarbideError::FailedPrecondition(_) => {
+            error @ NicoError::FailedPrecondition(_) => {
                 Status::failed_precondition(error.to_string())
             }
-            error @ CarbideError::AddressAlreadyInUse(_) => {
+            error @ NicoError::AddressAlreadyInUse(_) => {
                 Status::failed_precondition(error.to_string())
             }
-            error @ CarbideError::ClientCertificateMissingInformation(_) => {
+            error @ NicoError::ClientCertificateMissingInformation(_) => {
                 Status::unauthenticated(error.to_string())
             }
-            CarbideError::UnavailableError(msg) => Status::unavailable(msg),
-            CarbideError::PermissionDeniedError(msg) => Status::permission_denied(msg),
-            CarbideError::AlreadyInProgress(msg) => Status::already_exists(msg),
+            NicoError::UnavailableError(msg) => Status::unavailable(msg),
+            NicoError::PermissionDeniedError(msg) => Status::permission_denied(msg),
+            NicoError::AlreadyInProgress(msg) => Status::already_exists(msg),
             other => Status::internal(other.to_string()),
         }
     }
 }
 
-/// Result type for the return type of Carbide functions
+/// Result type for the return type of NICo functions
 ///
-/// Wraps `CarbideError` into `CarbideResult<T>`
-pub type CarbideResult<T> = Result<T, CarbideError>;
+/// Wraps `NicoError` into `NicoResult<T>`
+pub type NicoResult<T> = Result<T, NicoError>;
 
 #[test]
-fn test_carbide_result() {
-    use crate::{CarbideError, CarbideResult};
+fn test_nico_result() {
+    use crate::{NicoError, NicoResult};
 
-    pub fn do_something() -> CarbideResult<u8> {
-        Err(CarbideError::internal(String::from("can't make u8")))
+    pub fn do_something() -> NicoResult<u8> {
+        Err(NicoError::internal(String::from("can't make u8")))
     }
-    assert!(matches!(do_something(), Err(CarbideError::Internal { .. })));
+    assert!(matches!(do_something(), Err(NicoError::Internal { .. })));
 }
 
 #[test]
 fn test_dhcp_error_maps_to_resource_exhausted_status() {
-    let err = CarbideError::DhcpError(DhcpError::PrefixExhausted(
+    let err = NicoError::DhcpError(DhcpError::PrefixExhausted(
         "10.217.5.160".parse().expect("valid IP"),
     ));
     let status: tonic::Status = err.into();
@@ -444,14 +444,14 @@ fn test_dhcp_error_maps_to_resource_exhausted_status() {
 
 #[test]
 fn test_unavailable_error_maps_to_unavailable_status() {
-    let err = CarbideError::UnavailableError("service down".into());
+    let err = NicoError::UnavailableError("service down".into());
     let status: tonic::Status = err.into();
     assert_eq!(status.code(), tonic::Code::Unavailable);
 }
 
 #[test]
 fn test_permission_denied_error_maps_to_permission_denied_status() {
-    let err = CarbideError::PermissionDeniedError("not allowed".into());
+    let err = NicoError::PermissionDeniedError("not allowed".into());
     let status: tonic::Status = err.into();
     assert_eq!(status.code(), tonic::Code::PermissionDenied);
 }
@@ -459,7 +459,7 @@ fn test_permission_denied_error_maps_to_permission_denied_status() {
 #[test]
 fn test_address_already_in_use_maps_to_failed_precondition_status() {
     use std::str::FromStr;
-    let err = CarbideError::AddressAlreadyInUse(AddressAlreadyInUseError(
+    let err = NicoError::AddressAlreadyInUse(AddressAlreadyInUseError(
         "10.0.0.1".parse().unwrap(),
         MacAddress::from_str("aa:bb:cc:dd:ee:ff").unwrap(),
         uuid::Uuid::new_v4().into(),

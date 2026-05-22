@@ -22,9 +22,9 @@ pub mod spdm {
 
     use crate as rpc;
 
-    impl From<SpdmDeviceAttestationDetails> for rpc::forge::SpdmAttestationDetails {
+    impl From<SpdmDeviceAttestationDetails> for rpc::nico::SpdmAttestationDetails {
         fn from(value: SpdmDeviceAttestationDetails) -> Self {
-            rpc::forge::SpdmAttestationDetails {
+            rpc::nico::SpdmAttestationDetails {
                 machine_id: Some(value.machine_id),
                 completed_at: value.completed_at.map(|x| x.into()),
                 started_at: Some(value.started_at.into()),
@@ -35,7 +35,7 @@ pub mod spdm {
         }
     }
 
-    impl From<SpdmAttestationStatus> for rpc::forge::SpdmAttestationStatus {
+    impl From<SpdmAttestationStatus> for rpc::nico::SpdmAttestationStatus {
         fn from(value: SpdmAttestationStatus) -> Self {
             match value {
                 SpdmAttestationStatus::InProgress => Self::SpdmAttInProgress,

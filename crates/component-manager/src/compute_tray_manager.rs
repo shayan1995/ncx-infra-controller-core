@@ -4,7 +4,7 @@
 use std::fmt::Debug;
 use std::net::IpAddr;
 
-use forge_secrets::credentials::Credentials;
+use nico_secrets::credentials::Credentials;
 use model::component_manager::{ComputeTrayComponent, FirmwareState, PowerAction};
 
 use crate::error::ComponentManagerError;

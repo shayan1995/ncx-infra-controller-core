@@ -26,8 +26,8 @@ use crate::TenantState;
 use crate::errors::RpcDataConversionError;
 use crate::model::{RpcTryFrom, RpcTryInto};
 
-impl From<rpc::forge::NetworkSegmentSearchFilter> for NetworkSegmentSearchFilter {
-    fn from(filter: rpc::forge::NetworkSegmentSearchFilter) -> Self {
+impl From<rpc::nico::NetworkSegmentSearchFilter> for NetworkSegmentSearchFilter {
+    fn from(filter: rpc::nico::NetworkSegmentSearchFilter) -> Self {
         NetworkSegmentSearchFilter {
             name: filter.name,
             tenant_org_id: filter.tenant_org_id,
@@ -38,8 +38,8 @@ impl From<rpc::forge::NetworkSegmentSearchFilter> for NetworkSegmentSearchFilter
 const DEFAULT_MTU_TENANT: i32 = 9000;
 const DEFAULT_MTU_OTHER: i32 = 1500;
 
-impl From<rpc::forge::NetworkSegmentSearchConfig> for NetworkSegmentSearchConfig {
-    fn from(value: rpc::forge::NetworkSegmentSearchConfig) -> Self {
+impl From<rpc::nico::NetworkSegmentSearchConfig> for NetworkSegmentSearchConfig {
+    fn from(value: rpc::nico::NetworkSegmentSearchConfig) -> Self {
         NetworkSegmentSearchConfig {
             include_history: value.include_history,
             include_num_free_ips: value.include_num_free_ips,
@@ -51,12 +51,12 @@ impl RpcTryFrom<i32> for NetworkSegmentType {
     type Error = RpcDataConversionError;
     fn rpc_try_from(value: i32) -> Result<Self, Self::Error> {
         Ok(match value {
-            x if x == rpc::forge::NetworkSegmentType::Tenant as i32 => NetworkSegmentType::Tenant,
-            x if x == rpc::forge::NetworkSegmentType::Admin as i32 => NetworkSegmentType::Admin,
-            x if x == rpc::forge::NetworkSegmentType::Underlay as i32 => {
+            x if x == rpc::nico::NetworkSegmentType::Tenant as i32 => NetworkSegmentType::Tenant,
+            x if x == rpc::nico::NetworkSegmentType::Admin as i32 => NetworkSegmentType::Admin,
+            x if x == rpc::nico::NetworkSegmentType::Underlay as i32 => {
                 NetworkSegmentType::Underlay
             }
-            x if x == rpc::forge::NetworkSegmentType::HostInband as i32 => {
+            x if x == rpc::nico::NetworkSegmentType::HostInband as i32 => {
                 NetworkSegmentType::HostInband
             }
             _ => {
@@ -71,10 +71,10 @@ impl RpcTryFrom<i32> for NetworkSegmentType {
 /// subdomain_id - Converting from Protobuf UUID(String) to Rust UUID type can fail.
 /// Use try_from in order to return a Result where Result is an error if the conversion
 /// from String -> UUID fails
-impl TryFrom<rpc::forge::NetworkSegmentCreationRequest> for NewNetworkSegment {
+impl TryFrom<rpc::nico::NetworkSegmentCreationRequest> for NewNetworkSegment {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::NetworkSegmentCreationRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::NetworkSegmentCreationRequest) -> Result<Self, Self::Error> {
         if value.prefixes.is_empty() {
             return Err(RpcDataConversionError::InvalidArgument(
                 "Prefixes are empty.".to_string(),
@@ -156,20 +156,20 @@ impl TryFrom<NetworkSegment> for rpc::NetworkSegment {
         let lifecycle_state =
             serde_json::to_string(&src.status.controller_state.value).unwrap_or_default();
 
-        let sla: rpc::forge::StateSla = state_sla(
+        let sla: rpc::nico::StateSla = state_sla(
             &src.status.controller_state.value,
             &src.status.controller_state.version,
         )
         .into();
 
-        let state_reason: Option<rpc::forge::ControllerStateReason> =
+        let state_reason: Option<rpc::nico::ControllerStateReason> =
             src.status.controller_state_outcome.map(Into::into);
 
-        let history: Vec<rpc::forge::NetworkSegmentStateHistory> =
+        let history: Vec<rpc::nico::NetworkSegmentStateHistory> =
             src.status.history.into_iter().map(Into::into).collect();
 
         let flags: Vec<i32> = {
-            use crate::forge::NetworkSegmentFlag::*;
+            use crate::nico::NetworkSegmentFlag::*;
 
             let mut flags = vec![];
 
@@ -194,7 +194,7 @@ impl TryFrom<NetworkSegment> for rpc::NetworkSegment {
             flags.into_iter().map(|flag| flag as i32).collect()
         };
 
-        let prefixes: Vec<rpc::forge::NetworkPrefix> =
+        let prefixes: Vec<rpc::nico::NetworkPrefix> =
             src.prefixes.into_iter().map(Into::into).collect();
 
         let version = src.version.version_string();
@@ -210,16 +210,16 @@ impl TryFrom<NetworkSegment> for rpc::NetworkSegment {
             // in the Rust model. The Rust model keeps them top-level because each NetworkPrefix
             // contains mixed config fields (CIDR, gateway) and status fields (free_ip_count,
             // svi_ip). The proto puts them under config as the closest semantic fit for now.
-            config: Some(rpc::forge::NetworkSegmentConfig {
+            config: Some(rpc::nico::NetworkSegmentConfig {
                 vpc_id: src.config.vpc_id,
                 subdomain_id: src.config.subdomain_id,
                 mtu: Some(src.config.mtu),
                 prefixes: prefixes.clone(),
                 segment_type: src.config.segment_type as i32,
             }),
-            status: Some(rpc::forge::NetworkSegmentStatus {
+            status: Some(rpc::nico::NetworkSegmentStatus {
                 flags: flags.clone(),
-                lifecycle: Some(rpc::forge::LifecycleStatus {
+                lifecycle: Some(rpc::nico::LifecycleStatus {
                     state: lifecycle_state,
                     version: version.clone(),
                     state_reason: state_reason.clone(),
@@ -227,7 +227,7 @@ impl TryFrom<NetworkSegment> for rpc::NetworkSegment {
                 }),
                 tenant_state: tenant_state as i32,
             }),
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: src.config.name.clone(),
                 description: String::new(),
                 labels: vec![],
@@ -256,10 +256,10 @@ mod tests {
     use super::*;
 
     fn make_test_creation_request(
-        prefixes: Vec<rpc::forge::NetworkPrefix>,
+        prefixes: Vec<rpc::nico::NetworkPrefix>,
         segment_type: NetworkSegmentType,
-    ) -> rpc::forge::NetworkSegmentCreationRequest {
-        rpc::forge::NetworkSegmentCreationRequest {
+    ) -> rpc::nico::NetworkSegmentCreationRequest {
+        rpc::nico::NetworkSegmentCreationRequest {
             id: None,
             mtu: Some(1500),
             name: "TEST_SEGMENT".to_string(),
@@ -267,16 +267,16 @@ mod tests {
             subdomain_id: None,
             vpc_id: None,
             segment_type: match segment_type {
-                NetworkSegmentType::Admin => rpc::forge::NetworkSegmentType::Admin as i32,
-                NetworkSegmentType::Tenant => rpc::forge::NetworkSegmentType::Tenant as i32,
-                NetworkSegmentType::Underlay => rpc::forge::NetworkSegmentType::Underlay as i32,
-                NetworkSegmentType::HostInband => rpc::forge::NetworkSegmentType::HostInband as i32,
+                NetworkSegmentType::Admin => rpc::nico::NetworkSegmentType::Admin as i32,
+                NetworkSegmentType::Tenant => rpc::nico::NetworkSegmentType::Tenant as i32,
+                NetworkSegmentType::Underlay => rpc::nico::NetworkSegmentType::Underlay as i32,
+                NetworkSegmentType::HostInband => rpc::nico::NetworkSegmentType::HostInband as i32,
             },
         }
     }
 
-    fn ipv4_prefix(prefix: &str, gateway: Option<&str>) -> rpc::forge::NetworkPrefix {
-        rpc::forge::NetworkPrefix {
+    fn ipv4_prefix(prefix: &str, gateway: Option<&str>) -> rpc::nico::NetworkPrefix {
+        rpc::nico::NetworkPrefix {
             id: None,
             prefix: prefix.to_string(),
             gateway: gateway.map(|g| g.to_string()),
@@ -286,8 +286,8 @@ mod tests {
         }
     }
 
-    fn ipv6_prefix(prefix: &str) -> rpc::forge::NetworkPrefix {
-        rpc::forge::NetworkPrefix {
+    fn ipv6_prefix(prefix: &str) -> rpc::nico::NetworkPrefix {
+        rpc::nico::NetworkPrefix {
             id: None,
             prefix: prefix.to_string(),
             gateway: None,

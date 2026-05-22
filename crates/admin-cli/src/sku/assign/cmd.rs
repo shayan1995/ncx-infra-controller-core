@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-use carbide_uuid::machine::MachineId;
-use rpc::forge::SkuMachinePair;
+use nico_uuid::machine::MachineId;
+use rpc::nico::SkuMachinePair;
 
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn assign(
@@ -26,7 +26,7 @@ pub async fn assign(
     machine_id: MachineId,
     force: bool,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     api_client
         .0
         .assign_sku_to_machine(SkuMachinePair {

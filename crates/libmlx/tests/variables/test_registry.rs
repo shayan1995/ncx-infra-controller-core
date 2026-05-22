@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
 use libmlx::device::filters::{DeviceField, DeviceFilter, DeviceFilterSet, MatchMode};
 use libmlx::variables::registry::MlxVariableRegistry;
 use libmlx::variables::spec::MlxVariableSpec;

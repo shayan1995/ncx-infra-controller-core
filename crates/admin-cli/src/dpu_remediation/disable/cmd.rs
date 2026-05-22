@@ -16,13 +16,13 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 pub async fn disable_dpu_remediation(
     data: Args,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
+) -> Result<(), NicoCliError> {
     let id = data.id;
     api_client.0.disable_remediation(data).await?;
 

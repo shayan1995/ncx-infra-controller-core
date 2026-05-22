@@ -17,8 +17,8 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
 use chrono::prelude::*;
 use config_version::{ConfigVersion, Versioned};
 use mac_address::MacAddress;
@@ -262,7 +262,7 @@ pub enum ReProvisioningState {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "lowercase")]
 pub enum SwitchControllerState {
-    /// The Switch has been created in Carbide.
+    /// The Switch has been created in NICo.
     Created,
     /// The Switch is initializing.
     Initializing {

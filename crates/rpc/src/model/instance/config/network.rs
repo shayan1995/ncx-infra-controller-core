@@ -54,7 +54,7 @@ enum VFAllocationType {
     // Cloud is sending valid virtual function id.
     Cloud,
     // Cloud is sending None for virtual function id. This bis possible in older versions.
-    Carbide,
+    NICo,
 }
 
 type DeviceVFIdsMap =
@@ -86,7 +86,7 @@ fn validate_virtual_function_ids_and_get_allocation_method(
 
     if all_vf_ids.iter().all(|x| x.1.is_none()) {
         // Virtual function ids are not yet implemented at cloud.
-        return Ok(VFAllocationType::Carbide);
+        return Ok(VFAllocationType::NICo);
     }
 
     if all_vf_ids.iter().any(|x| x.1.is_none()) {
@@ -168,7 +168,7 @@ impl TryFrom<rpc::InstanceNetworkConfig> for InstanceNetworkConfig {
                     // call will declare those configs as invalid later on anyway.
                     // We mainly don't want to crash here.
                     InterfaceFunctionId::Virtual {
-                        id: if allocation_type == VFAllocationType::Carbide {
+                        id: if allocation_type == VFAllocationType::NICo {
                             let assigned_vfs = assigned_vfs_map
                                 .entry((iface.device.clone(), iface.device_instance))
                                 .or_insert(0);
@@ -309,7 +309,7 @@ impl TryFrom<InstanceNetworkConfig> for rpc::InstanceNetworkConfig {
             let function_type = iface.function_id.function_type();
 
             // Update network segment id based on network details.
-            let network_details: Option<rpc::forge::instance_interface_config::NetworkDetails> =
+            let network_details: Option<rpc::nico::instance_interface_config::NetworkDetails> =
                 iface.network_details.map(|x| x.into());
             let network_segment_id = iface.network_segment_id;
 
@@ -332,7 +332,7 @@ impl TryFrom<InstanceNetworkConfig> for rpc::InstanceNetworkConfig {
                 virtual_function_id,
                 ip_address: iface.requested_ip_addr.map(|i| i.to_string()),
                 ipv6_interface_config: iface.ipv6_interface_config.map(|v6| {
-                    rpc::forge::InstanceInterfaceIpv6Config {
+                    rpc::nico::InstanceInterfaceIpv6Config {
                         vpc_prefix_id: Some(v6.vpc_prefix_id),
                         ip_address: v6.requested_ip_addr.map(|i| i.to_string()),
                     }
@@ -344,30 +344,30 @@ impl TryFrom<InstanceNetworkConfig> for rpc::InstanceNetworkConfig {
     }
 }
 
-impl From<NetworkDetails> for rpc::forge::instance_interface_config::NetworkDetails {
+impl From<NetworkDetails> for rpc::nico::instance_interface_config::NetworkDetails {
     fn from(value: NetworkDetails) -> Self {
         match value {
             NetworkDetails::NetworkSegment(network_segment_id) => {
-                rpc::forge::instance_interface_config::NetworkDetails::SegmentId(network_segment_id)
+                rpc::nico::instance_interface_config::NetworkDetails::SegmentId(network_segment_id)
             }
             NetworkDetails::VpcPrefixId(uuid) => {
-                rpc::forge::instance_interface_config::NetworkDetails::VpcPrefixId(uuid)
+                rpc::nico::instance_interface_config::NetworkDetails::VpcPrefixId(uuid)
             }
         }
     }
 }
 
-impl TryFrom<rpc::forge::instance_interface_config::NetworkDetails> for NetworkDetails {
+impl TryFrom<rpc::nico::instance_interface_config::NetworkDetails> for NetworkDetails {
     type Error = RpcDataConversionError;
 
     fn try_from(
-        value: rpc::forge::instance_interface_config::NetworkDetails,
+        value: rpc::nico::instance_interface_config::NetworkDetails,
     ) -> Result<Self, Self::Error> {
         Ok(match value {
-            rpc::forge::instance_interface_config::NetworkDetails::SegmentId(ns_id) => {
+            rpc::nico::instance_interface_config::NetworkDetails::SegmentId(ns_id) => {
                 NetworkDetails::NetworkSegment(ns_id)
             }
-            rpc::forge::instance_interface_config::NetworkDetails::VpcPrefixId(vpc_prefix_id) => {
+            rpc::nico::instance_interface_config::NetworkDetails::VpcPrefixId(vpc_prefix_id) => {
                 NetworkDetails::VpcPrefixId(vpc_prefix_id)
             }
         })
@@ -376,8 +376,8 @@ impl TryFrom<rpc::forge::instance_interface_config::NetworkDetails> for NetworkD
 
 #[cfg(test)]
 mod tests {
-    use carbide_uuid::network::NetworkSegmentId;
-    use carbide_uuid::vpc::VpcPrefixId;
+    use nico_uuid::network::NetworkSegmentId;
+    use nico_uuid::vpc::VpcPrefixId;
     use model::instance::config::network::{INTERFACE_VFID_MAX, INTERFACE_VFID_MIN};
 
     use super::*;
@@ -496,7 +496,7 @@ mod tests {
                 network_segment_id: None,
                 virtual_function_id: None,
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::SegmentId(
+                    rpc::nico::instance_interface_config::NetworkDetails::SegmentId(
                         offset_segment_id(0),
                     ),
                 ),
@@ -510,7 +510,7 @@ mod tests {
                 network_segment_id: None,
                 virtual_function_id: Some(0),
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::SegmentId(
+                    rpc::nico::instance_interface_config::NetworkDetails::SegmentId(
                         offset_segment_id(1),
                     ),
                 ),
@@ -524,7 +524,7 @@ mod tests {
                 network_segment_id: None,
                 virtual_function_id: Some(1),
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::SegmentId(
+                    rpc::nico::instance_interface_config::NetworkDetails::SegmentId(
                         offset_segment_id(2),
                     ),
                 ),
@@ -538,7 +538,7 @@ mod tests {
                 network_segment_id: None,
                 virtual_function_id: Some(2),
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::SegmentId(
+                    rpc::nico::instance_interface_config::NetworkDetails::SegmentId(
                         offset_segment_id(3),
                     ),
                 ),
@@ -677,10 +677,10 @@ mod tests {
         let model_nd = NetworkDetails::VpcPrefixId(id);
 
         // Model -> RPC
-        let rpc_nd: rpc::forge::instance_interface_config::NetworkDetails = model_nd.clone().into();
+        let rpc_nd: rpc::nico::instance_interface_config::NetworkDetails = model_nd.clone().into();
         assert!(matches!(
             rpc_nd,
-            rpc::forge::instance_interface_config::NetworkDetails::VpcPrefixId(_)
+            rpc::nico::instance_interface_config::NetworkDetails::VpcPrefixId(_)
         ));
 
         // RPC -> Model
@@ -719,7 +719,7 @@ mod tests {
         let rpc_iface = &rpc_config.interfaces[0];
         assert!(matches!(
             rpc_iface.network_details,
-            Some(rpc::forge::instance_interface_config::NetworkDetails::VpcPrefixId(_))
+            Some(rpc::nico::instance_interface_config::NetworkDetails::VpcPrefixId(_))
         ));
         assert_eq!(
             rpc_iface
@@ -755,7 +755,7 @@ mod tests {
                 function_type: rpc::InterfaceFunctionType::Physical as i32,
                 network_segment_id: Some(NetworkSegmentId::new()),
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::SegmentId(
+                    rpc::nico::instance_interface_config::NetworkDetails::SegmentId(
                         NetworkSegmentId::new(),
                     ),
                 ),
@@ -763,7 +763,7 @@ mod tests {
                 device_instance: 0,
                 virtual_function_id: None,
                 ip_address: None,
-                ipv6_interface_config: Some(rpc::forge::InstanceInterfaceIpv6Config {
+                ipv6_interface_config: Some(rpc::nico::InstanceInterfaceIpv6Config {
                     vpc_prefix_id: Some(v6_id),
                     ip_address: None,
                 }),
@@ -783,7 +783,7 @@ mod tests {
                 function_type: rpc::InterfaceFunctionType::Physical as i32,
                 network_segment_id: None,
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::VpcPrefixId(v6_id),
+                    rpc::nico::instance_interface_config::NetworkDetails::VpcPrefixId(v6_id),
                 ),
                 device: None,
                 device_instance: 0,
@@ -811,13 +811,13 @@ mod tests {
                 function_type: rpc::InterfaceFunctionType::Physical as i32,
                 network_segment_id: None,
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::VpcPrefixId(v4_id),
+                    rpc::nico::instance_interface_config::NetworkDetails::VpcPrefixId(v4_id),
                 ),
                 device: None,
                 device_instance: 0,
                 virtual_function_id: None,
                 ip_address: Some("2001:db8::1".to_string()),
-                ipv6_interface_config: Some(rpc::forge::InstanceInterfaceIpv6Config {
+                ipv6_interface_config: Some(rpc::nico::InstanceInterfaceIpv6Config {
                     vpc_prefix_id: Some(v6_id),
                     ip_address: None,
                 }),
@@ -838,13 +838,13 @@ mod tests {
                 function_type: rpc::InterfaceFunctionType::Physical as i32,
                 network_segment_id: None,
                 network_details: Some(
-                    rpc::forge::instance_interface_config::NetworkDetails::VpcPrefixId(v4_id),
+                    rpc::nico::instance_interface_config::NetworkDetails::VpcPrefixId(v4_id),
                 ),
                 device: None,
                 device_instance: 0,
                 virtual_function_id: None,
                 ip_address: Some("10.0.0.1".to_string()),
-                ipv6_interface_config: Some(rpc::forge::InstanceInterfaceIpv6Config {
+                ipv6_interface_config: Some(rpc::nico::InstanceInterfaceIpv6Config {
                     vpc_prefix_id: Some(v6_id),
                     ip_address: None,
                 }),

@@ -16,9 +16,9 @@
  */
 
 #include "callouts.h"
-#include "carbide_rust.h"
+#include "nico_rust.h"
 
-isc::log::Logger logger("carbide-callouts");
+isc::log::Logger logger("nico-callouts");
 
 const int IPV4_ADDR_SIZEB = 4;
 
@@ -54,7 +54,7 @@ void CDHCPOptionsHandler<Option>::resetOption(boost::any param) {
                                       boost::any_cast<char *>(param)));
     break;
   default:
-    LOG_ERROR(logger, "LOG_CARBIDE_PKT4_SEND: packet send error: Option [%1] "
+    LOG_ERROR(logger, "LOG_NICO_PKT4_SEND: packet send error: Option [%1] "
                       "is not implemented for reset.")
         .arg(option);
   }
@@ -111,7 +111,7 @@ void CDHCPOptionsHandler<Option>::resetAndAddOption(boost::any param) {
 	response4_ptr->addOption(OptionPtr(new OptionInt<uint16_t>(Option::V4, DHO_INTERFACE_MTU, boost::any_cast<uint16_t>(param))));
 	break;
   default:
-    LOG_ERROR(logger, "LOG_CARBIDE_PKT4_SEND: packet send error: Option [%1] "
+    LOG_ERROR(logger, "LOG_NICO_PKT4_SEND: packet send error: Option [%1] "
                       "is not implemented for addandreset.")
         .arg(option);
   }
@@ -129,7 +129,7 @@ void update_option(CalloutHandle &handle, Pkt4Ptr response4_ptr,
     CDHCPOptionsHandler<T> option_handler(handle, response4_ptr, option);
     option_handler.resetAndAddOption(param);
   } catch (exception &e) {
-    LOG_ERROR(logger, "LOG_CARBIDE_PKT4_SEND: packet send Exception for option "
+    LOG_ERROR(logger, "LOG_NICO_PKT4_SEND: packet send Exception for option "
                       "[%1]. Exception: %2")
         .arg(option)
         .arg(e.what());
@@ -161,7 +161,7 @@ DiscoveryBuilderResult update_discovery_parameters_option82(
     if (circuit_id_opt) {
       OptionBuffer circuit_id = circuit_id_opt->getData();
       std::string circuit_value(circuit_id.begin(), circuit_id.end());
-      LOG_INFO(logger, "LOG_CARBIDE_PKT4_RECEIVE: CIRCUIT ID [%1] in packet")
+      LOG_INFO(logger, "LOG_NICO_PKT4_RECEIVE: CIRCUIT ID [%1] in packet")
           .arg(circuit_value);
       return discovery_set_circuit_id(discovery, circuit_value.c_str());
     }
@@ -172,7 +172,7 @@ DiscoveryBuilderResult update_discovery_parameters_option82(
     if (remote_id_opt) {
       OptionBuffer remote_id = remote_id_opt->getData();
       std::string remote_value(remote_id.begin(), remote_id.end());
-      LOG_INFO(logger, "LOG_CARBIDE_PKT4_RECEIVE: REMOTE ID [%1] in packet")
+      LOG_INFO(logger, "LOG_NICO_PKT4_RECEIVE: REMOTE ID [%1] in packet")
           .arg(remote_value);
       return discovery_set_remote_id(discovery, remote_value.c_str());
     }
@@ -195,7 +195,7 @@ update_discovery_parameters(DiscoveryBuilderFFI *discovery, int option,
     if (ret_val != DiscoveryBuilderResult::Success) {
       LOG_ERROR(
           logger,
-          "LOG_CARBIDE_PKT4_RECEIVE: Failed in handling link select address.");
+          "LOG_NICO_PKT4_RECEIVE: Failed in handling link select address.");
       return ret_val;
     }
 
@@ -203,7 +203,7 @@ update_discovery_parameters(DiscoveryBuilderFFI *discovery, int option,
         discovery, RAI_OPTION_AGENT_CIRCUIT_ID, option_val);
     if (ret_val != DiscoveryBuilderResult::Success) {
       LOG_ERROR(logger,
-                "LOG_CARBIDE_PKT4_RECEIVE: Failed in handling circuit_id.");
+                "LOG_NICO_PKT4_RECEIVE: Failed in handling circuit_id.");
       return ret_val;
     }
 
@@ -211,7 +211,7 @@ update_discovery_parameters(DiscoveryBuilderFFI *discovery, int option,
         discovery, RAI_OPTION_REMOTE_ID, option_val);
     if (ret_val != DiscoveryBuilderResult::Success) {
       LOG_ERROR(logger,
-                "LOG_CARBIDE_PKT4_RECEIVE: Failed in handling remote_id.");
+                "LOG_NICO_PKT4_RECEIVE: Failed in handling remote_id.");
       return ret_val;
     }
     break;
@@ -255,13 +255,13 @@ update_discovery_parameters(Pkt4Ptr query4_ptr, DiscoveryBuilderFFI *discovery,
   boost::shared_ptr<T> option_val =
       boost::dynamic_pointer_cast<T>(query4_ptr->getOption(option));
   if (option_val) {
-    LOG_INFO(logger, isc::log::LOG_CARBIDE_GENERIC).arg(option_val->toText());
+    LOG_INFO(logger, isc::log::LOG_NICO_GENERIC).arg(option_val->toText());
     return update_discovery_parameters(discovery, option, option_val);
   } else {
     if (option != DHO_DHCP_AGENT_OPTIONS) {
       // TODO: Does this mean we rather should return an error here?
       LOG_ERROR(logger,
-                "LOG_CARBIDE_PKT4_RECEIVE: Missing option [%1] in packet")
+                "LOG_NICO_PKT4_RECEIVE: Missing option [%1] in packet")
           .arg(option);
     }
   }
@@ -323,7 +323,7 @@ void set_options(CalloutHandle &handle, Pkt4Ptr response4_ptr,
 void set_vendor_options(Pkt4Ptr response4_ptr) {
   OptionPtr option_vendor(
       new Option(Option::V4, DHO_VENDOR_ENCAPSULATED_OPTIONS));
-  LOG_INFO(logger, isc::log::LOG_CARBIDE_GENERIC).arg(option_vendor->toText());
+  LOG_INFO(logger, isc::log::LOG_NICO_GENERIC).arg(option_vendor->toText());
 
   // Option 6 set to 0x8 tells iPXE not to wait for Proxy PXE since we don't
   // care about that.
@@ -343,30 +343,30 @@ int pkt4_receive(CalloutHandle &handle) {
 
   handle.getArgument("query4", query4_ptr);
 
-  LOG_INFO(logger, isc::log::LOG_CARBIDE_PKT4_RECEIVE)
+  LOG_INFO(logger, isc::log::LOG_NICO_PKT4_RECEIVE)
       .arg(query4_ptr->toText());
 
   /*
    * Call to increment total requests counter
    */
-  carbide_increment_total_requests();
+  nico_increment_total_requests();
 
   /*
    * We only work on relayed packets (i.e. we never provide DHCP
    * for the network in which this daemon is running.
    */
   if (!query4_ptr || !query4_ptr->isRelayed()) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_PKT4_RECEIVE)
+    LOG_ERROR(logger, isc::log::LOG_NICO_PKT4_RECEIVE)
         .arg("Received a non-relayed packet, dropping it");
     handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
     /*
      * Call to increment drooped requests counter
      */
-    carbide_increment_dropped_requests("NonRelayedPacket");
+    nico_increment_dropped_requests("NonRelayedPacket");
     return 0;
   }
 
-  LOG_INFO(logger, "LOG_CARBIDE_PKT4_RECEIVE: Packet type name: %1")
+  LOG_INFO(logger, "LOG_NICO_PKT4_RECEIVE: Packet type name: %1")
 	  .arg(query4_ptr->getName());
 
   // Initialize a discovery builder object
@@ -413,10 +413,10 @@ int pkt4_receive(CalloutHandle &handle) {
         discovery_set_desired_address(discovery.get(), desired.c_str());
 
         LOG_INFO(logger,
-                "LOG_CARBIDE_PKT4_RECEIVE: Desired Address [%1] set")
+                "LOG_NICO_PKT4_RECEIVE: Desired Address [%1] set")
           .arg(desired);
       } else {
-        LOG_ERROR(logger, "LOG_CARBIDE_PKT4_RECEIVE: Desired addr buf len wrong: [%1]")
+        LOG_ERROR(logger, "LOG_NICO_PKT4_RECEIVE: Desired addr buf len wrong: [%1]")
           .arg(bufSize);
       }
     }
@@ -452,14 +452,14 @@ int pkt4_receive(CalloutHandle &handle) {
     /*
      * We've been building up a object for the dhcp client options
      * we care about, so now we call the function to turn that
-     * object into a dhcp machine object from the carbide API.
+     * object into a dhcp machine object from the nico API.
      */
     builder_result = discovery_fetch_machine(discovery.get(), &machine);
   }
 
   if (builder_result != DiscoveryBuilderResult::Success || machine == nullptr) {
     LOG_ERROR(logger,
-              "LOG_CARBIDE_PKT4_RECV: Error while executing machine discovery "
+              "LOG_NICO_PKT4_RECV: Error while executing machine discovery "
               "in discovery_fetch_machine: %1, machine_ptr=%2")
         .arg(discovery_builder_result_as_str(builder_result))
         .arg(machine);
@@ -467,23 +467,23 @@ int pkt4_receive(CalloutHandle &handle) {
     /*
      * Call to increment drooped requests counter
      */
-    carbide_increment_dropped_requests(discovery_builder_result_as_str(builder_result));
+    nico_increment_dropped_requests(discovery_builder_result_as_str(builder_result));
     return 1;
   }
 
   /*
    * machine_get_interface_address returns the IPv4 address as a u32 in
-   * network byte order, or 0 if Carbide didn't return a parseable IPv4
+   * network byte order, or 0 if NICo didn't return a parseable IPv4
    * address. 0.0.0.0 is not a valid allocation, and pkt4_receive is the
    * packet-level hook where NEXT_STEP_DROP reliably stops processing before
    * Kea can select, renew, or persist a lease.
    */
   if (machine_get_interface_address(machine) == 0) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_PKT4_RECEIVE)
-        .arg("Carbide returned no usable IPv4 address; dropping packet");
+    LOG_ERROR(logger, isc::log::LOG_NICO_PKT4_RECEIVE)
+        .arg("NICo returned no usable IPv4 address; dropping packet");
     machine_free(machine);
     handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
-    carbide_increment_dropped_requests("NoUsableIPv4Address");
+    nico_increment_dropped_requests("NoUsableIPv4Address");
     return 1;
   }
 
@@ -513,7 +513,7 @@ int pkt4_send(CalloutHandle &handle) {
   boost::shared_ptr<Machine> machine;
   handle.getContext("machine", machine);
   if (!machine) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_PKT4_SEND)
+    LOG_ERROR(logger, isc::log::LOG_NICO_PKT4_SEND)
         .arg("Missing machine object from handle context");
     handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
     return 1;
@@ -537,7 +537,7 @@ int pkt4_send(CalloutHandle &handle) {
    */
   set_vendor_options(response4_ptr);
 
-  LOG_INFO(logger, isc::log::LOG_CARBIDE_PKT4_SEND)
+  LOG_INFO(logger, isc::log::LOG_NICO_PKT4_SEND)
       .arg(response4_ptr->toText());
 
   return 0;
@@ -548,7 +548,7 @@ int lease4_expire(CalloutHandle &handle) {
   handle.getArgument("lease4", lease4);
 
   if (!lease4) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE_EXPIRE_ERROR)
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE_EXPIRE_ERROR)
         .arg("missing lease4 argument");
     return 0;
   }
@@ -560,12 +560,12 @@ int lease4_expire(CalloutHandle &handle) {
   if (lease4->hwaddr_ && !lease4->hwaddr_->hwaddr_.empty()) {
     mac_str = lease4->hwaddr_->toText(false);
   }
-  LOG_INFO(logger, isc::log::LOG_CARBIDE_LEASE_EXPIRE).arg(ip_str);
+  LOG_INFO(logger, isc::log::LOG_NICO_LEASE_EXPIRE).arg(ip_str);
 
-  auto result = carbide_expire_lease(
+  auto result = nico_expire_lease(
       ip_str.c_str(), mac_str.empty() ? nullptr : mac_str.c_str());
   if (result != LeaseExpirationResult::Success) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE_EXPIRE_ERROR).arg(ip_str);
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE_EXPIRE_ERROR).arg(ip_str);
   }
 
   return 0;
@@ -579,7 +579,7 @@ int lease4_select(CalloutHandle &handle) {
    * is persisted.
    *
    * Either way, we want to take Kea's proposed lease and replace its address
-   * with the one Carbide allocated. The Machine was stashed on the callout
+   * with the one NICo allocated. The Machine was stashed on the callout
    * handle context in pkt4_receive, so it's already cached.
    */
   Lease4Ptr lease4;
@@ -596,7 +596,7 @@ int lease4_select(CalloutHandle &handle) {
   }
 
   if (!lease4) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE4_SELECT)
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE4_SELECT)
         .arg("Missing lease4 argument");
     // At lease4_select, SKIP means Kea will not assign its selected lease.
     handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
@@ -614,45 +614,45 @@ int lease4_select(CalloutHandle &handle) {
   boost::shared_ptr<Machine> machine;
   handle.getContext("machine", machine);
   if (!machine) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE4_SELECT)
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE4_SELECT)
         .arg("Missing machine object from handle context");
     handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
     return 1;
   }
 
   // machine_get_interface_address returns the IPv4 address as a u32 in
-  // network byte order, or 0 if Carbide didn't return a parseable IPv4
+  // network byte order, or 0 if NICo didn't return a parseable IPv4
   // address. 0.0.0.0 is not a valid allocation, so treat it as a failure.
-  uint32_t carbide_u32 = machine_get_interface_address(machine.get());
-  if (carbide_u32 == 0) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE4_SELECT)
-        .arg("Carbide returned no usable IPv4 address; refusing to allocate");
+  uint32_t nico_u32 = machine_get_interface_address(machine.get());
+  if (nico_u32 == 0) {
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE4_SELECT)
+        .arg("NICo returned no usable IPv4 address; refusing to allocate");
     handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
     return 1;
   }
 
-  isc::asiolink::IOAddress carbide_addr(carbide_u32);
+  isc::asiolink::IOAddress nico_addr(nico_u32);
 
-  // If Kea's allocator already picked the same address Carbide returned,
+  // If Kea's allocator already picked the same address NICo returned,
   // no override needed -- but the common case is that they differ (Kea's
   // allocator is bidding from the 0.0.0.0/0 pool independently of what
-  // Carbide chose).
-  if (lease4->addr_ != carbide_addr) {
-    LOG_INFO(logger, isc::log::LOG_CARBIDE_LEASE4_SELECT)
+  // NICo chose).
+  if (lease4->addr_ != nico_addr) {
+    LOG_INFO(logger, isc::log::LOG_NICO_LEASE4_SELECT)
         .arg(std::string("overriding ") + lease4->addr_.toText() + " -> " +
-             carbide_addr.toText() +
+             nico_addr.toText() +
              (fake_allocation ? " (DISCOVER, not persisted)"
                               : " (REQUEST, will persist)"));
-    lease4->addr_ = carbide_addr;
+    lease4->addr_ = nico_addr;
     // Push the modified lease back. Lease4Ptr is a shared_ptr so mutating
     // through it already affects Kea's copy, but calling setArgument is
     // explicit about our intent and survives any future Kea changes to
     // how it tracks lease-object mutation.
     handle.setArgument("lease4", lease4);
   } else {
-    LOG_INFO(logger, isc::log::LOG_CARBIDE_LEASE4_SELECT)
-        .arg(std::string("lease addr already matches Carbide (") +
-             carbide_addr.toText() + ")");
+    LOG_INFO(logger, isc::log::LOG_NICO_LEASE4_SELECT)
+        .arg(std::string("lease addr already matches NICo (") +
+             nico_addr.toText() + ")");
   }
 
   return 0;
@@ -666,8 +666,8 @@ int lease4_renew(CalloutHandle &handle) {
    * `fake_allocation` distinction -- renewals are always persisted.
    *
    * Our goal here is the same as lease4_select: keep Kea's memfile lease
-   * address aligned with whatever Carbide currently considers the
-   * binding for this MAC. In the common case (Carbide's allocation is
+   * address aligned with whatever NICo currently considers the
+   * binding for this MAC. In the common case (NICo's allocation is
    * stable) this is a no-op; the interesting case is when an operator
    * has changed `machine_interfaces.address` while a lease is live, and
    * we want the memfile to track the change rather than drift.
@@ -676,7 +676,7 @@ int lease4_renew(CalloutHandle &handle) {
   handle.getArgument("lease4", lease4);
 
   if (!lease4) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE4_RENEW)
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE4_RENEW)
         .arg("Missing lease4 argument");
     // At lease4_renew, SKIP means Kea will not update the lease database.
     handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
@@ -686,32 +686,32 @@ int lease4_renew(CalloutHandle &handle) {
   boost::shared_ptr<Machine> machine;
   handle.getContext("machine", machine);
   if (!machine) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE4_RENEW)
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE4_RENEW)
         .arg("Missing machine object from handle context");
     handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
     return 1;
   }
 
-  uint32_t carbide_u32 = machine_get_interface_address(machine.get());
-  if (carbide_u32 == 0) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE4_RENEW)
-        .arg("Carbide returned no usable IPv4 address; refusing to renew");
+  uint32_t nico_u32 = machine_get_interface_address(machine.get());
+  if (nico_u32 == 0) {
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE4_RENEW)
+        .arg("NICo returned no usable IPv4 address; refusing to renew");
     handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
     return 1;
   }
 
-  isc::asiolink::IOAddress carbide_addr(carbide_u32);
+  isc::asiolink::IOAddress nico_addr(nico_u32);
 
-  if (lease4->addr_ != carbide_addr) {
-    LOG_INFO(logger, isc::log::LOG_CARBIDE_LEASE4_RENEW)
+  if (lease4->addr_ != nico_addr) {
+    LOG_INFO(logger, isc::log::LOG_NICO_LEASE4_RENEW)
         .arg(std::string("overriding ") + lease4->addr_.toText() + " -> " +
-             carbide_addr.toText() + " on renewal");
-    lease4->addr_ = carbide_addr;
+             nico_addr.toText() + " on renewal");
+    lease4->addr_ = nico_addr;
     handle.setArgument("lease4", lease4);
   } else {
-    LOG_INFO(logger, isc::log::LOG_CARBIDE_LEASE4_RENEW)
-        .arg(std::string("renewing, lease addr already matches Carbide (") +
-             carbide_addr.toText() + ")");
+    LOG_INFO(logger, isc::log::LOG_NICO_LEASE4_RENEW)
+        .arg(std::string("renewing, lease addr already matches NICo (") +
+             nico_addr.toText() + ")");
   }
 
   return 0;
@@ -722,7 +722,7 @@ int lease6_expire(CalloutHandle &handle) {
   handle.getArgument("lease6", lease6);
 
   if (!lease6) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE_EXPIRE_ERROR)
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE_EXPIRE_ERROR)
         .arg("missing lease6 argument");
     return 0;
   }
@@ -734,12 +734,12 @@ int lease6_expire(CalloutHandle &handle) {
   if (lease6->hwaddr_ && !lease6->hwaddr_->hwaddr_.empty()) {
     mac_str = lease6->hwaddr_->toText(false);
   }
-  LOG_INFO(logger, isc::log::LOG_CARBIDE_LEASE_EXPIRE).arg(ip_str);
+  LOG_INFO(logger, isc::log::LOG_NICO_LEASE_EXPIRE).arg(ip_str);
 
-  auto result = carbide_expire_lease(
+  auto result = nico_expire_lease(
       ip_str.c_str(), mac_str.empty() ? nullptr : mac_str.c_str());
   if (result != LeaseExpirationResult::Success) {
-    LOG_ERROR(logger, isc::log::LOG_CARBIDE_LEASE_EXPIRE_ERROR).arg(ip_str);
+    LOG_ERROR(logger, isc::log::LOG_NICO_LEASE_EXPIRE_ERROR).arg(ip_str);
   }
 
   return 0;

@@ -19,7 +19,7 @@ use clap::Parser;
 use mac_address::MacAddress;
 use uuid::Uuid;
 
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -33,19 +33,19 @@ pub struct Args {
     pub id: Option<Uuid>,
 }
 
-impl TryFrom<Args> for Option<rpc::forge::ExpectedPowerShelfRequest> {
-    type Error = CarbideCliError;
+impl TryFrom<Args> for Option<rpc::nico::ExpectedPowerShelfRequest> {
+    type Error = NicoCliError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
         match (args.bmc_mac_address, args.id) {
-            (Some(_), Some(_)) => Err(CarbideCliError::ChooseOneError("--bmc-mac-address", "--id")),
-            (None, Some(id)) => Ok(Some(rpc::forge::ExpectedPowerShelfRequest {
+            (Some(_), Some(_)) => Err(NicoCliError::ChooseOneError("--bmc-mac-address", "--id")),
+            (None, Some(id)) => Ok(Some(rpc::nico::ExpectedPowerShelfRequest {
                 bmc_mac_address: String::new(),
                 expected_power_shelf_id: Some(::rpc::common::Uuid {
                     value: id.to_string(),
                 }),
             })),
-            (Some(mac), None) => Ok(Some(rpc::forge::ExpectedPowerShelfRequest {
+            (Some(mac), None) => Ok(Some(rpc::nico::ExpectedPowerShelfRequest {
                 bmc_mac_address: mac.to_string(),
                 expected_power_shelf_id: None,
             })),

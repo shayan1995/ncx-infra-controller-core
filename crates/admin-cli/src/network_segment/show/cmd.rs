@@ -18,14 +18,14 @@ use std::fmt::Write;
 use std::str::FromStr as _;
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as forgerpc;
-use carbide_uuid::domain::DomainId;
-use carbide_uuid::network::NetworkSegmentId;
+use ::rpc::nico as nicorpc;
+use nico_uuid::domain::DomainId;
+use nico_uuid::network::NetworkSegmentId;
 use prettytable::{Table, row};
 use serde::Deserialize;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 #[derive(Deserialize)]
@@ -35,11 +35,11 @@ struct NetworkState {
 
 #[allow(deprecated)]
 fn convert_old_history(
-    history: &[forgerpc::NetworkSegmentStateHistory],
-) -> Vec<forgerpc::StateHistoryRecord> {
+    history: &[nicorpc::NetworkSegmentStateHistory],
+) -> Vec<nicorpc::StateHistoryRecord> {
     history
         .iter()
-        .map(|h| forgerpc::StateHistoryRecord {
+        .map(|h| nicorpc::StateHistoryRecord {
             state: h.state.clone(),
             version: h.version.clone(),
             time: h.time,
@@ -49,10 +49,10 @@ fn convert_old_history(
 
 #[allow(deprecated)]
 async fn convert_network_to_nice_format(
-    segment: forgerpc::NetworkSegment,
-    history: Vec<forgerpc::StateHistoryRecord>,
+    segment: nicorpc::NetworkSegment,
+    history: Vec<nicorpc::StateHistoryRecord>,
     api_client: &ApiClient,
-) -> CarbideCliResult<String> {
+) -> NicoCliResult<String> {
     let name = segment
         .metadata
         .as_ref()
@@ -63,7 +63,7 @@ async fn convert_network_to_nice_format(
         config
     } else {
         // Old server: construct from deprecated flat fields.
-        forgerpc::NetworkSegmentConfig {
+        nicorpc::NetworkSegmentConfig {
             vpc_id: segment.vpc_id,
             subdomain_id: segment.subdomain_id,
             mtu: segment.mtu,
@@ -80,7 +80,7 @@ async fn convert_network_to_nice_format(
         // Old server: format the deprecated enum field as a string.
         format!(
             "{:?}",
-            forgerpc::TenantState::try_from(segment.state).unwrap_or_default()
+            nicorpc::TenantState::try_from(segment.state).unwrap_or_default()
         )
     };
 
@@ -116,7 +116,7 @@ async fn convert_network_to_nice_format(
             "TYPE",
             format!(
                 "{:?}",
-                forgerpc::NetworkSegmentType::try_from(config.segment_type).unwrap_or_default()
+                nicorpc::NetworkSegmentType::try_from(config.segment_type).unwrap_or_default()
             ),
         ),
     ];
@@ -203,8 +203,8 @@ async fn get_domain_name(domain_id: Option<DomainId>, api_client: &ApiClient) ->
 
 #[allow(deprecated)]
 fn convert_network_to_nice_table(
-    segments: forgerpc::NetworkSegmentList,
-) -> CarbideCliResult<Box<Table>> {
+    segments: nicorpc::NetworkSegmentList,
+) -> NicoCliResult<Box<Table>> {
     let mut table = Table::new();
 
     table.set_titles(row![
@@ -224,7 +224,7 @@ fn convert_network_to_nice_table(
             config
         } else {
             // Old server: construct from deprecated flat fields.
-            forgerpc::NetworkSegmentConfig {
+            nicorpc::NetworkSegmentConfig {
                 vpc_id: segment.vpc_id,
                 subdomain_id: segment.subdomain_id,
                 mtu: segment.mtu,
@@ -242,7 +242,7 @@ fn convert_network_to_nice_table(
             // Old server: format deprecated enum and version fields.
             let state = format!(
                 "{:?}",
-                forgerpc::TenantState::try_from(segment.state).unwrap_or_default()
+                nicorpc::TenantState::try_from(segment.state).unwrap_or_default()
             );
             (state, segment.version.clone())
         };
@@ -272,7 +272,7 @@ fn convert_network_to_nice_table(
             version,
             format!(
                 "{:?}",
-                forgerpc::NetworkSegmentType::try_from(config.segment_type).unwrap_or_default()
+                nicorpc::NetworkSegmentType::try_from(config.segment_type).unwrap_or_default()
             ),
         ]);
     }
@@ -286,7 +286,7 @@ async fn show_all_segments(
     tenant_org_id: Option<String>,
     name: Option<String>,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let all_segments = match api_client
         .get_all_segments(tenant_org_id, name, page_size)
         .await
@@ -306,14 +306,14 @@ async fn show_network_information(
     segment_id: NetworkSegmentId,
     json: bool,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let segment = match api_client.get_one_segment(segment_id).await {
         Ok(instances) => instances,
         Err(e) => return Err(e),
     };
 
     let Some(segment) = segment.network_segments.into_iter().next() else {
-        return Err(CarbideCliError::SegmentNotFound);
+        return Err(NicoCliError::SegmentNotFound);
     };
 
     // Try the `FindNetworkSegmentStateHistories` RPC first; fall back to the inline
@@ -342,7 +342,7 @@ pub async fn handle_show(
     output_format: OutputFormat,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
     if let Some(network) = args.network {
         show_network_information(network, is_json, api_client).await?;
@@ -361,12 +361,12 @@ pub async fn handle_show(
 
 #[cfg(test)]
 mod tests {
-    use ::rpc::forge as forgerpc;
+    use ::rpc::nico as nicorpc;
 
     use super::{convert_network_to_nice_table, convert_old_history};
 
-    fn prefix(cidr: &str) -> forgerpc::NetworkPrefix {
-        forgerpc::NetworkPrefix {
+    fn prefix(cidr: &str) -> nicorpc::NetworkPrefix {
+        nicorpc::NetworkPrefix {
             prefix: cidr.to_string(),
             id: None,
             gateway: None,
@@ -376,9 +376,9 @@ mod tests {
         }
     }
 
-    fn old_history_record(state: &str, version: &str) -> forgerpc::NetworkSegmentStateHistory {
+    fn old_history_record(state: &str, version: &str) -> nicorpc::NetworkSegmentStateHistory {
         #[allow(deprecated)]
-        forgerpc::NetworkSegmentStateHistory {
+        nicorpc::NetworkSegmentStateHistory {
             state: state.to_string(),
             version: version.to_string(),
             time: None,
@@ -415,28 +415,28 @@ mod tests {
         vpc_uuid: &str,
         cidr: &str,
         state: &str,
-    ) -> forgerpc::NetworkSegment {
+    ) -> nicorpc::NetworkSegment {
         #[allow(deprecated)]
-        forgerpc::NetworkSegment {
+        nicorpc::NetworkSegment {
             id: None,
-            config: Some(forgerpc::NetworkSegmentConfig {
+            config: Some(nicorpc::NetworkSegmentConfig {
                 vpc_id: Some(vpc_uuid.parse().unwrap()),
                 subdomain_id: None,
                 mtu: Some(9000),
-                segment_type: forgerpc::NetworkSegmentType::Tenant as i32,
+                segment_type: nicorpc::NetworkSegmentType::Tenant as i32,
                 prefixes: vec![prefix(cidr)],
             }),
-            status: Some(forgerpc::NetworkSegmentStatus {
+            status: Some(nicorpc::NetworkSegmentStatus {
                 flags: vec![],
-                lifecycle: Some(forgerpc::LifecycleStatus {
+                lifecycle: Some(nicorpc::LifecycleStatus {
                     state: state.to_string(),
                     version: "2".to_string(),
                     state_reason: None,
                     sla: None,
                 }),
-                tenant_state: forgerpc::TenantState::Ready as i32,
+                tenant_state: nicorpc::TenantState::Ready as i32,
             }),
-            metadata: Some(forgerpc::Metadata {
+            metadata: Some(nicorpc::Metadata {
                 name: name.to_string(),
                 description: String::new(),
                 labels: vec![],
@@ -449,9 +449,9 @@ mod tests {
             subdomain_id: None,
             mtu: Some(1500),
             prefixes: vec![prefix("192.0.2.0/24")],
-            segment_type: forgerpc::NetworkSegmentType::Admin as i32,
+            segment_type: nicorpc::NetworkSegmentType::Admin as i32,
             version: "old-version".to_string(),
-            state: forgerpc::TenantState::Provisioning as i32,
+            state: nicorpc::TenantState::Provisioning as i32,
             history: vec![],
             created: None,
             updated: None,
@@ -462,10 +462,10 @@ mod tests {
         }
     }
 
-    fn old_format_segment(name: &str, vpc_uuid: &str, cidr: &str) -> forgerpc::NetworkSegment {
+    fn old_format_segment(name: &str, vpc_uuid: &str, cidr: &str) -> nicorpc::NetworkSegment {
         // Simulates a response from an old server: new fields absent, deprecated flat fields set.
         #[allow(deprecated)]
-        forgerpc::NetworkSegment {
+        nicorpc::NetworkSegment {
             id: None,
             config: None,
             status: None,
@@ -475,9 +475,9 @@ mod tests {
             subdomain_id: None,
             mtu: Some(1500),
             prefixes: vec![prefix(cidr)],
-            segment_type: forgerpc::NetworkSegmentType::Tenant as i32,
+            segment_type: nicorpc::NetworkSegmentType::Tenant as i32,
             version: "1".to_string(),
-            state: forgerpc::TenantState::Ready as i32,
+            state: nicorpc::TenantState::Ready as i32,
             history: vec![],
             created: None,
             updated: None,
@@ -488,8 +488,8 @@ mod tests {
         }
     }
 
-    fn table_string(segments: Vec<forgerpc::NetworkSegment>) -> String {
-        let list = forgerpc::NetworkSegmentList {
+    fn table_string(segments: Vec<nicorpc::NetworkSegment>) -> String {
+        let list = nicorpc::NetworkSegmentList {
             network_segments: segments,
         };
         let table = convert_network_to_nice_table(list).expect("table build failed");

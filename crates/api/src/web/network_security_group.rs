@@ -23,8 +23,8 @@ use axum::Json;
 use axum::extract::{Form, OriginalUri, Path as AxumPath, Query, State as AxumState};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use hyper::http::StatusCode;
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{self as forgerpc};
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{self as nicorpc};
 use serde::Deserialize;
 
 use super::pagination::{PageContext, empty_string_as_none};
@@ -62,8 +62,8 @@ impl Ord for NetworkSecurityGroupRowDisplay {
     }
 }
 
-impl From<forgerpc::NetworkSecurityGroup> for NetworkSecurityGroupRowDisplay {
-    fn from(nsg: forgerpc::NetworkSecurityGroup) -> Self {
+impl From<nicorpc::NetworkSecurityGroup> for NetworkSecurityGroupRowDisplay {
+    fn from(nsg: nicorpc::NetworkSecurityGroup) -> Self {
         let created = nsg.created_at().to_string();
         let metadata = nsg.metadata.unwrap_or_default();
 
@@ -100,7 +100,7 @@ struct NetworkSecurityGroupDetailDisplay {
     stateful_egress: bool,
     labels: String,
     rules: String,
-    attachments: forgerpc::NetworkSecurityGroupAttachments,
+    attachments: nicorpc::NetworkSecurityGroupAttachments,
     propagation: Vec<NetworkSecurityGroupPropagation>,
 }
 
@@ -153,8 +153,8 @@ async fn fetch_network_security_groups(
     current_page: usize,
     limit: usize,
 ) -> Result<(usize, Vec<NetworkSecurityGroupRowDisplay>), tonic::Status> {
-    let request: tonic::Request<forgerpc::FindNetworkSecurityGroupIdsRequest> =
-        tonic::Request::new(forgerpc::FindNetworkSecurityGroupIdsRequest {
+    let request: tonic::Request<nicorpc::FindNetworkSecurityGroupIdsRequest> =
+        tonic::Request::new(nicorpc::FindNetworkSecurityGroupIdsRequest {
             name: None,
             tenant_organization_id: None,
         });
@@ -195,7 +195,7 @@ async fn fetch_network_security_groups(
 
     let nsgs = api
         .find_network_security_groups_by_ids(tonic::Request::new(
-            forgerpc::FindNetworkSecurityGroupsByIdsRequest {
+            nicorpc::FindNetworkSecurityGroupsByIdsRequest {
                 tenant_organization_id: None,
                 network_security_group_ids: ids_for_page,
             },
@@ -224,7 +224,7 @@ pub async fn show_detail(
     // Grab the basic details for the NSG
     let Some(nsg) = match api
         .find_network_security_groups_by_ids(tonic::Request::new(
-            forgerpc::FindNetworkSecurityGroupsByIdsRequest {
+            nicorpc::FindNetworkSecurityGroupsByIdsRequest {
                 tenant_organization_id: None,
                 network_security_group_ids: vec![network_security_group_id.clone()],
             },
@@ -283,7 +283,7 @@ pub async fn show_detail(
     // Find any objects that are using this NSG
     let attachments = match api
         .get_network_security_group_attachments(tonic::Request::new(
-            forgerpc::GetNetworkSecurityGroupAttachmentsRequest {
+            nicorpc::GetNetworkSecurityGroupAttachmentsRequest {
                 network_security_group_ids: vec![network_security_group_id.clone()],
             },
         ))
@@ -310,10 +310,10 @@ pub async fn show_detail(
     if !attachments.vpc_ids.is_empty() || !attachments.instance_ids.is_empty() {
         let propagations = match api
             .get_network_security_group_propagation_status(tonic::Request::new(
-                forgerpc::GetNetworkSecurityGroupPropagationStatusRequest {
+                nicorpc::GetNetworkSecurityGroupPropagationStatusRequest {
                     vpc_ids: attachments.vpc_ids.clone(),
                     instance_ids: attachments.instance_ids.clone(),
-                    network_security_group_ids: Some(forgerpc::NetworkSecurityGroupIdList {
+                    network_security_group_ids: Some(nicorpc::NetworkSecurityGroupIdList {
                         ids: vec![network_security_group_id],
                     }),
                 },
@@ -404,7 +404,7 @@ pub async fn create(
     let network_security_group_attributes = if form.rules.is_empty() {
         None
     } else {
-        Some(forgerpc::NetworkSecurityGroupAttributes {
+        Some(nicorpc::NetworkSecurityGroupAttributes {
             stateful_egress: form.stateful_egress.unwrap_or_default(),
             rules: match serde_json::from_str(&form.rules) {
                 Ok(r) => r,
@@ -421,10 +421,10 @@ pub async fn create(
 
     let resp = match api
         .create_network_security_group(tonic::Request::new(
-            forgerpc::CreateNetworkSecurityGroupRequest {
+            nicorpc::CreateNetworkSecurityGroupRequest {
                 id,
                 tenant_organization_id: form.tenant_organization_id,
-                metadata: Some(forgerpc::Metadata {
+                metadata: Some(nicorpc::Metadata {
                     name: form.name,
                     description: form.description,
                     labels: match serde_json::from_str(&labels) {
@@ -494,7 +494,7 @@ pub async fn update(
     let network_security_group_attributes = if form.rules.is_empty() {
         None
     } else {
-        Some(forgerpc::NetworkSecurityGroupAttributes {
+        Some(nicorpc::NetworkSecurityGroupAttributes {
             stateful_egress: form.stateful_egress.unwrap_or_default(),
 
             rules: match serde_json::from_str(&form.rules) {
@@ -512,11 +512,11 @@ pub async fn update(
 
     let resp = match api
         .update_network_security_group(tonic::Request::new(
-            forgerpc::UpdateNetworkSecurityGroupRequest {
+            nicorpc::UpdateNetworkSecurityGroupRequest {
                 id: network_security_group_id,
                 if_version_match: Some(form.version),
                 tenant_organization_id: form.tenant_organization_id,
-                metadata: Some(forgerpc::Metadata {
+                metadata: Some(nicorpc::Metadata {
                     name: form.name,
                     description: form.description,
                     labels: match serde_json::from_str(&labels) {
@@ -572,7 +572,7 @@ pub async fn delete(
 ) -> Response {
     if let Err(e) = api
         .delete_network_security_group(tonic::Request::new(
-            forgerpc::DeleteNetworkSecurityGroupRequest {
+            nicorpc::DeleteNetworkSecurityGroupRequest {
                 id: network_security_group_id,
                 tenant_organization_id: form.tenant_organization_id,
             },

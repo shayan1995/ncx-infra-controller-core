@@ -16,15 +16,15 @@
  */
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 /// "Attaches" a network security group to an object (VPC/Instance)
 /// by updating the config of the object.
-pub async fn attach(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn attach(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     // Check that at least one of instance ID or VPC ID has been sent
     if args.instance_id.is_none() && args.vpc_id.is_none() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "one of instance ID or VPC ID must be used".to_string(),
         ));
     }
@@ -36,12 +36,12 @@ pub async fn attach(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> 
             .await?
             .instances
             .pop()
-            .ok_or(CarbideCliError::UuidNotFound)?;
+            .ok_or(NicoCliError::UuidNotFound)?;
 
         // Grab the instance config for the target instance.
         // We'll modify the NSG ID field and then resubmit.
         let Some(mut config) = instance.config else {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "requested instance found without config".to_string(),
             ));
         };
@@ -74,7 +74,7 @@ pub async fn attach(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> 
             .await?
             .vpcs
             .pop()
-            .ok_or(CarbideCliError::UuidNotFound)?;
+            .ok_or(NicoCliError::UuidNotFound)?;
 
         // Submit the VPC details back to the system but change the
         // NSG ID value.

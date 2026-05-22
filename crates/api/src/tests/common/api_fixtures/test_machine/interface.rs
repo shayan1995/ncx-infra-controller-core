@@ -17,9 +17,9 @@
 
 use std::sync::Arc;
 
-use carbide_uuid::machine::MachineInterfaceId;
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{MachineArchitecture, PxeInstructions};
+use nico_uuid::machine::MachineInterfaceId;
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{MachineArchitecture, PxeInstructions};
 
 use crate::tests::common::api_fixtures::Api;
 
@@ -46,7 +46,7 @@ impl TestMachineInterface {
             .to_string();
 
         self.api
-            .get_pxe_instructions(tonic::Request::new(rpc::forge::PxeInstructionRequest {
+            .get_pxe_instructions(tonic::Request::new(rpc::nico::PxeInstructionRequest {
                 arch: arch as i32,
                 product: None,
                 client_ip: Some(client_ip),

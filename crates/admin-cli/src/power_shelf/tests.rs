@@ -97,7 +97,7 @@ fn parse_list_with_filters() {
 
     match cmd {
         Cmd::List(args) => {
-            assert!(matches!(args.deleted, rpc::forge::DeletedFilter::Only));
+            assert!(matches!(args.deleted, rpc::nico::DeletedFilter::Only));
             assert_eq!(args.controller_state, Some("ready".to_string()));
             assert!(args.bmc_mac.is_some());
         }
@@ -129,7 +129,7 @@ fn parse_list_invalid_bmc_mac() {
 //   - convert the parsed `Args` to a gRPC `PowerShelfMaintenanceRequest`
 //     via `into_request()` and assert the operation enum on the wire.
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 
 use super::maintenance;
 
@@ -279,7 +279,7 @@ fn power_on_into_request_uses_power_on_operation() {
     let req = args.into_request();
     assert_eq!(
         req.operation,
-        rpc::forge::PowerShelfMaintenanceOperation::PowerOn as i32,
+        rpc::nico::PowerShelfMaintenanceOperation::PowerOn as i32,
     );
     assert_eq!(req.power_shelf_ids, vec![parse_ps_id(SAMPLE_PS_ID_1)]);
     assert_eq!(req.reference.as_deref(), Some("ref-1"));
@@ -296,7 +296,7 @@ fn power_off_into_request_uses_power_off_operation() {
     let req = args.into_request();
     assert_eq!(
         req.operation,
-        rpc::forge::PowerShelfMaintenanceOperation::PowerOff as i32,
+        rpc::nico::PowerShelfMaintenanceOperation::PowerOff as i32,
     );
     assert_eq!(
         req.power_shelf_ids,

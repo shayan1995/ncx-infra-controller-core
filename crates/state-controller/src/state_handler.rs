@@ -16,7 +16,7 @@
  */
 use std::panic::Location;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use db::DatabaseError;
 use model::controller_outcome::PersistentStateHandlerOutcome;
 use model::machine::ManagedHostState;

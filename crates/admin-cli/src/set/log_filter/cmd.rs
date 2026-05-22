@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::ConfigSetting;
+use ::rpc::nico::ConfigSetting;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn log_filter(opts: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn log_filter(opts: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     api_client
         .set_dynamic_config(ConfigSetting::LogFilter, opts.filter, Some(opts.expiry))
         .await

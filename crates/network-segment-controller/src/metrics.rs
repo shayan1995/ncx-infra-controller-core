@@ -19,7 +19,7 @@
 
 use std::collections::HashMap;
 
-use carbide_utils::metrics::SharedMetricsHolder;
+use nico_utils::metrics::SharedMetricsHolder;
 use opentelemetry::KeyValue;
 use opentelemetry::metrics::Meter;
 use state_controller::metrics::MetricsEmitter;
@@ -60,7 +60,7 @@ impl MetricsEmitter for NetworkSegmentMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_available_ips_count")
+                .u64_observable_gauge("nico_available_ips_count")
                 .with_description("The total number of available ips in the site")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
@@ -86,7 +86,7 @@ impl MetricsEmitter for NetworkSegmentMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_reserved_ips_count")
+                .u64_observable_gauge("nico_reserved_ips_count")
                 .with_description("The total number of reserved ips in the site")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
@@ -112,7 +112,7 @@ impl MetricsEmitter for NetworkSegmentMetricsEmitter {
         {
             let metrics = shared_metrics;
             meter
-                .u64_observable_gauge("carbide_total_ips_count")
+                .u64_observable_gauge("nico_total_ips_count")
                 .with_description("The total number of ips in the site")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {

@@ -19,7 +19,7 @@ use mac_address::MacAddress;
 use model::bmc_info::{BmcInfo, UserRoles};
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<rpc::BmcInfo> for BmcInfo {
     type Error = RpcDataConversionError;

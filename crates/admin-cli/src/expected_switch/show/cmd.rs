@@ -20,17 +20,17 @@ use std::collections::HashMap;
 use mac_address::MacAddress;
 use prettytable::{Table, row};
 use rpc::admin_cli::OutputFormat;
-use rpc::forge::ExpectedSwitchRequest;
+use rpc::nico::ExpectedSwitchRequest;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn show(
     query: &Args,
     api_client: &ApiClient,
     output_format: OutputFormat,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let req: Option<ExpectedSwitchRequest> = query.try_into()?;
 
     if let Some(req) = req {
@@ -51,7 +51,7 @@ pub async fn show(
         .filter_map(|x| x.bmc_mac_address.parse().ok())
         .collect::<Vec<MacAddress>>();
 
-    let expected_mi: HashMap<MacAddress, ::rpc::forge::MachineInterface> =
+    let expected_mi: HashMap<MacAddress, ::rpc::nico::MachineInterface> =
         HashMap::from_iter(all_mi.interfaces.into_iter().filter_map(|x| {
             let mac = x.mac_address.parse().ok()?;
             if expected_macs.contains(&mac) {
@@ -92,10 +92,10 @@ pub async fn show(
 }
 
 fn convert_and_print_into_nice_table(
-    expected_switches: &::rpc::forge::ExpectedSwitchList,
+    expected_switches: &::rpc::nico::ExpectedSwitchList,
     expected_discovered_machine_ids: &HashMap<String, String>,
-    expected_discovered_machine_interfaces: &HashMap<MacAddress, ::rpc::forge::MachineInterface>,
-) -> CarbideCliResult<()> {
+    expected_discovered_machine_interfaces: &HashMap<MacAddress, ::rpc::nico::MachineInterface>,
+) -> NicoCliResult<()> {
     let mut table = Box::new(Table::new());
 
     table.set_titles(row![

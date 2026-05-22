@@ -23,13 +23,13 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
 use bmc_vendor::BMCVendor;
-use carbide_authn::config::{AllowedCertCriteria, TrustConfig};
-use carbide_firmware::FirmwareConfig;
-use carbide_ib_fabric::config::{IBFabricConfig, IbFabricDefinition};
-use carbide_nvlink_manager::config::NvLinkConfig;
-use carbide_preingestion_manager::PreingestionManagerConfig;
-use carbide_site_explorer::config::SiteExplorerConfig;
-use carbide_utils::config::{
+use nico_authn::config::{AllowedCertCriteria, TrustConfig};
+use nico_firmware::FirmwareConfig;
+use nico_ib_fabric::config::{IBFabricConfig, IbFabricDefinition};
+use nico_nvlink_manager::config::NvLinkConfig;
+use nico_preingestion_manager::PreingestionManagerConfig;
+use nico_site_explorer::config::SiteExplorerConfig;
+use nico_utils::config::{
     as_duration, as_std_duration, deserialize_arc_atomic_bool, serialize_arc_atomic_bool,
 };
 use chrono::Duration;
@@ -69,7 +69,7 @@ pub(crate) const MAX_DPU_NUM_OF_VFS: u32 = 126;
 
 /// nico-api configuration file content
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CarbideConfig {
+pub struct NicoConfig {
     /// Socket address for the gRPC API server, used by
     /// clients and nico-admin-cli to connect.
     /// Default is `[::]:1079`.
@@ -87,7 +87,7 @@ pub struct CarbideConfig {
     /// Prometheus metrics under `/metrics`.
     pub metrics_endpoint: Option<SocketAddr>,
 
-    /// Alternative metric prefix emitted alongside `carbide_`,
+    /// Alternative metric prefix emitted alongside `nico_`,
     /// used for dual-emitting while migrating dashboards and
     /// alerts. Increases observability system load.
     pub alt_metric_prefix: Option<String>,
@@ -407,7 +407,7 @@ pub struct CarbideConfig {
     /// Model names are normalized to lowercase with spaces replaced by underscores
     /// (e.g. `"PowerEdge R760"` → `"poweredge_r760"`).
     ///
-    /// Example (carbide.toml):
+    /// Example (nico.toml):
     /// ```toml
     /// # Disable PSU Hot Spare on Dell R760 to prevent fan spin-up (nvbugs-5834644)
     /// [oem_manager_profiles.Dell.poweredge_r760.performance]
@@ -557,21 +557,21 @@ pub struct CarbideConfig {
     /// Vendors for which the state controller should pin the UEFI HTTP boot
     /// URL on the BMC (via Redfish `HttpBootUri`) in addition to the existing
     /// DHCP option 67 path. Machines whose BMC vendor is NOT in this list
-    /// continue to rely on carbide-dhcp's option 67 for the URL.
+    /// continue to rely on nico-dhcp's option 67 for the URL.
     ///
     /// Empty by default — no machines get the BMC-pinned URL until vendors
     /// are explicitly added here (typically after per-vendor verification on
     /// real hardware). Adding a vendor that libredfish doesn't yet implement
     /// (e.g., `Dell` / `Lenovo` until their libredfish impls land) will
-    /// surface a runtime `NotSupported` error; carbide-dhcp option 67 is the
+    /// surface a runtime `NotSupported` error; nico-dhcp option 67 is the
     /// fallback URL source.
     #[serde(default)]
     pub set_http_boot_uri_for_vendors: Vec<BMCVendor>,
 
     /// Alternate API URL for external hosts that cannot resolve
-    /// https://carbide-pxe.forge. This be an IP (e.g., "https://10.0.0.1:1079"),
+    /// https://nico-pxe.nico. This be an IP (e.g., "https://10.0.0.1:1079"),
     /// or an externally resolvable hostname (e.g.,
-    /// "https://carbide-stack-api.corp.example.com"). This is the URL
+    /// "https://nico-stack-api.corp.example.com"). This is the URL
     /// that gets handed back to interfaces assigned ot the static-assignments
     /// subnet. If not set, external hosts will just get the "internal"
     /// variant of api_url.
@@ -579,14 +579,14 @@ pub struct CarbideConfig {
     pub external_api_url: Option<String>,
 
     /// Alternate PXE URL for external hosts (e.g., "http://10.0.0.1:8080"
-    /// or "http://carbide-stack-pxe.corp.example.com"). Used for cloud-init and
+    /// or "http://nico-stack-pxe.corp.example.com"). Used for cloud-init and
     /// root CA retrieval for interfaces on the static-assignments segment,
     /// and follows the same rules as external_api_url above.
     #[serde(default)]
     pub external_pxe_url: Option<String>,
 
     /// Alternate static PXE URL for external hosts (e.g.,
-    /// "http://10.0.0.1:8081" or "http://carbide-stack-static.corp.example.com").
+    /// "http://10.0.0.1:8081" or "http://nico-stack-static.corp.example.com").
     /// Used for kernel/blob downloads on the static-assignments segment.
     /// If not set, falls back to `external_pxe_url`.
     #[serde(default)]
@@ -643,7 +643,7 @@ pub struct CarbideConfig {
     /// extraction so runtime code can attribute individual keys back to their
     /// source files via `Figment::find_metadata`
     ///
-    /// `None` for `CarbideConfig` values that didn't come from `parse_carbide_config`
+    /// `None` for `NicoConfig` values that didn't come from `parse_nico_config`
     /// (test fixtures, programmatic construction).
     #[serde(skip)]
     pub config_ctx: Option<Figment>,
@@ -737,11 +737,11 @@ fn default_dpf_deployment_name() -> String {
 }
 
 fn default_dpf_flavor_name() -> String {
-    "carbide-dpu-flavor".to_string()
+    "nico-dpu-flavor".to_string()
 }
 
 fn default_dpf_node_label_key() -> String {
-    "carbide.nvidia.com/controlled.node.v2".to_string()
+    "nico.nvidia.com/controlled.node.v2".to_string()
 }
 
 /// Configuration for a mandatory Helm-based DPF service.
@@ -882,7 +882,7 @@ impl From<MachineIdentityConfig> for model::tenant::IdentityConfigValidationBoun
                 .current_encryption_key_id
                 .expect(
                     "current_encryption_key_id is required when machine identity is enabled; \
-                     startup validation in parse_carbide_config failed",
+                     startup validation in parse_nico_config failed",
                 )
                 .try_into()
                 .expect(
@@ -1050,7 +1050,7 @@ pub struct FnnRoutingProfileConfig {
     pub access_tier: u32,
 }
 
-impl From<&FnnRoutingProfileConfig> for rpc::forge::RoutingProfile {
+impl From<&FnnRoutingProfileConfig> for rpc::nico::RoutingProfile {
     fn from(profile: &FnnRoutingProfileConfig) -> Self {
         Self {
             tenant_leak_communities_accepted: profile.tenant_leak_communities_accepted,
@@ -1059,14 +1059,14 @@ impl From<&FnnRoutingProfileConfig> for rpc::forge::RoutingProfile {
             accepted_leaks_from_underlay: profile
                 .accepted_leaks_from_underlay
                 .iter()
-                .map(|entry| rpc::forge::PrefixFilterPolicyEntry {
+                .map(|entry| rpc::nico::PrefixFilterPolicyEntry {
                     prefix: entry.prefix.to_string(),
                 })
                 .collect(),
             allowed_anycast_prefixes: profile
                 .allowed_anycast_prefixes
                 .iter()
-                .map(|entry| rpc::forge::PrefixFilterPolicyEntry {
+                .map(|entry| rpc::nico::PrefixFilterPolicyEntry {
                     prefix: entry.prefix.to_string(),
                 })
                 .collect(),
@@ -1131,8 +1131,8 @@ fn validate_tool_url(name: &str, url: &str) -> eyre::Result<()> {
     Ok(())
 }
 
-impl CarbideConfig {
-    /// Returns a version of CarbideConfig where secrets are erased
+impl NicoConfig {
+    /// Returns a version of NicoConfig where secrets are erased
     pub fn redacted(&self) -> Self {
         let mut config = self.clone();
         if let Some(host_index) = config.database_url.find('@') {
@@ -2024,7 +2024,7 @@ pub struct FirmwareGlobal {
     #[serde(default = "FirmwareGlobal::concurrency_limit_default")]
     pub concurrency_limit: usize,
     /// Local directory where firmware binaries are stored.
-    /// Default is `/opt/carbide/firmware`.
+    /// Default is `/opt/nico/firmware`.
     #[serde(default = "FirmwareGlobal::firmware_directory_default")]
     pub firmware_directory: PathBuf,
     /// Delay before retrying a failed host firmware
@@ -2126,7 +2126,7 @@ impl FirmwareGlobal {
         16
     }
     pub fn firmware_directory_default() -> PathBuf {
-        PathBuf::from("/opt/carbide/firmware")
+        PathBuf::from("/opt/nico/firmware")
     }
     pub fn host_firmware_upgrade_retry_interval_default() -> Duration {
         Duration::minutes(60)
@@ -2344,22 +2344,22 @@ impl std::fmt::Display for VpcIsolationBehaviorType {
     }
 }
 
-impl From<VpcIsolationBehaviorType> for rpc::forge::VpcIsolationBehaviorType {
+impl From<VpcIsolationBehaviorType> for rpc::nico::VpcIsolationBehaviorType {
     fn from(b: VpcIsolationBehaviorType) -> Self {
         match b {
             VpcIsolationBehaviorType::Open => {
-                rpc::forge::VpcIsolationBehaviorType::VpcIsolationOpen
+                rpc::nico::VpcIsolationBehaviorType::VpcIsolationOpen
             }
             VpcIsolationBehaviorType::MutualIsolation => {
-                rpc::forge::VpcIsolationBehaviorType::VpcIsolationMutual
+                rpc::nico::VpcIsolationBehaviorType::VpcIsolationMutual
             }
         }
     }
 }
 
 #[allow(deprecated)] // nvue_enabled proto field is deprecated but still set for backwards compat
-impl From<CarbideConfig> for rpc::forge::RuntimeConfig {
-    fn from(value: CarbideConfig) -> Self {
+impl From<NicoConfig> for rpc::nico::RuntimeConfig {
+    fn from(value: NicoConfig) -> Self {
         Self {
             listen: value.listen.to_string(),
             metrics_endpoint: value
@@ -2461,7 +2461,7 @@ impl From<CarbideConfig> for rpc::forge::RuntimeConfig {
 }
 
 fn default_mqtt_endpoint() -> String {
-    "mqtt.forge".to_string()
+    "mqtt.nico".to_string()
 }
 
 fn default_mqtt_broker_port() -> u16 {
@@ -2573,7 +2573,7 @@ pub struct DpaConfig {
 
 /// DSX Exchange Event Bus configuration for publishing state change events via MQTT 3.1.1.
 ///
-/// When configured, Carbide will publish `ManagedHostState` transitions to
+/// When configured, NICo will publish `ManagedHostState` transitions to
 /// `{topic_prefix}/{machineId}/state` (default `NICO/v1/machine`), publish BMS
 /// rack leak/isolation values and heartbeat timestamps to metadata-defined DSX
 /// topics, and subscribe to `BMS/v1/PUB/Metadata/#` to learn those routing
@@ -2787,8 +2787,8 @@ pub fn default_host_intercept_bridge_port() -> String {
 mod tests {
     use std::sync::atomic::Ordering as AtomicOrdering;
 
-    use carbide_authn::config::CertComponent;
-    use carbide_site_explorer::config::SiteExplorerExploreMode;
+    use nico_authn::config::CertComponent;
+    use nico_site_explorer::config::SiteExplorerExploreMode;
     use chrono::Datelike;
     use figment::Figment;
     use figment::providers::{Env, Format, Toml};
@@ -2967,7 +2967,7 @@ mod tests {
         // Sanity-check the precondition: the helper rejects this URL.
         assert!(validate_tool_url("evil", BAD_URL).is_err());
 
-        let mut config: CarbideConfig = Figment::new()
+        let mut config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .extract()
             .unwrap();
@@ -3001,7 +3001,7 @@ mod tests {
 
     #[test]
     fn test_redact_config() {
-        let mut config: CarbideConfig = Figment::new()
+        let mut config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .extract()
             .unwrap();
@@ -3010,14 +3010,14 @@ mod tests {
             redacted.database_url,
             "postgres://redacted@postgresql".to_string()
         );
-        config.database_url = "postgres://forge-system.carbide:very-very-long-password@forge-pg-cluster.postgres.svc.cluster.local:5432/forge_system_carbide".to_string();
+        config.database_url = "postgres://nico-system.nico:very-very-long-password@nico-pg-cluster.postgres.svc.cluster.local:5432/nico_system_nico".to_string();
         let redacted = config.redacted();
-        assert_eq!(redacted.database_url, "postgres://redacted@forge-pg-cluster.postgres.svc.cluster.local:5432/forge_system_carbide".to_string());
+        assert_eq!(redacted.database_url, "postgres://redacted@nico-pg-cluster.postgres.svc.cluster.local:5432/nico_system_nico".to_string());
     }
 
     #[test]
     fn deserialize_min_config() {
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .extract()
             .unwrap();
@@ -3072,7 +3072,7 @@ mod tests {
 
     #[test]
     fn deserialize_patched_min_config() {
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .merge(Toml::file(format!("{TEST_DATA_DIR}/site_config.toml")))
             .extract()
@@ -3141,7 +3141,7 @@ mod tests {
                 override_target_ip: None,
                 override_target_port: None,
                 allow_zero_dpu_hosts: false,
-                bmc_proxy: carbide_site_explorer::config::bmc_proxy(None),
+                bmc_proxy: nico_site_explorer::config::bmc_proxy(None),
                 allow_changing_bmc_proxy: None,
                 reset_rate_limit: Duration::hours(1),
                 admin_segment_type_non_dpu: Arc::new(false.into()),
@@ -3214,7 +3214,7 @@ mod tests {
 
     #[test]
     fn deserialize_full_config() {
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/full_config.toml")))
             .extract()
             .unwrap();
@@ -3315,7 +3315,7 @@ mod tests {
                 override_target_ip: Some("1.2.3.4".to_owned()),
                 override_target_port: Some(10443),
                 allow_zero_dpu_hosts: false,
-                bmc_proxy: carbide_site_explorer::config::bmc_proxy(None),
+                bmc_proxy: nico_site_explorer::config::bmc_proxy(None),
                 allow_changing_bmc_proxy: None,
                 reset_rate_limit: Duration::hours(2),
                 admin_segment_type_non_dpu: Arc::new(false.into()),
@@ -3455,7 +3455,7 @@ mod tests {
                 .unwrap()
                 .required_equals
                 .get(&CertComponent::IssuerCN),
-            Some("NVIDIA Forge Root Certificate Authority 2022".to_string()).as_ref()
+            Some("NVIDIA NICo Root Certificate Authority 2022".to_string()).as_ref()
         );
         assert_eq!(
             config
@@ -3527,7 +3527,7 @@ mod tests {
 
     #[test]
     fn deserialize_patched_full_config() {
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/full_config.toml")))
             .merge(Toml::file(format!("{TEST_DATA_DIR}/site_config.toml")))
             .extract()
@@ -3624,7 +3624,7 @@ mod tests {
                 override_target_ip: Some("1.2.3.4".to_owned()),
                 override_target_port: Some(10443),
                 allow_zero_dpu_hosts: false,
-                bmc_proxy: carbide_site_explorer::config::bmc_proxy(None),
+                bmc_proxy: nico_site_explorer::config::bmc_proxy(None),
                 allow_changing_bmc_proxy: None,
                 reset_rate_limit: Duration::hours(2),
                 admin_segment_type_non_dpu: Arc::new(false.into()),
@@ -3728,17 +3728,17 @@ mod tests {
     #[allow(clippy::result_large_err)] // complains about figma::Error which we don't control
     fn deserialize_env_patched_full_config() {
         figment::Jail::expect_with(|jail| {
-            jail.set_env("CARBIDE_API_DATABASE_URL", "postgres://othersql");
-            jail.set_env("CARBIDE_API_ASN", 777);
-            jail.set_env("CARBIDE_API_AUTH", "{permissive_mode=true}");
+            jail.set_env("NICO_API_DATABASE_URL", "postgres://othersql");
+            jail.set_env("NICO_API_ASN", 777);
+            jail.set_env("NICO_API_AUTH", "{permissive_mode=true}");
             jail.set_env(
-                "CARBIDE_API_TLS",
+                "NICO_API_TLS",
                 "{identity_pemfile_path=/patched/path/to/cert}",
             );
 
-            let config: CarbideConfig = Figment::new()
+            let config: NicoConfig = Figment::new()
                 .merge(Toml::file(format!("{TEST_DATA_DIR}/full_config.toml")))
-                .merge(Env::prefixed("CARBIDE_API_"))
+                .merge(Env::prefixed("NICO_API_"))
                 .extract()
                 .unwrap();
             assert_eq!(config.listen, "[::]:1081".parse().unwrap());
@@ -3808,7 +3808,7 @@ mod tests {
     fn deserialize_dpa_config() {
         let toml = r#"
 enabled=true
-mqtt_endpoint = "mqtt.forge"
+mqtt_endpoint = "mqtt.nico"
         "#;
 
         let dpa_config: DpaConfig = Figment::new().merge(Toml::string(toml)).extract().unwrap();
@@ -3817,7 +3817,7 @@ mqtt_endpoint = "mqtt.forge"
             dpa_config,
             DpaConfig {
                 enabled: true,
-                mqtt_endpoint: "mqtt.forge".to_string(),
+                mqtt_endpoint: "mqtt.nico".to_string(),
                 mqtt_broker_port: 1884,
                 hb_interval: Duration::minutes(2),
                 subnet_ip: Ipv4Addr::UNSPECIFIED,
@@ -3835,7 +3835,7 @@ dpu_enable_secure_boot = true
 num_of_vfs = 64
 "#;
 
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/full_config.toml")))
             .merge(Toml::string(toml))
             .extract()
@@ -3858,7 +3858,7 @@ num_of_vfs = 127
         let error = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/full_config.toml")))
             .merge(Toml::string(toml))
-            .extract::<CarbideConfig>()
+            .extract::<NicoConfig>()
             .unwrap_err();
 
         // Surface a clear operator-facing message for the invalid value.
@@ -3935,7 +3935,7 @@ version = "32.44.0000"
 firmware_url = "ssh://firmwarehost/path/to/fw.bin"
         "#;
 
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .merge(Toml::string(toml))
             .extract()
@@ -3983,7 +3983,7 @@ version = "32.44.0000"
 firmware_url = "https://firmware.example.com/fw-b.bin"
         "#;
 
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .merge(Toml::string(toml))
             .extract()
@@ -4013,7 +4013,7 @@ firmware_url = "https://firmware.example.com/fw-b.bin"
 
     #[test]
     fn get_mlxconfig_profile_lookup() {
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/full_config.toml")))
             .extract()
             .unwrap();
@@ -4037,7 +4037,7 @@ firmware_url = "https://firmware.example.com/fw-b.bin"
 
     #[test]
     fn get_mlxconfig_profile_none_when_unconfigured() {
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .extract()
             .unwrap();
@@ -4049,7 +4049,7 @@ firmware_url = "https://firmware.example.com/fw-b.bin"
 
     #[test]
     fn supernic_firmware_profiles_empty_by_default() {
-        let config: CarbideConfig = Figment::new()
+        let config: NicoConfig = Figment::new()
             .merge(Toml::file(format!("{TEST_DATA_DIR}/min_config.toml")))
             .extract()
             .unwrap();

@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-//! Describes hardware that is discovered by Forge
+//! Describes hardware that is discovered by NICo
 
 use base64::prelude::*;
-use carbide_network::{MELLANOX_SF_VF_MAC_ADDRESS_IN, MELLANOX_SF_VF_MAC_ADDRESS_OUT};
-use carbide_utils::arch::CpuArchitecture;
-use carbide_utils::try_convert_vec;
+use nico_network::{MELLANOX_SF_VF_MAC_ADDRESS_IN, MELLANOX_SF_VF_MAC_ADDRESS_OUT};
+use nico_utils::arch::CpuArchitecture;
+use nico_utils::try_convert_vec;
 use mac_address::MacAddress;
 use model::hardware_info::{
     BlockDevice, CpuInfo, DmiData, DpuData, Gpu, GpuPlatformInfo, HardwareInfo,
@@ -535,10 +535,10 @@ impl TryFrom<HardwareInfo> for rpc::machine_discovery::DiscoveryInfo {
     }
 }
 
-impl TryFrom<crate::forge::MachineInventory> for MachineInventory {
+impl TryFrom<crate::nico::MachineInventory> for MachineInventory {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::MachineInventory) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineInventory) -> Result<Self, Self::Error> {
         Ok(MachineInventory {
             components: value
                 .components
@@ -549,12 +549,12 @@ impl TryFrom<crate::forge::MachineInventory> for MachineInventory {
     }
 }
 
-impl TryFrom<crate::forge::MachineInventorySoftwareComponent>
+impl TryFrom<crate::nico::MachineInventorySoftwareComponent>
     for MachineInventorySoftwareComponent
 {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::MachineInventorySoftwareComponent) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineInventorySoftwareComponent) -> Result<Self, Self::Error> {
         Ok(MachineInventorySoftwareComponent {
             name: value.name,
             version: value.version,
@@ -563,13 +563,13 @@ impl TryFrom<crate::forge::MachineInventorySoftwareComponent>
     }
 }
 
-impl From<MachineInventory> for rpc::forge::MachineInventory {
+impl From<MachineInventory> for rpc::nico::MachineInventory {
     fn from(value: MachineInventory) -> Self {
-        rpc::forge::MachineInventory {
+        rpc::nico::MachineInventory {
             components: value
                 .components
                 .into_iter()
-                .map(|c| rpc::forge::MachineInventorySoftwareComponent {
+                .map(|c| rpc::nico::MachineInventorySoftwareComponent {
                     name: c.name,
                     version: c.version,
                     url: c.url,
@@ -579,23 +579,23 @@ impl From<MachineInventory> for rpc::forge::MachineInventory {
     }
 }
 
-impl From<MachineNvLinkInfo> for rpc::forge::MachineNvLinkInfo {
+impl From<MachineNvLinkInfo> for rpc::nico::MachineNvLinkInfo {
     fn from(value: MachineNvLinkInfo) -> Self {
-        rpc::forge::MachineNvLinkInfo {
+        rpc::nico::MachineNvLinkInfo {
             domain_uuid: Some(value.domain_uuid),
             gpus: value
                 .gpus
                 .into_iter()
-                .map(rpc::forge::NvLinkGpu::from)
+                .map(rpc::nico::NvLinkGpu::from)
                 .collect(),
             chassis_serial: value.chassis_serial,
         }
     }
 }
 
-impl From<NvLinkGpu> for rpc::forge::NvLinkGpu {
+impl From<NvLinkGpu> for rpc::nico::NvLinkGpu {
     fn from(value: NvLinkGpu) -> Self {
-        rpc::forge::NvLinkGpu {
+        rpc::nico::NvLinkGpu {
             tray_index: value.tray_index,
             slot_id: value.slot_id,
             device_id: value.device_id,
@@ -604,10 +604,10 @@ impl From<NvLinkGpu> for rpc::forge::NvLinkGpu {
     }
 }
 
-impl TryFrom<rpc::forge::MachineNvLinkInfo> for MachineNvLinkInfo {
+impl TryFrom<rpc::nico::MachineNvLinkInfo> for MachineNvLinkInfo {
     type Error = rpc::errors::RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::MachineNvLinkInfo) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineNvLinkInfo) -> Result<Self, Self::Error> {
         Ok(MachineNvLinkInfo {
             domain_uuid: value.domain_uuid.ok_or(
                 rpc::errors::RpcDataConversionError::MissingArgument("domain_uuid"),
@@ -618,8 +618,8 @@ impl TryFrom<rpc::forge::MachineNvLinkInfo> for MachineNvLinkInfo {
     }
 }
 
-impl From<rpc::forge::NvLinkGpu> for NvLinkGpu {
-    fn from(value: rpc::forge::NvLinkGpu) -> Self {
+impl From<rpc::nico::NvLinkGpu> for NvLinkGpu {
+    fn from(value: rpc::nico::NvLinkGpu) -> Self {
         NvLinkGpu {
             tray_index: value.tray_index,
             slot_id: value.slot_id,

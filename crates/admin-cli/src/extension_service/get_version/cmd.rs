@@ -16,10 +16,10 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn handle_get_version(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn handle_get_version(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     let versions = api_client
         .0
         .get_dpu_extension_service_versions_info(args)

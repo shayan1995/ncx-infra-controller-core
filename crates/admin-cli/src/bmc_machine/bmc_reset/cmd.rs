@@ -16,10 +16,10 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn bmc_reset(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn bmc_reset(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     if args.use_ipmitool {
         eprintln!(
             "Warning: ipmitool bmc reset requests may be silently ignored if the BMC is in lockdown mode."

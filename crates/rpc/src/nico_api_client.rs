@@ -22,14 +22,14 @@ use chrono::{DateTime, Utc};
 use nonempty::NonEmpty;
 use tonic::Status;
 
-use crate::forge_tls_client::{
-    ApiConfig, ForgeClientConfig, ForgeClientT, ForgeTlsClient, RetryConfig,
+use crate::nico_tls_client::{
+    ApiConfig, NicoClientConfig, NicoClientT, NicoTlsClient, RetryConfig,
 };
-pub use crate::protos::forge_api_client::ForgeApiClient;
+pub use crate::protos::nico_api_client::NicoApiClient;
 
-impl ForgeApiClient {
+impl NicoApiClient {
     pub fn new(api_config: &ApiConfig<'_>) -> Self {
-        Self::build(ForgeTlsConnectionProvider {
+        Self::build(NicoTlsConnectionProvider {
             urls: NonEmpty::from((
                 api_config.url.to_string(),
                 api_config.additional_urls.to_vec(),
@@ -45,7 +45,7 @@ impl ForgeApiClient {
         api_config: &ApiConfig<'_>,
         fail_over_on: FailOverOn,
     ) -> Self {
-        Self::build(ForgeTlsConnectionProvider {
+        Self::build(NicoTlsConnectionProvider {
             urls: NonEmpty::from((
                 api_config.url.to_string(),
                 api_config.additional_urls.to_vec(),
@@ -59,28 +59,28 @@ impl ForgeApiClient {
 }
 
 #[derive(Debug)]
-pub struct ForgeTlsConnectionProvider {
+pub struct NicoTlsConnectionProvider {
     pub urls: NonEmpty<String>,
-    pub client_config: ForgeClientConfig,
+    pub client_config: NicoClientConfig,
     pub retry_config: RetryConfig,
     pub fail_over_on: FailOverOn,
     pub last_connection_index: AtomicUsize,
 }
 
 #[derive(Debug, Clone, Copy)]
-/// Determines when ForgeTlsConnectionProvider should select the next server in the list, if
-/// configured for multiple carbide-api servers.
+/// Determines when NicoTlsConnectionProvider should select the next server in the list, if
+/// configured for multiple nico-api servers.
 pub enum FailOverOn {
-    /// Fail over whenever there is a failure connecting to carbide-api. Note that fail-back is not
+    /// Fail over whenever there is a failure connecting to nico-api. Note that fail-back is not
     /// (yet) supported.
     ConnectionError,
-    /// Select a new carbide-api instance on every call to carbide-api. This is currently only
+    /// Select a new nico-api instance on every call to nico-api. This is currently only
     /// needed by tests, where we intentionally want to vary the connection to emulate what a load
     /// balancer would do.
     EveryApiCall,
 }
 
-impl ForgeTlsConnectionProvider {
+impl NicoTlsConnectionProvider {
     fn current_endpoint_url(&self) -> &str {
         // SAFETY: last_connection_index is always modulo urls.len()
         self.urls
@@ -101,8 +101,8 @@ impl ForgeTlsConnectionProvider {
 }
 
 #[async_trait::async_trait]
-impl tonic_client_wrapper::ConnectionProvider<ForgeClientT> for ForgeTlsConnectionProvider {
-    async fn provide_connection(&self) -> Result<ForgeClientT, Status> {
+impl tonic_client_wrapper::ConnectionProvider<NicoClientT> for NicoTlsConnectionProvider {
+    async fn provide_connection(&self) -> Result<NicoClientT, Status> {
         let mut url = if self.urls.len() <= 1 {
             self.urls.first()
         } else {
@@ -114,7 +114,7 @@ impl tonic_client_wrapper::ConnectionProvider<ForgeClientT> for ForgeTlsConnecti
 
         let mut retries = 0;
         loop {
-            match ForgeTlsClient::retry_build(
+            match NicoTlsClient::retry_build(
                 &ApiConfig::new(url, &self.client_config).with_retry_config(RetryConfig {
                     // We do our own retry counting
                     retries: 1,
@@ -152,7 +152,7 @@ impl tonic_client_wrapper::ConnectionProvider<ForgeClientT> for ForgeTlsConnecti
                         cert_path = &client_cert.cert_path,
                         %old_cert_date,
                         %new_cert_date,
-                        "ForgeApiClient: Reconnecting to pick up newer client certificate"
+                        "NicoApiClient: Reconnecting to pick up newer client certificate"
                     );
                     true
                 } else {
@@ -169,7 +169,7 @@ impl tonic_client_wrapper::ConnectionProvider<ForgeClientT> for ForgeTlsConnecti
                         key_path = &client_cert.key_path,
                         %old_key_date,
                         %new_key_date,
-                        "ForgeApiClient: Reconnecting to pick up newer client key"
+                        "NicoApiClient: Reconnecting to pick up newer client key"
                     );
                     true
                 } else {

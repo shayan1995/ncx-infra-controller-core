@@ -17,7 +17,7 @@
 
 use clap::Parser;
 
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::os_image::common::str_to_rpc_uuid;
 
 #[derive(Parser, Debug, Clone)]
@@ -56,9 +56,9 @@ pub struct UpdateRequest {
 }
 
 impl TryFrom<Args> for UpdateRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
 
-    fn try_from(args: Args) -> CarbideCliResult<Self> {
+    fn try_from(args: Args) -> NicoCliResult<Self> {
         let id = str_to_rpc_uuid(&args.id)?;
         Ok(UpdateRequest {
             id,

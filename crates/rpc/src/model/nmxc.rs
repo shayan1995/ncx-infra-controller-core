@@ -19,7 +19,7 @@ use model::nmxc::NvlinkNmxcEndpoint;
 
 use crate as rpc;
 
-impl From<NvlinkNmxcEndpoint> for rpc::forge::NvlinkNmxcEndpoint {
+impl From<NvlinkNmxcEndpoint> for rpc::nico::NvlinkNmxcEndpoint {
     fn from(row: NvlinkNmxcEndpoint) -> Self {
         Self {
             chassis_serial: row.chassis_serial,

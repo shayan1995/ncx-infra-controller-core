@@ -16,7 +16,7 @@
  */
 use std::collections::HashMap;
 
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
 use chrono::Utc;
 use common::api_fixtures::{
     TestEnv, TestEnvOverrides, create_test_env, create_test_env_with_overrides, get_config,
@@ -27,8 +27,8 @@ use mac_address::MacAddress;
 use model::machine::{
     CleanupContext, DpuInitState, HostReprovisionState, MachineState, ManagedHostState,
 };
-use rpc::forge::CloudInitInstructionsRequest;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::CloudInitInstructionsRequest;
+use rpc::nico::nico_server::NICo;
 
 use crate::tests::common;
 use crate::tests::common::api_fixtures::managed_host::ManagedHostConfig;
@@ -63,9 +63,9 @@ async fn move_machine_to_needed_state(
 async fn get_pxe_instructions(
     env: &TestEnv,
     interface_id: MachineInterfaceId,
-    arch: rpc::forge::MachineArchitecture,
+    arch: rpc::nico::MachineArchitecture,
     product: Option<String>,
-) -> rpc::forge::PxeInstructions {
+) -> rpc::nico::PxeInstructions {
     let mut txn = env.pool.begin().await.unwrap();
     let iface = db::machine_interface::find_one(txn.as_mut(), interface_id)
         .await
@@ -78,7 +78,7 @@ async fn get_pxe_instructions(
         .to_string();
 
     env.api
-        .get_pxe_instructions(tonic::Request::new(rpc::forge::PxeInstructionRequest {
+        .get_pxe_instructions(tonic::Request::new(rpc::nico::PxeInstructionRequest {
             arch: arch as i32,
             product,
             client_ip: Some(client_ip),
@@ -109,7 +109,7 @@ async fn test_pxe_dpu_ready(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         dpu_interface_id,
-        rpc::forge::MachineArchitecture::Arm,
+        rpc::nico::MachineArchitecture::Arm,
         Some("Fake Bluefield".to_string()),
     )
     .await;
@@ -149,7 +149,7 @@ async fn test_pxe_dpu_waiting_for_network_install(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         machine.interfaces.first().unwrap().id,
-        rpc::forge::MachineArchitecture::Arm,
+        rpc::nico::MachineArchitecture::Arm,
         Some("Fake Bluefield".to_string()),
     )
     .await;
@@ -165,7 +165,7 @@ async fn test_pxe_dpu_waiting_for_network_install(pool: sqlx::PgPool) {
         "This state assumes an OS is provisioned and will exit into the OS in 5 seconds."
     ));
 
-    assert!(!instructions.pxe_script.contains("aarch64/carbide.root"));
+    assert!(!instructions.pxe_script.contains("aarch64/nico.root"));
 }
 
 #[crate::sqlx_test]
@@ -174,7 +174,7 @@ async fn test_dpu_pxe_gets_correct_os_when_machine_is_not_created(
 ) -> eyre::Result<()> {
     // This test ensures that when a DPU PXE boots after site-explorer ingestion, but before the
     // managed host is fully configured, we don't confuse it for an ARM host, and we give it
-    // carbide.efi (the DPU OS) and *not* scout.efi.
+    // nico.efi (the DPU OS) and *not* scout.efi.
     let env = create_test_env(pool).await;
     let mock_explored_host = MockExploredHost::new(&env, ManagedHostConfig::default());
     let dpu_oob_mac = mock_explored_host.managed_host.dpus[0].oob_mac_address;
@@ -196,7 +196,7 @@ async fn test_dpu_pxe_gets_correct_os_when_machine_is_not_created(
     let instructions = get_pxe_instructions(
         &env,
         dpu_interface_id,
-        rpc::forge::MachineArchitecture::Arm,
+        rpc::nico::MachineArchitecture::Arm,
         Some("Fake Bluefield".to_string()),
     )
     .await;
@@ -206,8 +206,8 @@ async fn test_dpu_pxe_gets_correct_os_when_machine_is_not_created(
         "should PXE boot, got an exit instruction"
     );
     assert!(
-        instructions.pxe_script.contains("aarch64/carbide.efi"),
-        "should PXE boot to carbide.efi for DPU agent OS"
+        instructions.pxe_script.contains("aarch64/nico.efi"),
+        "should PXE boot to nico.efi for DPU agent OS"
     );
 
     Ok(())
@@ -225,7 +225,7 @@ async fn test_pxe_when_machine_is_not_ingested(pool: sqlx::PgPool) -> eyre::Resu
     let instructions = get_pxe_instructions(
         &env,
         dpu_interface_id,
-        rpc::forge::MachineArchitecture::Arm,
+        rpc::nico::MachineArchitecture::Arm,
         Some("Fake Host".to_string()),
     )
     .await;
@@ -242,7 +242,7 @@ async fn test_pxe_when_machine_is_not_ingested(pool: sqlx::PgPool) -> eyre::Resu
     let instructions = get_pxe_instructions(
         &env,
         dpu_interface_id,
-        rpc::forge::MachineArchitecture::X86,
+        rpc::nico::MachineArchitecture::X86,
         None,
     )
     .await;
@@ -270,7 +270,7 @@ async fn test_pxe_when_dpu_is_not_ingested(pool: sqlx::PgPool) -> eyre::Result<(
     let instructions = get_pxe_instructions(
         &env,
         dpu_interface_id,
-        rpc::forge::MachineArchitecture::Arm,
+        rpc::nico::MachineArchitecture::Arm,
         Some("Fake Bluefield".to_string()),
     )
     .await;
@@ -313,7 +313,7 @@ async fn test_pxe_host(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         host_interface_id,
-        rpc::forge::MachineArchitecture::X86,
+        rpc::nico::MachineArchitecture::X86,
         None,
     )
     .await;
@@ -333,7 +333,7 @@ async fn test_pxe_host(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         host_interface_id,
-        rpc::forge::MachineArchitecture::X86,
+        rpc::nico::MachineArchitecture::X86,
         None,
     )
     .await;
@@ -354,7 +354,7 @@ async fn test_pxe_host(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         host_interface_id,
-        rpc::forge::MachineArchitecture::X86,
+        rpc::nico::MachineArchitecture::X86,
         None,
     )
     .await;
@@ -373,7 +373,7 @@ async fn test_pxe_host(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         host_interface_id,
-        rpc::forge::MachineArchitecture::X86,
+        rpc::nico::MachineArchitecture::X86,
         Some("Fake X86 Host".to_string()),
     )
     .await;
@@ -400,7 +400,7 @@ async fn test_pxe_instance(pool: sqlx::PgPool) {
         .await;
 
     let instructions = host_interface
-        .get_pxe_instructions(rpc::forge::MachineArchitecture::X86)
+        .get_pxe_instructions(rpc::nico::MachineArchitecture::X86)
         .await;
 
     assert_eq!(instructions.pxe_script, "SomeRandomiPxe".to_string());
@@ -474,7 +474,7 @@ async fn test_cloud_init_uses_configured_num_of_vfs(pool: sqlx::PgPool) {
         .expect("get_cloud_init_instructions returned an error")
         .into_inner();
 
-    // The configured value should pass through to carbide-pxe unchanged.
+    // The configured value should pass through to nico-pxe unchanged.
     let discovery_instructions = cloud_init_cfg
         .discovery_instructions
         .expect("expected discovery instructions");
@@ -564,7 +564,7 @@ async fn test_pxe_url_overrides_for_external_host(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         interface_id,
-        rpc::forge::MachineArchitecture::X86,
+        rpc::nico::MachineArchitecture::X86,
         None,
     )
     .await;
@@ -636,7 +636,7 @@ async fn test_pxe_url_overrides_none_for_internal_host(pool: sqlx::PgPool) {
     let instructions = get_pxe_instructions(
         &env,
         host_interface_id,
-        rpc::forge::MachineArchitecture::X86,
+        rpc::nico::MachineArchitecture::X86,
         None,
     )
     .await;
@@ -704,8 +704,8 @@ async fn test_cloud_init_url_overrides_none_for_internal_host(pool: sqlx::PgPool
     );
 }
 
-// carbide-pxe identifies the booting machine by the client IP it observed
-// and forwards it to carbide-api. An IP that doesn't map to any interface
+// nico-pxe identifies the booting machine by the client IP it observed
+// and forwards it to nico-api. An IP that doesn't map to any interface
 // in machine_interface_addresses should NotFound cleanly. (The happy path
 // -- known IP resolves to the right interface -- is exercised by every
 // other test in this module that calls get_pxe_instructions, since the
@@ -716,8 +716,8 @@ async fn test_pxe_instructions_unknown_client_ip_returns_not_found(pool: sqlx::P
 
     let result = env
         .api
-        .get_pxe_instructions(tonic::Request::new(rpc::forge::PxeInstructionRequest {
-            arch: rpc::forge::MachineArchitecture::X86 as i32,
+        .get_pxe_instructions(tonic::Request::new(rpc::nico::PxeInstructionRequest {
+            arch: rpc::nico::MachineArchitecture::X86 as i32,
             product: None,
             client_ip: Some("203.0.113.99".to_string()),
             ..Default::default()

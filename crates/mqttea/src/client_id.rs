@@ -48,9 +48,9 @@ const SUFFIX_LEN: usize = 8;
 /// ```
 /// use mqttea::client_id::unique_client_id;
 ///
-/// let id = unique_client_id("carbide-dsx-exchange-event-bus");
-/// assert!(id.starts_with("carbide-dsx-exchange-event-bus-"));
-/// assert_eq!(id.len(), "carbide-dsx-exchange-event-bus-".len() + 8);
+/// let id = unique_client_id("nico-dsx-exchange-event-bus");
+/// assert!(id.starts_with("nico-dsx-exchange-event-bus-"));
+/// assert_eq!(id.len(), "nico-dsx-exchange-event-bus-".len() + 8);
 /// ```
 pub fn unique_client_id(base: &str) -> String {
     let suffix: String = Uuid::new_v4()

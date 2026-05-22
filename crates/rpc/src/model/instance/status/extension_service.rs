@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::extension_service::ExtensionServiceId;
+use nico_uuid::extension_service::ExtensionServiceId;
 use config_version::ConfigVersion;
 use model::instance::status::extension_service::{
     ExtensionServiceComponent, ExtensionServiceDeploymentStatus, ExtensionServiceStatusObservation,
@@ -23,7 +23,7 @@ use model::instance::status::extension_service::{
 };
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<InstanceExtensionServicesStatus> for rpc::InstanceDpuExtensionServicesStatus {
     type Error = RpcDataConversionError;

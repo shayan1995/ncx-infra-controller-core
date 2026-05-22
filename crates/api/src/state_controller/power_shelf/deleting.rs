@@ -17,7 +17,7 @@
 
 //! Handler for PowerShelfControllerState::Deleting.
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use db::power_shelf as db_power_shelf;
 use model::power_shelf::{PowerShelf, PowerShelfControllerState};
 use state_controller::state_handler::{

@@ -19,9 +19,9 @@
 
 use std::sync::Arc;
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use db::power_shelf as db_power_shelf;
-use forge_secrets::credentials::TestCredentialManager;
+use nico_secrets::credentials::TestCredentialManager;
 use model::power_shelf::{PowerShelf, PowerShelfControllerState, PowerShelfMaintenanceOperation};
 use sqlx::PgConnection;
 

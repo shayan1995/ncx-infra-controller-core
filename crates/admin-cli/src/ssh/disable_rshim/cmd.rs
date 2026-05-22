@@ -15,18 +15,18 @@
  * limitations under the License.
  */
 
-use forge_ssh::ssh::disable_rshim;
+use nico_ssh::ssh::disable_rshim;
 
 use super::super::common::SshArgs;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
-pub async fn disable_rshim_cmd(args: SshArgs) -> CarbideCliResult<()> {
+pub async fn disable_rshim_cmd(args: SshArgs) -> NicoCliResult<()> {
     disable_rshim(
         args.credentials.bmc_ip_address,
         args.credentials.bmc_username,
         args.credentials.bmc_password,
     )
     .await
-    .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+    .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
     Ok(())
 }

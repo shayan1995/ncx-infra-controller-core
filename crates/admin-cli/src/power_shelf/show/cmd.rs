@@ -17,15 +17,15 @@
 
 use std::str::FromStr;
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use color_eyre::Result;
 use prettytable::{Table, row};
 use rpc::admin_cli::OutputFormat;
-use rpc::forge::PowerShelf;
+use rpc::nico::PowerShelf;
 
 use super::args::Args;
 use crate::cfg::runtime::RuntimeConfig;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub fn show_power_shelves(
@@ -117,7 +117,7 @@ pub async fn handle_show(
     args: Args,
     api_client: &ApiClient,
     config: &RuntimeConfig,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let power_shelves = match args.identifier {
         Some(id) if !id.is_empty() => match PowerShelfId::from_str(&id) {
             Ok(power_shelf_id) => {
@@ -128,7 +128,7 @@ pub async fn handle_show(
             }
             Err(_) => {
                 // Fall back to name-based lookup
-                let query = rpc::forge::PowerShelfQuery {
+                let query = rpc::nico::PowerShelfQuery {
                     name: Some(id),
                     power_shelf_id: None,
                 };
@@ -136,7 +136,7 @@ pub async fn handle_show(
             }
         },
         _ => {
-            let filter = rpc::forge::PowerShelfSearchFilter::default();
+            let filter = rpc::nico::PowerShelfSearchFilter::default();
             api_client
                 .get_all_power_shelves(filter, config.page_size)
                 .await?

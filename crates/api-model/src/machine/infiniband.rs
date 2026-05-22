@@ -18,7 +18,7 @@
 use std::collections::HashSet;
 use std::fmt::Write;
 
-use carbide_uuid::infiniband::IBPartitionId;
+use nico_uuid::infiniband::IBPartitionId;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -314,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_ib_config_synced_ok_when_synced() {
-        use carbide_uuid::infiniband::IBPartitionId;
+        use nico_uuid::infiniband::IBPartitionId;
 
         use crate::instance::config::network::InterfaceFunctionId;
         let partition_id: IBPartitionId =

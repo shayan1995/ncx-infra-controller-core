@@ -16,10 +16,10 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn reset_host_reprovisioning(api_client: &ApiClient, args: Args) -> CarbideCliResult<()> {
+pub async fn reset_host_reprovisioning(api_client: &ApiClient, args: Args) -> NicoCliResult<()> {
     api_client.0.reset_host_reprovisioning(args.machine).await?;
     Ok(())
 }

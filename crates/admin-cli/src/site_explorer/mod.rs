@@ -42,11 +42,11 @@ pub enum Cmd {
     #[clap(about = "Retrieves the latest site exploration report", subcommand)]
     GetReport(get_report::Args),
     #[clap(
-        about = "Asks carbide-api to explore a single host and prints the report. Does not store it."
+        about = "Asks nico-api to explore a single host and prints the report. Does not store it."
     )]
     Explore(explore::Args),
     #[clap(
-        about = "Asks carbide-api to explore a single host in the next exploration cycle. The results will be stored."
+        about = "Asks nico-api to explore a single host in the next exploration cycle. The results will be stored."
     )]
     ReExplore(re_explore::Args),
     #[clap(

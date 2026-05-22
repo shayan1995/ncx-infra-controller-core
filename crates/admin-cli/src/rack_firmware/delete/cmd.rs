@@ -16,10 +16,10 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
-pub async fn delete(opts: Args, api_client: &ApiClient) -> Result<(), CarbideCliError> {
+pub async fn delete(opts: Args, api_client: &ApiClient) -> Result<(), NicoCliError> {
     let id = opts.id.clone();
 
     match api_client.0.delete_rack_firmware(opts).await {
@@ -27,12 +27,12 @@ pub async fn delete(opts: Args, api_client: &ApiClient) -> Result<(), CarbideCli
             println!("Deleted Rack firmware configuration: {}", id);
         }
         Err(status) if status.code() == tonic::Code::NotFound => {
-            return Err(CarbideCliError::GenericError(format!(
+            return Err(NicoCliError::GenericError(format!(
                 "Rack firmware configuration not found: {}",
                 id
             )));
         }
-        Err(err) => return Err(CarbideCliError::from(err)),
+        Err(err) => return Err(NicoCliError::from(err)),
     }
 
     Ok(())

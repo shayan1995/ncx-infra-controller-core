@@ -22,13 +22,13 @@ pub use args::Args;
 
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 /// `expected-machine patch`: forwards CLI flags to `ApiClient::patch_expected_machine` (partial
 /// update; unset flags keep existing values). `--bmc-ip-address` uses the same server-side
 /// static-interface logic as a full RPC update.
 impl Run for Args {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         if let Err(e) = self.validate() {
             eprintln!("{e}");
             return Ok(());
@@ -52,7 +52,7 @@ impl Run for Args {
                 self.bmc_retain_credentials,
                 self.dpu_mode,
                 self.disable_lockdown
-                    .map(|dl| ::rpc::forge::HostLifecycleProfile {
+                    .map(|dl| ::rpc::nico::HostLifecycleProfile {
                         disable_lockdown: Some(dl),
                     }),
             )

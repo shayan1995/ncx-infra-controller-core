@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-//! Describes the Forge site controller internal data model
+//! Describes the NICo site controller internal data model
 //!
 //! The model described here is used in both internal decision logic and might
 //! be stored in database fields.
 //! Data inside this module therefore needs to be backward compatible with previous
-//! versions of Forge that are deployed.
+//! versions of NICo that are deployed.
 //!
 //! The module should only contain data definitions and associated helper functions,
 //! but no actual business logic.
@@ -28,7 +28,7 @@
 use std::fmt;
 use std::ops::{Deref, DerefMut};
 
-use carbide_uuid::network::NetworkSegmentId;
+use nico_uuid::network::NetworkSegmentId;
 use instance::config::network::InterfaceFunctionId;
 use mac_address::MacAddress;
 use serde::{Deserialize, Serialize};
@@ -97,7 +97,7 @@ pub mod vpc;
 pub mod vpc_prefix;
 
 /// Error that is returned when we validate various configurations that are obtained
-/// from Forge users.
+/// from NICo users.
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum ConfigValidationError {
     /// A configuration value is invalid
@@ -166,7 +166,7 @@ impl ConfigValidationError {
 }
 
 // Error that is returned when we validate various status that are obtained
-/// from Forge system components
+/// from NICo system components
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum StatusValidationError {
     /// A configuration value is invalid

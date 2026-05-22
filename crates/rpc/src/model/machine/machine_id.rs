@@ -18,7 +18,7 @@
 // use std::fmt::Write;
 use std::str::FromStr;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 
 use crate::errors::RpcDataConversionError;
 

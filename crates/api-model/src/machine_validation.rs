@@ -17,8 +17,8 @@
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::machine_validation::MachineValidationId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::machine_validation::MachineValidationId;
 use chrono::{DateTime, Utc};
 use config_version::ConfigVersion;
 use serde::{Deserialize, Serialize};

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::extension_service::ExtensionServiceId;
+use nico_uuid::extension_service::ExtensionServiceId;
 use chrono::prelude::*;
 use config_version::ConfigVersion;
 use serde::{Deserialize, Serialize};

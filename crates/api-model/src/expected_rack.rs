@@ -17,7 +17,7 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::rack::{RackId, RackProfileId};
+use nico_uuid::rack::{RackId, RackProfileId};
 use serde::Deserialize;
 use sqlx::postgres::PgRow;
 use sqlx::{FromRow, Row};
@@ -26,14 +26,14 @@ use crate::metadata::{Metadata, default_metadata_for_deserializer};
 
 /// ExpectedRack represents a rack that has been declared and is expected to
 /// be fully populated with compute trays, switches, and power shelves. The
-/// rack_profile_id references a RackProfile in the Carbide config file.
+/// rack_profile_id references a RackProfile in the NICo config file.
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct ExpectedRack {
     /// rack_id is the rack identifier, which comes from the DCIM.
     pub rack_id: RackId,
 
     /// rack_profile_id is the identifier of the rack profile (e.g. "NVL72").
-    /// This maps to a RackProfile in the Carbide config file, which defines
+    /// This maps to a RackProfile in the NICo config file, which defines
     /// the rack hardware type, topology, and rack capabilities.
     pub rack_profile_id: RackProfileId,
 

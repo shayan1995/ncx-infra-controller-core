@@ -17,8 +17,8 @@
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
 
-use ::rpc::forge as rpc;
-use carbide_network::ip::{IdentifyAddressFamily, IpAddressFamily};
+use ::rpc::nico as rpc;
+use nico_network::ip::{IdentifyAddressFamily, IpAddressFamily};
 use db::dhcp_entry::DhcpEntry;
 use db::{self, expected_machine, machine_interface};
 use mac_address::MacAddress;
@@ -29,7 +29,7 @@ use model::network_segment::{AllocationStrategy, NetworkSegmentSearchConfig, Net
 use sqlx::PgConnection;
 use tonic::{Request, Response};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::Api;
 
 // MTU for both the underlay and overlay networks on
@@ -52,9 +52,9 @@ async fn handle_overlay_from_dpa(
     dpa_if: &mut DpaInterface,
     macaddr: MacAddress,
     desired_addr: IpAddr,
-) -> Result<Option<Response<rpc::DhcpRecord>>, CarbideError> {
+) -> Result<Option<Response<rpc::DhcpRecord>>, NicoError> {
     let IpAddr::V4(ip_v4_addr) = desired_addr else {
-        return Err(CarbideError::internal(
+        return Err(NicoError::internal(
             "IPv6 not supported for DPA overlay".to_string(),
         ));
     };
@@ -90,7 +90,7 @@ async fn handle_underlay_from_dpa(
     dpa_if: &mut DpaInterface,
     macaddr: MacAddress,
     relay_address: String,
-) -> Result<Option<Response<rpc::DhcpRecord>>, CarbideError> {
+) -> Result<Option<Response<rpc::DhcpRecord>>, NicoError> {
     // The relay address and the mac address should differ only in bit 0
     let relay_addr = Ipv4Addr::from_str(&relay_address)?;
 
@@ -133,7 +133,7 @@ async fn handle_dhcp_from_dpa(
     macaddr: MacAddress,
     relay_address: String,
     desired_address: Option<IpAddr>,
-) -> Result<Option<Response<rpc::DhcpRecord>>, CarbideError> {
+) -> Result<Option<Response<rpc::DhcpRecord>>, NicoError> {
     if !api.runtime_config.is_dpa_enabled() {
         return Ok(None);
     }
@@ -165,7 +165,7 @@ async fn handle_dhcp_from_dpa(
 pub async fn discover_dhcp(
     api: &Api,
     request: Request<rpc::DhcpDiscovery>,
-) -> Result<Response<rpc::DhcpRecord>, CarbideError> {
+) -> Result<Response<rpc::DhcpRecord>, NicoError> {
     let mut txn = api.txn_begin().await?;
 
     let rpc::DhcpDiscovery {
@@ -245,7 +245,7 @@ pub async fn discover_dhcp(
                     if let Some(m) =
                         expected_machine::find_by_host_mac_address(&mut txn, parsed_mac)
                             .await
-                            .map_err(CarbideError::from)?
+                            .map_err(NicoError::from)?
                     {
                         // If ExpectedHostNics are configured, see if any
                         // of them are annotated as "primary", or if any of
@@ -268,7 +268,7 @@ pub async fn discover_dhcp(
                             && let Some(fixed_ip_str) = &nic.fixed_ip
                         {
                             let fixed_ip: IpAddr = fixed_ip_str.parse().map_err(|_| {
-                            CarbideError::InvalidArgument(format!(
+                            NicoError::InvalidArgument(format!(
                                 "invalid fixed_ip on ExpectedHostNic {parsed_mac}: {fixed_ip_str}"
                             ))
                         })?;
@@ -284,7 +284,7 @@ pub async fn discover_dhcp(
                     } else if let Some(m) =
                         expected_machine::find_by_bmc_mac_address(&mut txn, parsed_mac)
                             .await
-                            .map_err(CarbideError::from)?
+                            .map_err(NicoError::from)?
                         && let Some(bmc_ip) = m.data.bmc_ip_address
                     {
                         // In this case it looks like our parsed MAC address is for the BMC
@@ -320,7 +320,7 @@ pub async fn discover_dhcp(
     )
     .await?
     .pop()
-    .ok_or_else(|| CarbideError::NotFoundError {
+    .ok_or_else(|| NicoError::NotFoundError {
         kind: "network_segment",
         id: machine_interface.segment_id.to_string(),
     })?;
@@ -332,7 +332,7 @@ pub async fn discover_dhcp(
         && !machine_interface.primary_interface
         && segment.config.segment_type == NetworkSegmentType::Admin
     {
-        return Err(CarbideError::FailedPrecondition(format!(
+        return Err(NicoError::FailedPrecondition(format!(
             "DHCP request received on dormant non-primary admin interface {}. Ignoring.",
             machine_interface.id
         )));
@@ -358,7 +358,7 @@ pub async fn discover_dhcp(
         // If the segment only allows static reservations, don't
         // dynamically allocate. The device has no reservation.
         if segment.config.allocation_strategy == AllocationStrategy::Reserved {
-            return Err(CarbideError::internal(format!(
+            return Err(NicoError::internal(format!(
                 "segment {} configured for static DHCP leases only; no static reservation for MAC {parsed_mac}",
                 segment.config.name,
             )));
@@ -385,7 +385,7 @@ pub async fn discover_dhcp(
         // their DHCP proceed.
         let dpus = db::machine::find_dpus_by_host_machine_id(&mut txn, &machine_id).await?;
         if !dpus.is_empty() {
-            return Err(CarbideError::internal(format!(
+            return Err(NicoError::internal(format!(
                 "DHCP request received for instance: {instance_id}. Ignoring."
             )));
         }

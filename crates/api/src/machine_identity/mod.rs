@@ -185,7 +185,7 @@ pub fn public_pem_to_jwk_value(
     }))
 }
 
-/// Serializes `{"keys":[ ... ]}` as compact UTF-8 JSON for gRPC [`rpc::forge::Jwks::jwks`].
+/// Serializes `{"keys":[ ... ]}` as compact UTF-8 JSON for gRPC [`rpc::nico::Jwks::jwks`].
 pub fn jwks_document_string(keys: &[Value]) -> Result<String, JwkBuildError> {
     if keys.is_empty() {
         return Err(JwkBuildError(
@@ -213,7 +213,7 @@ mod tests {
     fn sign_returns_jwt_svid_for_valid_object_payload_and_key() {
         let payload = serde_json::json!({
             "sub": "spiffe://example.org/machine/123",
-            "iss": "https://carbide/v1/org/org-id",
+            "iss": "https://nico/v1/org/org-id",
             "aud": ["service-a"],
             "exp": 1678886400,
             "iat": 1678882800,

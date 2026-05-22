@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::BmcEndpointRequest;
+use ::rpc::nico::BmcEndpointRequest;
 use mac_address::MacAddress;
 
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn have_credentials(
     api_client: &ApiClient,
     address: &str,
     mac: Option<MacAddress>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let have_credentials = api_client
         .0
         .bmc_credential_status(BmcEndpointRequest {

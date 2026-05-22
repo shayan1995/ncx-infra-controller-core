@@ -24,7 +24,7 @@ use health_report::{
 };
 
 use super::args::{Args, HealthReportTemplates};
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::health_utils;
 use crate::rpc::ApiClient;
 
@@ -132,7 +132,7 @@ pub fn get_health_report(template: HealthReportTemplates, message: Option<String
 
         // Template to indicate that the instance is identified as unhealthy and
         // is ready to be picked for OnlineRepair without releasing the instance.
-        // Adds `PreventInstanceDeletion` so carbide-api refuses `ReleaseInstance` until this merge is cleared
+        // Adds `PreventInstanceDeletion` so nico-api refuses `ReleaseInstance` until this merge is cleared
         // (admin machine force-delete is unchanged). Merge source `request-online-repair` is separate
         // from `tenant-reported-issue`.
         HealthReportTemplates::RequestOnlineRepair => {
@@ -169,7 +169,7 @@ pub async fn handle_health_report(
     command: Args,
     output_format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match command {
         Args::Show { machine_id } => {
             let response = api_client.machine_list_health_reports(machine_id).await?;

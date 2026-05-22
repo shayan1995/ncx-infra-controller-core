@@ -115,7 +115,7 @@ impl MlxVariableRegistry {
     // Returns true if no filters are configured (allows all devices).
     pub fn matches_device(
         &self,
-        device_info: &carbide_libmlx_model::device::info::MlxDeviceInfo,
+        device_info: &nico_libmlx_model::device::info::MlxDeviceInfo,
     ) -> bool {
         self.filters
             .as_ref()

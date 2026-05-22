@@ -18,8 +18,8 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 use ::rpc::Timestamp;
-use ::rpc::forge::{Metadata, VpcVirtualizationType};
-use carbide_uuid::vpc::VpcId;
+use ::rpc::nico::{Metadata, VpcVirtualizationType};
+use nico_uuid::vpc::VpcId;
 
 use crate::config::MachineATronContext;
 use crate::tui::{UiUpdate, VpcDetails};

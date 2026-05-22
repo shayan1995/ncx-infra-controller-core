@@ -17,8 +17,8 @@
 
 use std::collections::HashMap;
 
-use ::rpc::forge::instance_interface_config::NetworkDetails;
-use ::rpc::forge::{
+use ::rpc::nico::instance_interface_config::NetworkDetails;
+use ::rpc::nico::{
     self as rpc, BmcEndpointRequest, FindInstanceTypesByIdsRequest,
     FindNetworkSecurityGroupsByIdsRequest, GetDpfHostSnapshotRequest, GetDpfStateRequest,
     GetNetworkSecurityGroupAttachmentsRequest, GetNetworkSecurityGroupPropagationStatusRequest,
@@ -28,54 +28,54 @@ use ::rpc::forge::{
     RemediationList, UpdateMachineHardwareInfoRequest, UpdateNetworkSecurityGroupRequest,
     VpcCreationRequest, VpcSearchFilter, VpcVirtualizationType, VpcsByIdsRequest,
 };
-use ::rpc::forge_api_client::ForgeApiClient;
+use ::rpc::nico_api_client::NicoApiClient;
 use ::rpc::{Machine, NetworkSegment};
-use carbide_uuid::dpa_interface::DpaInterfaceId;
-use carbide_uuid::dpu_remediations::RemediationId;
-use carbide_uuid::infiniband::IBPartitionId;
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
-use carbide_uuid::machine_validation::MachineValidationId;
-use carbide_uuid::network::NetworkSegmentId;
-use carbide_uuid::nvlink::{NvLinkLogicalPartitionId, NvLinkPartitionId};
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
-use carbide_uuid::vpc::VpcId;
+use nico_uuid::dpa_interface::DpaInterfaceId;
+use nico_uuid::dpu_remediations::RemediationId;
+use nico_uuid::infiniband::IBPartitionId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
+use nico_uuid::machine_validation::MachineValidationId;
+use nico_uuid::network::NetworkSegmentId;
+use nico_uuid::nvlink::{NvLinkLogicalPartitionId, NvLinkPartitionId};
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
+use nico_uuid::vpc::VpcId;
 use mac_address::MacAddress;
 
 use crate::IntoOnlyOne;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::expected_machines::common::ExpectedMachineJson;
 use crate::instance::AllocateInstance;
 use crate::machine::MachineAutoupdate;
 
-/// [`ApiClient`] is a thin wrapper around [`ForgeApiClient`], which mainly adds some convenience
+/// [`ApiClient`] is a thin wrapper around [`NicoApiClient`], which mainly adds some convenience
 /// methods.
 #[derive(Clone)]
-pub struct ApiClient(pub ForgeApiClient);
+pub struct ApiClient(pub NicoApiClient);
 
 // Note: You do *not* need to add every gRPC method to this wrapper. Callers can use `.0` to get
-// access to the underlying ForgeApiClient, if they want to simply call the gRPC methods themselves.
+// access to the underlying NicoApiClient, if they want to simply call the gRPC methods themselves.
 // Add methods here if there's some value to it, like constructing rpc request objects from simpler
 // primitives, or other data conversions.
 //
-// (this module used to have more logic around establishing a connection to carbide, but this is all
-// now done in ForgeApiClient itself, leaving these methods only concerned with data conversions and
+// (this module used to have more logic around establishing a connection to nico, but this is all
+// now done in NicoApiClient itself, leaving these methods only concerned with data conversions and
 // other conveniences. 90% of these methods no longer justify their existence... we probably don't
 // need to add more.)
 impl ApiClient {
-    pub async fn get_machine(&self, id: MachineId) -> CarbideCliResult<rpc::Machine> {
+    pub async fn get_machine(&self, id: MachineId) -> NicoCliResult<rpc::Machine> {
         let mut machines = self
             .0
-            .find_machines_by_ids(::rpc::forge::MachinesByIdsRequest {
+            .find_machines_by_ids(::rpc::nico::MachinesByIdsRequest {
                 machine_ids: vec![id],
                 include_history: true,
             })
             .await?;
 
         if machines.machines.is_empty() {
-            return Err(CarbideCliError::MachineNotFound(id));
+            return Err(NicoCliError::MachineNotFound(id));
         }
 
         let machine_details = machines.machines.remove(0);
@@ -87,7 +87,7 @@ impl ApiClient {
         &self,
         request: rpc::MachineSearchConfig,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::MachineList> {
+    ) -> NicoCliResult<rpc::MachineList> {
         let all_machine_ids = self.0.find_machine_ids(request).await?;
         let mut all_machines = rpc::MachineList {
             machines: Vec::with_capacity(all_machine_ids.machine_ids.len()),
@@ -101,7 +101,7 @@ impl ApiClient {
         Ok(all_machines)
     }
 
-    pub async fn identify_uuid(&self, u: uuid::Uuid) -> CarbideCliResult<rpc::UuidType> {
+    pub async fn identify_uuid(&self, u: uuid::Uuid) -> NicoCliResult<rpc::UuidType> {
         let request = rpc::IdentifyUuidRequest {
             uuid: Some(u.into()),
         };
@@ -109,21 +109,21 @@ impl ApiClient {
         let uuid_details = match self.0.identify_uuid(request).await {
             Ok(m) => m,
             Err(status) if status.code() == tonic::Code::NotFound => {
-                return Err(CarbideCliError::UuidNotFound);
+                return Err(NicoCliError::UuidNotFound);
             }
             Err(err) => {
                 tracing::error!(%err, "identify_uuid error calling grpc identify_uuid");
-                return Err(CarbideCliError::GenericError(err.to_string()));
+                return Err(NicoCliError::GenericError(err.to_string()));
             }
         };
         let object_type = match rpc::UuidType::try_from(uuid_details.object_type) {
             Ok(ot) => ot,
             Err(e) => {
                 tracing::error!(
-                    "Invalid UuidType from carbide api: {}",
+                    "Invalid UuidType from nico api: {}",
                     uuid_details.object_type
                 );
-                return Err(CarbideCliError::GenericError(e.to_string()));
+                return Err(NicoCliError::GenericError(e.to_string()));
             }
         };
 
@@ -133,7 +133,7 @@ impl ApiClient {
     pub async fn identify_mac(
         &self,
         mac_address: MacAddress,
-    ) -> CarbideCliResult<(rpc::MacOwner, String)> {
+    ) -> NicoCliResult<(rpc::MacOwner, String)> {
         let request = rpc::IdentifyMacRequest {
             mac_address: mac_address.to_string(),
         };
@@ -141,21 +141,21 @@ impl ApiClient {
         let mac_details = match self.0.identify_mac(request).await {
             Ok(m) => m,
             Err(status) if status.code() == tonic::Code::NotFound => {
-                return Err(CarbideCliError::MacAddressNotFound);
+                return Err(NicoCliError::MacAddressNotFound);
             }
             Err(err) => {
                 tracing::error!(%err, "identify_mac error calling grpc identify_mac");
-                return Err(CarbideCliError::GenericError(err.to_string()));
+                return Err(NicoCliError::GenericError(err.to_string()));
             }
         };
         let object_type = match rpc::MacOwner::try_from(mac_details.object_type) {
             Ok(ot) => ot,
             Err(e) => {
                 tracing::error!(
-                    "Invalid MachineOwner from carbide api: {}",
+                    "Invalid MachineOwner from nico api: {}",
                     mac_details.object_type
                 );
-                return Err(CarbideCliError::GenericError(e.to_string()));
+                return Err(NicoCliError::GenericError(e.to_string()));
             }
         };
 
@@ -166,7 +166,7 @@ impl ApiClient {
         &self,
         serial_number: String,
         exact: bool,
-    ) -> CarbideCliResult<MachineId> {
+    ) -> NicoCliResult<MachineId> {
         let serial_details = match self
             .0
             .identify_serial(IdentifySerialRequest {
@@ -177,17 +177,17 @@ impl ApiClient {
         {
             Ok(m) => m,
             Err(status) if status.code() == tonic::Code::NotFound => {
-                return Err(CarbideCliError::SerialNumberNotFound);
+                return Err(NicoCliError::SerialNumberNotFound);
             }
             Err(err) => {
                 tracing::error!(%err, "identify_serial error calling grpc identify_serial");
-                return Err(CarbideCliError::GenericError(err.to_string()));
+                return Err(NicoCliError::GenericError(err.to_string()));
             }
         };
 
         serial_details
             .machine_id
-            .ok_or(CarbideCliError::GenericError(
+            .ok_or(NicoCliError::GenericError(
                 "Serial number found without associated machine ID".to_string(),
             ))
     }
@@ -200,7 +200,7 @@ impl ApiClient {
         label_value: Option<String>,
         instance_type_id: Option<String>,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::InstanceList> {
+    ) -> NicoCliResult<rpc::InstanceList> {
         let all_ids = self
             .get_instance_ids(
                 tenant_org_id,
@@ -225,7 +225,7 @@ impl ApiClient {
     pub async fn get_one_instance(
         &self,
         instance_id: InstanceId,
-    ) -> CarbideCliResult<rpc::InstanceList> {
+    ) -> NicoCliResult<rpc::InstanceList> {
         let instances = self.0.find_instances_by_ids(vec![instance_id]).await?;
 
         Ok(instances)
@@ -238,7 +238,7 @@ impl ApiClient {
         label_key: Option<String>,
         label_value: Option<String>,
         instance_type_id: Option<String>,
-    ) -> CarbideCliResult<rpc::InstanceIdList> {
+    ) -> NicoCliResult<rpc::InstanceIdList> {
         let request = rpc::InstanceSearchFilter {
             tenant_org_id,
             vpc_id,
@@ -255,7 +255,7 @@ impl ApiClient {
         Ok(self.0.find_instance_ids(request).await?)
     }
 
-    pub async fn get_all_racks(&self, page_size: usize) -> CarbideCliResult<rpc::RackList> {
+    pub async fn get_all_racks(&self, page_size: usize) -> NicoCliResult<rpc::RackList> {
         let all_ids = self.get_rack_ids().await?;
         let mut all_list = rpc::RackList {
             racks: Vec::with_capacity(all_ids.rack_ids.len()),
@@ -269,7 +269,7 @@ impl ApiClient {
         Ok(all_list)
     }
 
-    pub async fn get_one_rack(&self, rack_id: RackId) -> CarbideCliResult<rpc::RackList> {
+    pub async fn get_one_rack(&self, rack_id: RackId) -> NicoCliResult<rpc::RackList> {
         let racks = self.0.find_racks_by_ids(vec![rack_id]).await?;
 
         Ok(racks)
@@ -278,7 +278,7 @@ impl ApiClient {
     pub async fn get_rack_profile(
         &self,
         rack_id: RackId,
-    ) -> CarbideCliResult<rpc::GetRackProfileResponse> {
+    ) -> NicoCliResult<rpc::GetRackProfileResponse> {
         Ok(self
             .0
             .get_rack_profile(rpc::GetRackProfileRequest {
@@ -287,7 +287,7 @@ impl ApiClient {
             .await?)
     }
 
-    async fn get_rack_ids(&self) -> CarbideCliResult<rpc::RackIdList> {
+    async fn get_rack_ids(&self) -> NicoCliResult<rpc::RackIdList> {
         Ok(self
             .0
             .find_rack_ids(rpc::RackSearchFilter::default())
@@ -298,7 +298,7 @@ impl ApiClient {
         &self,
         filter: rpc::SwitchSearchFilter,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::SwitchList> {
+    ) -> NicoCliResult<rpc::SwitchList> {
         let all_ids = self.0.find_switch_ids(filter).await?;
         let mut all_list = rpc::SwitchList {
             switches: Vec::with_capacity(all_ids.ids.len()),
@@ -317,7 +317,7 @@ impl ApiClient {
         Ok(all_list)
     }
 
-    pub async fn get_one_switch(&self, switch_id: SwitchId) -> CarbideCliResult<rpc::SwitchList> {
+    pub async fn get_one_switch(&self, switch_id: SwitchId) -> NicoCliResult<rpc::SwitchList> {
         Ok(self
             .0
             .find_switches_by_ids(rpc::SwitchesByIdsRequest {
@@ -330,7 +330,7 @@ impl ApiClient {
         &self,
         filter: rpc::PowerShelfSearchFilter,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::PowerShelfList> {
+    ) -> NicoCliResult<rpc::PowerShelfList> {
         let all_ids = self.0.find_power_shelf_ids(filter).await?;
         let mut all_list = rpc::PowerShelfList {
             power_shelves: Vec::with_capacity(all_ids.ids.len()),
@@ -352,7 +352,7 @@ impl ApiClient {
     pub async fn get_one_power_shelf(
         &self,
         power_shelf_id: PowerShelfId,
-    ) -> CarbideCliResult<rpc::PowerShelfList> {
+    ) -> NicoCliResult<rpc::PowerShelfList> {
         Ok(self
             .0
             .find_power_shelves_by_ids(rpc::PowerShelvesByIdsRequest {
@@ -366,7 +366,7 @@ impl ApiClient {
         tenant_org_id: Option<String>,
         name: Option<String>,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::NetworkSegmentList> {
+    ) -> NicoCliResult<rpc::NetworkSegmentList> {
         let all_ids = self.get_segment_ids(tenant_org_id, name).await?;
         let mut all_list = rpc::NetworkSegmentList {
             network_segments: Vec::with_capacity(all_ids.network_segments_ids.len()),
@@ -383,7 +383,7 @@ impl ApiClient {
     pub async fn get_one_segment(
         &self,
         segment_id: NetworkSegmentId,
-    ) -> CarbideCliResult<rpc::NetworkSegmentList> {
+    ) -> NicoCliResult<rpc::NetworkSegmentList> {
         let segments = self.get_segments_by_ids(&[segment_id]).await?;
 
         Ok(segments)
@@ -393,7 +393,7 @@ impl ApiClient {
         &self,
         tenant_org_id: Option<String>,
         name: Option<String>,
-    ) -> CarbideCliResult<rpc::NetworkSegmentIdList> {
+    ) -> NicoCliResult<rpc::NetworkSegmentIdList> {
         let request = rpc::NetworkSegmentSearchFilter {
             tenant_org_id,
             name,
@@ -404,7 +404,7 @@ impl ApiClient {
     pub async fn get_segments_by_ids(
         &self,
         network_segments_ids: &[NetworkSegmentId],
-    ) -> CarbideCliResult<rpc::NetworkSegmentList> {
+    ) -> NicoCliResult<rpc::NetworkSegmentList> {
         let request = rpc::NetworkSegmentsByIdsRequest {
             network_segments_ids: network_segments_ids.to_vec(),
             // Request inline history for single-segment lookups so old servers (lacking the
@@ -418,7 +418,7 @@ impl ApiClient {
     pub async fn get_segment_state_history(
         &self,
         segment_id: NetworkSegmentId,
-    ) -> CarbideCliResult<Vec<rpc::StateHistoryRecord>> {
+    ) -> NicoCliResult<Vec<rpc::StateHistoryRecord>> {
         let mut result = self
             .0
             .find_network_segment_state_histories(rpc::NetworkSegmentStateHistoriesRequest {
@@ -435,8 +435,8 @@ impl ApiClient {
 
     pub async fn get_domains(
         &self,
-        id: Option<::carbide_uuid::domain::DomainId>,
-    ) -> CarbideCliResult<::rpc::protos::dns::DomainList> {
+        id: Option<::nico_uuid::domain::DomainId>,
+    ) -> NicoCliResult<::rpc::protos::dns::DomainList> {
         let request = ::rpc::protos::dns::DomainSearchQuery { id, name: None };
         Ok(self.0.find_domain(request).await?)
     }
@@ -446,8 +446,8 @@ impl ApiClient {
         id: MachineId,
         report: ::rpc::health::HealthReport,
         replace: bool,
-    ) -> CarbideCliResult<()> {
-        let request = ::rpc::forge::InsertMachineHealthReportRequest {
+    ) -> NicoCliResult<()> {
+        let request = ::rpc::nico::InsertMachineHealthReportRequest {
             machine_id: Some(id),
             health_report_entry: Some(rpc::HealthReportEntry {
                 report: Some(report),
@@ -473,7 +473,7 @@ impl ApiClient {
     pub async fn machine_list_health_reports(
         &self,
         machine_id: MachineId,
-    ) -> CarbideCliResult<rpc::ListHealthReportResponse> {
+    ) -> NicoCliResult<rpc::ListHealthReportResponse> {
         match self.0.list_machine_health_reports(machine_id).await {
             Ok(response) => Ok(response),
             Err(status) if status.code() == tonic::Code::Unimplemented => {
@@ -489,8 +489,8 @@ impl ApiClient {
         &self,
         machine_id: MachineId,
         source: String,
-    ) -> CarbideCliResult<()> {
-        let request = ::rpc::forge::RemoveMachineHealthReportRequest {
+    ) -> NicoCliResult<()> {
+        let request = ::rpc::nico::RemoveMachineHealthReportRequest {
             machine_id: Some(machine_id),
             source,
         };
@@ -509,8 +509,8 @@ impl ApiClient {
         &self,
         bmc_endpoint_request: Option<BmcEndpointRequest>,
         machine_id: Option<String>,
-        action: ::rpc::forge::admin_power_control_request::SystemPowerControl,
-    ) -> CarbideCliResult<rpc::AdminPowerControlResponse> {
+        action: ::rpc::nico::admin_power_control_request::SystemPowerControl,
+    ) -> NicoCliResult<rpc::AdminPowerControlResponse> {
         let request = rpc::AdminPowerControlRequest {
             bmc_endpoint_request,
             machine_id,
@@ -522,7 +522,7 @@ impl ApiClient {
     pub async fn get_all_machines_interfaces(
         &self,
         id: Option<MachineInterfaceId>,
-    ) -> CarbideCliResult<rpc::InterfaceList> {
+    ) -> NicoCliResult<rpc::InterfaceList> {
         let request = rpc::InterfaceSearchQuery { id, ip: None };
         Ok(self.0.find_interfaces(request).await?)
     }
@@ -530,7 +530,7 @@ impl ApiClient {
     pub async fn get_site_exploration_report(
         &self,
         page_size: usize,
-    ) -> CarbideCliResult<::rpc::site_explorer::SiteExplorationReport> {
+    ) -> NicoCliResult<::rpc::site_explorer::SiteExplorationReport> {
         // grab endpoints
         let endpoint_ids = match self.0.find_explored_endpoint_ids().await {
             Ok(endpoint_ids) => endpoint_ids,
@@ -562,7 +562,7 @@ impl ApiClient {
     pub async fn get_explored_endpoints_by_ids(
         &self,
         endpoint_ids: &[String],
-    ) -> CarbideCliResult<::rpc::site_explorer::ExploredEndpointList> {
+    ) -> NicoCliResult<::rpc::site_explorer::ExploredEndpointList> {
         let request = ::rpc::site_explorer::ExploredEndpointsByIdsRequest {
             endpoint_ids: endpoint_ids.to_vec(),
         };
@@ -572,7 +572,7 @@ impl ApiClient {
     pub async fn get_all_explored_managed_hosts(
         &self,
         page_size: usize,
-    ) -> CarbideCliResult<Vec<::rpc::site_explorer::ExploredManagedHost>> {
+    ) -> NicoCliResult<Vec<::rpc::site_explorer::ExploredManagedHost>> {
         let host_ids = match self.0.find_explored_managed_host_ids().await {
             Ok(host_ids) => host_ids,
             Err(status) if status.code() == tonic::Code::Unimplemented => {
@@ -594,8 +594,8 @@ impl ApiClient {
     pub async fn get_machines_by_ids(
         &self,
         machine_ids: &[MachineId],
-    ) -> CarbideCliResult<rpc::MachineList> {
-        let request = ::rpc::forge::MachinesByIdsRequest {
+    ) -> NicoCliResult<rpc::MachineList> {
+        let request = ::rpc::nico::MachinesByIdsRequest {
             machine_ids: Vec::from(machine_ids),
             ..Default::default()
         };
@@ -607,7 +607,7 @@ impl ApiClient {
         feature: rpc::ConfigSetting,
         value: String,
         expiry: Option<String>,
-    ) -> CarbideCliResult<()> {
+    ) -> NicoCliResult<()> {
         let request = rpc::SetDynamicConfigRequest {
             setting: feature.into(),
             value,
@@ -637,24 +637,24 @@ impl ApiClient {
         dpf_enabled: Option<bool>,
         bmc_ip_address: Option<String>,
         bmc_retain_credentials: Option<bool>,
-        dpu_mode: Option<::rpc::forge::DpuMode>,
-        host_lifecycle_profile: Option<::rpc::forge::HostLifecycleProfile>,
-    ) -> Result<(), CarbideCliError> {
+        dpu_mode: Option<::rpc::nico::DpuMode>,
+        host_lifecycle_profile: Option<::rpc::nico::HostLifecycleProfile>,
+    ) -> Result<(), NicoCliError> {
         let get_req = match (bmc_mac_address, id) {
             (Some(_), Some(_)) => {
-                return Err(CarbideCliError::ChooseOneError("--bmc-mac-address", "--id"));
+                return Err(NicoCliError::ChooseOneError("--bmc-mac-address", "--id"));
             }
             (None, None) => {
-                return Err(CarbideCliError::RequireOneError(
+                return Err(NicoCliError::RequireOneError(
                     "--bmc-mac-address",
                     "--id",
                 ));
             }
-            (_, Some(id)) => ::rpc::forge::ExpectedMachineRequest {
+            (_, Some(id)) => ::rpc::nico::ExpectedMachineRequest {
                 bmc_mac_address: String::new(),
                 id: Some(::rpc::common::Uuid { value: id }),
             },
-            (Some(mac), None) => ::rpc::forge::ExpectedMachineRequest {
+            (Some(mac), None) => ::rpc::nico::ExpectedMachineRequest {
                 bmc_mac_address: mac.to_string(),
                 id: None,
             },
@@ -674,11 +674,11 @@ impl ApiClient {
                     let mut proto_labels = Vec::new();
                     for label in label_list {
                         let proto_label = match label.split_once(':') {
-                            Some((k, v)) => ::rpc::forge::Label {
+                            Some((k, v)) => ::rpc::nico::Label {
                                 key: k.trim().to_string(),
                                 value: Some(v.trim().to_string()),
                             },
-                            None => ::rpc::forge::Label {
+                            None => ::rpc::nico::Label {
                                 key: label.trim().to_string(),
                                 value: None,
                             },
@@ -690,7 +690,7 @@ impl ApiClient {
                     existing.labels
                 };
 
-                Some(::rpc::forge::Metadata {
+                Some(::rpc::nico::Metadata {
                     name: meta_name.unwrap_or(existing.name),
                     description: meta_description.unwrap_or(existing.description),
                     labels: merged_labels,
@@ -733,7 +733,7 @@ impl ApiClient {
     pub async fn replace_all_expected_machines(
         &self,
         expected_machine_list: Vec<ExpectedMachineJson>,
-    ) -> Result<(), CarbideCliError> {
+    ) -> Result<(), NicoCliError> {
         let request = rpc::ExpectedMachineList {
             expected_machines: expected_machine_list
                 .into_iter()
@@ -759,7 +759,7 @@ impl ApiClient {
                     bmc_retain_credentials: machine.bmc_retain_credentials,
                     dpu_mode: machine.dpu_mode.map(|m| m as i32),
                     host_lifecycle_profile: machine.host_lifecycle_profile.map(|hlp| {
-                        ::rpc::forge::HostLifecycleProfile {
+                        ::rpc::nico::HostLifecycleProfile {
                             disable_lockdown: hlp.disable_lockdown,
                         }
                     }),
@@ -773,7 +773,7 @@ impl ApiClient {
     pub async fn replace_all_expected_power_shelves(
         &self,
         expected_power_shelf_list: Vec<crate::expected_power_shelf::common::ExpectedPowerShelfJson>,
-    ) -> Result<(), CarbideCliError> {
+    ) -> Result<(), NicoCliError> {
         let request = rpc::ExpectedPowerShelfList {
             expected_power_shelves: expected_power_shelf_list
                 .into_iter()
@@ -796,13 +796,13 @@ impl ApiClient {
         self.0
             .replace_all_expected_power_shelves(request)
             .await
-            .map_err(CarbideCliError::ApiInvocationError)
+            .map_err(NicoCliError::ApiInvocationError)
     }
 
     pub async fn replace_all_expected_switches(
         &self,
         expected_switch_list: Vec<crate::expected_switch::common::ExpectedSwitchJson>,
-    ) -> Result<(), CarbideCliError> {
+    ) -> Result<(), NicoCliError> {
         let request = rpc::ExpectedSwitchList {
             expected_switches: expected_switch_list
                 .into_iter()
@@ -832,7 +832,7 @@ impl ApiClient {
         self.0
             .replace_all_expected_switches(request)
             .await
-            .map_err(CarbideCliError::ApiInvocationError)
+            .map_err(NicoCliError::ApiInvocationError)
     }
 
     pub async fn get_all_vpcs(
@@ -842,7 +842,7 @@ impl ApiClient {
         page_size: usize,
         label_key: Option<String>,
         label_value: Option<String>,
-    ) -> CarbideCliResult<rpc::VpcList> {
+    ) -> NicoCliResult<rpc::VpcList> {
         let all_ids = self
             .get_vpc_ids(tenant_org_id, name, label_key, label_value)
             .await?;
@@ -859,7 +859,7 @@ impl ApiClient {
     }
 
     // Get all the DPA interfaces and return the vector of DPA interfaces
-    pub async fn get_all_dpas(&self, page_size: usize) -> CarbideCliResult<rpc::DpaInterfaceList> {
+    pub async fn get_all_dpas(&self, page_size: usize) -> NicoCliResult<rpc::DpaInterfaceList> {
         let all_ids = self.get_dpa_ids().await?;
         let mut all_list = rpc::DpaInterfaceList {
             interfaces: Vec::with_capacity(all_ids.ids.len()),
@@ -880,11 +880,11 @@ impl ApiClient {
         Ok(all_list)
     }
 
-    // Given an DPA interface ID, fetch it from Carbide and return it
+    // Given an DPA interface ID, fetch it from NICo and return it
     pub async fn get_one_dpa(
         &self,
         dpa_id: DpaInterfaceId,
-    ) -> CarbideCliResult<rpc::DpaInterfaceList> {
+    ) -> NicoCliResult<rpc::DpaInterfaceList> {
         let request = rpc::DpaInterfacesByIdsRequest {
             ids: vec![dpa_id],
             include_history: true,
@@ -893,7 +893,7 @@ impl ApiClient {
         Ok(self.0.find_dpa_interfaces_by_ids(request).await?)
     }
 
-    pub async fn get_vpc_by_name(&self, name: &str) -> CarbideCliResult<rpc::VpcList> {
+    pub async fn get_vpc_by_name(&self, name: &str) -> NicoCliResult<rpc::VpcList> {
         let vpc_ids = self
             .0
             .find_vpc_ids(VpcSearchFilter {
@@ -913,7 +913,7 @@ impl ApiClient {
         })
     }
 
-    pub async fn create_vpc(&self, name: &str, vpc_id: VpcId) -> CarbideCliResult<rpc::Vpc> {
+    pub async fn create_vpc(&self, name: &str, vpc_id: VpcId) -> NicoCliResult<rpc::Vpc> {
         let vpc = match self
             .0
             .create_vpc(VpcCreationRequest {
@@ -949,7 +949,7 @@ impl ApiClient {
         name: String,
         prefix: String,
         gateway: Option<String>,
-    ) -> CarbideCliResult<NetworkSegment> {
+    ) -> NicoCliResult<NetworkSegment> {
         let request = NetworkSegmentCreationRequest {
             vpc_id,
             name,
@@ -969,8 +969,8 @@ impl ApiClient {
         Ok(self.0.create_network_segment(request).await?)
     }
 
-    // Fetch from Carbide and return a vector of Dpa interface IDs
-    async fn get_dpa_ids(&self) -> CarbideCliResult<rpc::DpaInterfaceIdList> {
+    // Fetch from NICo and return a vector of Dpa interface IDs
+    async fn get_dpa_ids(&self) -> NicoCliResult<rpc::DpaInterfaceIdList> {
         Ok(self.0.get_all_dpa_interface_ids().await?)
     }
 
@@ -980,7 +980,7 @@ impl ApiClient {
         name: Option<String>,
         label_key: Option<String>,
         label_value: Option<String>,
-    ) -> CarbideCliResult<rpc::VpcIdList> {
+    ) -> NicoCliResult<rpc::VpcIdList> {
         let request = rpc::VpcSearchFilter {
             tenant_org_id,
             name,
@@ -1005,7 +1005,7 @@ impl ApiClient {
         &self,
         vpc: rpc::Vpc,
         virtualizer: VpcVirtualizationType,
-    ) -> CarbideCliResult<()> {
+    ) -> NicoCliResult<()> {
         let request = rpc::VpcUpdateVirtualizationRequest {
             id: vpc.id,
             if_version_match: None,
@@ -1021,7 +1021,7 @@ impl ApiClient {
         tenant_org_id: Option<String>,
         name: Option<String>,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::IbPartitionList> {
+    ) -> NicoCliResult<rpc::IbPartitionList> {
         let all_ids = self.get_ib_partition_ids(tenant_org_id, name).await?;
         let mut all_list = rpc::IbPartitionList {
             ib_partitions: Vec::with_capacity(all_ids.ib_partition_ids.len()),
@@ -1038,7 +1038,7 @@ impl ApiClient {
     pub async fn get_one_ib_partition(
         &self,
         ib_partition_id: IBPartitionId,
-    ) -> CarbideCliResult<rpc::IbPartitionList> {
+    ) -> NicoCliResult<rpc::IbPartitionList> {
         let partitions = self.get_ib_partitions_by_ids(&[ib_partition_id]).await?;
 
         Ok(partitions)
@@ -1048,7 +1048,7 @@ impl ApiClient {
         &self,
         tenant_org_id: Option<String>,
         name: Option<String>,
-    ) -> CarbideCliResult<rpc::IbPartitionIdList> {
+    ) -> NicoCliResult<rpc::IbPartitionIdList> {
         let request = rpc::IbPartitionSearchFilter {
             tenant_org_id,
             name,
@@ -1059,7 +1059,7 @@ impl ApiClient {
     async fn get_ib_partitions_by_ids(
         &self,
         ids: &[IBPartitionId],
-    ) -> CarbideCliResult<rpc::IbPartitionList> {
+    ) -> NicoCliResult<rpc::IbPartitionList> {
         let request = rpc::IbPartitionsByIdsRequest {
             ib_partition_ids: Vec::from(ids),
             include_history: ids.len() == 1,
@@ -1071,7 +1071,7 @@ impl ApiClient {
         &self,
         tenant_org_id: Option<String>,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::TenantKeySetList> {
+    ) -> NicoCliResult<rpc::TenantKeySetList> {
         let all_ids = self.get_keyset_ids(tenant_org_id).await?;
         let mut all_list = rpc::TenantKeySetList {
             keyset: Vec::with_capacity(all_ids.keyset_ids.len()),
@@ -1088,7 +1088,7 @@ impl ApiClient {
     pub async fn get_one_keyset(
         &self,
         keyset_id: rpc::TenantKeysetIdentifier,
-    ) -> CarbideCliResult<rpc::TenantKeySetList> {
+    ) -> NicoCliResult<rpc::TenantKeySetList> {
         let keysets = self
             .get_keysets_by_ids(std::slice::from_ref(&keyset_id))
             .await?;
@@ -1099,7 +1099,7 @@ impl ApiClient {
     async fn get_keyset_ids(
         &self,
         tenant_org_id: Option<String>,
-    ) -> CarbideCliResult<rpc::TenantKeysetIdList> {
+    ) -> NicoCliResult<rpc::TenantKeysetIdList> {
         let request = rpc::TenantKeysetSearchFilter { tenant_org_id };
         Ok(self.0.find_tenant_keyset_ids(request).await?)
     }
@@ -1107,7 +1107,7 @@ impl ApiClient {
     async fn get_keysets_by_ids(
         &self,
         identifiers: &[rpc::TenantKeysetIdentifier],
-    ) -> CarbideCliResult<rpc::TenantKeySetList> {
+    ) -> NicoCliResult<rpc::TenantKeySetList> {
         let request = rpc::TenantKeysetsByIdsRequest {
             keyset_ids: Vec::from(identifiers),
             include_key_data: true,
@@ -1118,15 +1118,15 @@ impl ApiClient {
     pub async fn machine_set_auto_update(
         &self,
         req: MachineAutoupdate,
-    ) -> CarbideCliResult<::rpc::forge::MachineSetAutoUpdateResponse> {
+    ) -> NicoCliResult<::rpc::nico::MachineSetAutoUpdateResponse> {
         let action = if req.enable {
-            ::rpc::forge::machine_set_auto_update_request::SetAutoupdateAction::Enable
+            ::rpc::nico::machine_set_auto_update_request::SetAutoupdateAction::Enable
         } else if req.disable {
-            ::rpc::forge::machine_set_auto_update_request::SetAutoupdateAction::Disable
+            ::rpc::nico::machine_set_auto_update_request::SetAutoupdateAction::Disable
         } else {
-            ::rpc::forge::machine_set_auto_update_request::SetAutoupdateAction::Clear
+            ::rpc::nico::machine_set_auto_update_request::SetAutoupdateAction::Clear
         };
-        let request = ::rpc::forge::MachineSetAutoUpdateRequest {
+        let request = ::rpc::nico::MachineSetAutoUpdateRequest {
             machine_id: Some(req.machine),
             action: action.into(),
         };
@@ -1136,7 +1136,7 @@ impl ApiClient {
     async fn get_subnet_ids_for_names(
         &self,
         subnets: &Vec<String>,
-    ) -> CarbideCliResult<Vec<NetworkSegmentId>> {
+    ) -> NicoCliResult<Vec<NetworkSegmentId>> {
         // find all the segment ids for the specified subnets.
         let mut network_segment_ids = Vec::default();
         for network_segment_name in subnets {
@@ -1151,7 +1151,7 @@ impl ApiClient {
                 }
 
                 Err(e) => {
-                    return Err(CarbideCliError::GenericError(format!(
+                    return Err(NicoCliError::GenericError(format!(
                         "network segment: {network_segment_name} retrieval error {e}"
                     )));
                 }
@@ -1168,11 +1168,11 @@ impl ApiClient {
         allocate_instance: &AllocateInstance,
         instance_name: &str,
         modified_by: Option<String>,
-    ) -> CarbideCliResult<rpc::InstanceAllocationRequest> {
+    ) -> NicoCliResult<rpc::InstanceAllocationRequest> {
         let mut vf_function_id = 0;
         let (interface_configs, tenant_org) = if !allocate_instance.subnet.is_empty() {
             if !allocate_instance.vf_vpc_prefix_id.is_empty() {
-                return Err(CarbideCliError::GenericError(
+                return Err(NicoCliError::GenericError(
                     "Cannot use vf_vpc_prefix_id with subnet".to_string(),
                 ));
             }
@@ -1180,7 +1180,7 @@ impl ApiClient {
                 .get_subnet_ids_for_names(&allocate_instance.subnet)
                 .await?;
             if pf_network_segment_ids.is_empty() {
-                return Err(CarbideCliError::GenericError(
+                return Err(NicoCliError::GenericError(
                     "no network segments found.".to_string(),
                 ));
             }
@@ -1197,7 +1197,7 @@ impl ApiClient {
             let mut next_device_instance = HashMap::new();
 
             let Some(interfaces) = machine.discovery_info.map(|di| di.network_interfaces) else {
-                return Err(CarbideCliError::GenericError(format!(
+                return Err(NicoCliError::GenericError(format!(
                     "no interface information for machine: {}",
                     machine.id.unwrap_or_default()
                 )));
@@ -1216,7 +1216,7 @@ impl ApiClient {
             for network_segment_id in pf_network_segment_ids {
                 let device = interface_iter
                     .next()
-                    .ok_or(CarbideCliError::GenericError(
+                    .ok_or(NicoCliError::GenericError(
                         "Insufficient interfaces for selected machine".to_string(),
                     ))?
                     .pci_properties
@@ -1267,11 +1267,11 @@ impl ApiClient {
                 allocate_instance
                     .tenant_org
                     .as_deref()
-                    .unwrap_or("Forge-simulation-tenant"),
+                    .unwrap_or("NICo-simulation-tenant"),
             )
         } else if !allocate_instance.vpc_prefix_id.is_empty() {
             let Some(discovery_info) = &machine.discovery_info else {
-                return Err(CarbideCliError::GenericError(
+                return Err(NicoCliError::GenericError(
                     "Machine discovery info is required for VPC prefix allocation.".to_string(),
                 ));
             };
@@ -1374,13 +1374,13 @@ impl ApiClient {
             (
                 interface_configs,
                 allocate_instance.tenant_org.as_deref().ok_or_else(|| {
-                    CarbideCliError::GenericError(
+                    NicoCliError::GenericError(
                         "Tenant org is mandatory in case of vpc_prefix.".to_string(),
                     )
                 })?,
             )
         } else {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "Either network segment id or vpc_prefix id is needed.".to_string(),
             ));
         };
@@ -1391,7 +1391,7 @@ impl ApiClient {
                 + allocate_instance.vpc_prefix_id.len()
                 + allocate_instance.vf_vpc_prefix_id.len())
         {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "Could not create the correct number of interface configs to satisfy request."
                     .to_string(),
             ));
@@ -1461,7 +1461,7 @@ impl ApiClient {
         allocate_instance: &AllocateInstance,
         instance_name: &str,
         modified_by: Option<String>,
-    ) -> CarbideCliResult<rpc::Instance> {
+    ) -> NicoCliResult<rpc::Instance> {
         let request = self
             .build_instance_request(machine, allocate_instance, instance_name, modified_by)
             .await?;
@@ -1472,7 +1472,7 @@ impl ApiClient {
     pub async fn allocate_instances(
         &self,
         requests: Vec<rpc::InstanceAllocationRequest>,
-    ) -> CarbideCliResult<Vec<rpc::Instance>> {
+    ) -> NicoCliResult<Vec<rpc::Instance>> {
         let response = self
             .0
             .allocate_instances(rpc::BatchInstanceAllocationRequest {
@@ -1486,21 +1486,21 @@ impl ApiClient {
     /// The function fetches the current configuration, and then calls the two
     /// `modify` closures to apply updates to the configuration.
     /// It then calls the `UpdateInstanceConfig` API to submit the updates
-    /// to carbide.
+    /// to nico.
     pub async fn update_instance_config_with(
         &self,
         instance_id: InstanceId,
         modify_config: impl FnOnce(&mut rpc::InstanceConfig),
         modify_metadata: impl FnOnce(&mut rpc::Metadata),
         modified_by: Option<String>,
-    ) -> CarbideCliResult<rpc::Instance> {
+    ) -> NicoCliResult<rpc::Instance> {
         let find_response = self.0.find_instances_by_ids(vec![instance_id]).await?;
 
         let instance = find_response
             .instances
             .into_iter()
             .next()
-            .ok_or_else(|| CarbideCliError::InstanceNotFound(instance_id))?;
+            .ok_or_else(|| NicoCliError::InstanceNotFound(instance_id))?;
 
         let config = instance.config.map(|mut c| {
             modify_config(&mut c);
@@ -1547,7 +1547,7 @@ impl ApiClient {
         name: String,
         description: String,
         config: Vec<u8>,
-    ) -> CarbideCliResult<()> {
+    ) -> NicoCliResult<()> {
         let request = rpc::AddUpdateMachineValidationExternalConfigRequest {
             name,
             description: Some(description),
@@ -1564,7 +1564,7 @@ impl ApiClient {
         machine_id: Option<MachineId>,
         history: bool,
         validation_id: Option<MachineValidationId>,
-    ) -> CarbideCliResult<rpc::MachineValidationResultList> {
+    ) -> NicoCliResult<rpc::MachineValidationResultList> {
         let request = rpc::MachineValidationGetRequest {
             machine_id,
             include_history: history,
@@ -1577,7 +1577,7 @@ impl ApiClient {
         &self,
         machine_id: Option<MachineId>,
         include_history: bool,
-    ) -> CarbideCliResult<rpc::MachineValidationRunList> {
+    ) -> NicoCliResult<rpc::MachineValidationRunList> {
         let request = rpc::MachineValidationRunListGetRequest {
             machine_id,
             include_history,
@@ -1592,7 +1592,7 @@ impl ApiClient {
         allowed_tests: Option<Vec<String>>,
         run_unverfied_tests: bool,
         contexts: Option<Vec<String>>,
-    ) -> CarbideCliResult<rpc::MachineValidationOnDemandResponse> {
+    ) -> NicoCliResult<rpc::MachineValidationOnDemandResponse> {
         let allowed_tests: Vec<String> = allowed_tests
             .unwrap_or_default()
             .into_iter()
@@ -1616,7 +1616,7 @@ impl ApiClient {
         switch_ids: Vec<String>,
         power_shelf_ids: Vec<String>,
         activities: Vec<rpc::MaintenanceActivityConfig>,
-    ) -> CarbideCliResult<rpc::RackMaintenanceOnDemandResponse> {
+    ) -> NicoCliResult<rpc::RackMaintenanceOnDemandResponse> {
         let request = rpc::RackMaintenanceOnDemandRequest {
             rack_id: Some(rack_id),
             scope: Some(rpc::RackMaintenanceScope {
@@ -1632,7 +1632,7 @@ impl ApiClient {
     pub async fn list_os_image(
         &self,
         tenant_organization_id: Option<String>,
-    ) -> CarbideCliResult<Vec<rpc::OsImage>> {
+    ) -> NicoCliResult<Vec<rpc::OsImage>> {
         let request = rpc::ListOsImageRequest {
             tenant_organization_id,
         };
@@ -1647,10 +1647,10 @@ impl ApiClient {
         auth_token: Option<String>,
         name: Option<String>,
         description: Option<String>,
-    ) -> CarbideCliResult<rpc::OsImage> {
+    ) -> NicoCliResult<rpc::OsImage> {
         let os_image = self.0.get_os_image(id).await?;
         let Some(mut new_attrs) = os_image.attributes else {
-            return Err(CarbideCliError::Empty);
+            return Err(NicoCliError::Empty);
         };
         if auth_type.is_some() {
             new_attrs.auth_type = auth_type;
@@ -1673,7 +1673,7 @@ impl ApiClient {
         version: String,
         config: rpc::InstanceConfig,
         metadata: Option<rpc::Metadata>,
-    ) -> CarbideCliResult<rpc::Instance> {
+    ) -> NicoCliResult<rpc::Instance> {
         let request = rpc::InstanceConfigUpdateRequest {
             instance_id: Some(instance_id),
             if_version_match: Some(version),
@@ -1689,7 +1689,7 @@ impl ApiClient {
         version: String,
         metadata: Option<rpc::Metadata>,
         network_security_group_id: Option<String>,
-    ) -> CarbideCliResult<rpc::Vpc> {
+    ) -> NicoCliResult<rpc::Vpc> {
         let request = rpc::VpcUpdateRequest {
             id: Some(vpc_id),
             if_version_match: Some(version),
@@ -1701,7 +1701,7 @@ impl ApiClient {
             .update_vpc(request)
             .await?
             .vpc
-            .ok_or(CarbideCliError::Empty)
+            .ok_or(NicoCliError::Empty)
     }
 
     pub async fn get_machine_validation_tests(
@@ -1710,7 +1710,7 @@ impl ApiClient {
         platforms: Vec<String>,
         contexts: Vec<String>,
         show_un_verified: bool,
-    ) -> CarbideCliResult<rpc::MachineValidationTestsGetResponse> {
+    ) -> NicoCliResult<rpc::MachineValidationTestsGetResponse> {
         let verified = if show_un_verified { None } else { Some(true) };
         let request = rpc::MachineValidationTestsGetRequest {
             supported_platforms: platforms,
@@ -1725,10 +1725,10 @@ impl ApiClient {
     pub async fn update_machine_metadata(
         &self,
         machine_id: MachineId,
-        metadata: ::rpc::forge::Metadata,
+        metadata: ::rpc::nico::Metadata,
         current_version: String,
-    ) -> CarbideCliResult<()> {
-        let request = ::rpc::forge::MachineMetadataUpdateRequest {
+    ) -> NicoCliResult<()> {
+        let request = ::rpc::nico::MachineMetadataUpdateRequest {
             machine_id: Some(machine_id),
             if_version_match: Some(current_version),
             metadata: Some(metadata),
@@ -1739,10 +1739,10 @@ impl ApiClient {
     pub async fn update_rack_metadata(
         &self,
         rack_id: RackId,
-        metadata: ::rpc::forge::Metadata,
+        metadata: ::rpc::nico::Metadata,
         current_version: String,
-    ) -> CarbideCliResult<()> {
-        let request = ::rpc::forge::RackMetadataUpdateRequest {
+    ) -> NicoCliResult<()> {
+        let request = ::rpc::nico::RackMetadataUpdateRequest {
             rack_id: Some(rack_id),
             if_version_match: Some(current_version),
             metadata: Some(metadata),
@@ -1753,10 +1753,10 @@ impl ApiClient {
     pub async fn update_switch_metadata(
         &self,
         switch_id: SwitchId,
-        metadata: ::rpc::forge::Metadata,
+        metadata: ::rpc::nico::Metadata,
         current_version: String,
-    ) -> CarbideCliResult<()> {
-        let request = ::rpc::forge::SwitchMetadataUpdateRequest {
+    ) -> NicoCliResult<()> {
+        let request = ::rpc::nico::SwitchMetadataUpdateRequest {
             switch_id: Some(switch_id),
             if_version_match: Some(current_version),
             metadata: Some(metadata),
@@ -1767,10 +1767,10 @@ impl ApiClient {
     pub async fn update_power_shelf_metadata(
         &self,
         power_shelf_id: PowerShelfId,
-        metadata: ::rpc::forge::Metadata,
+        metadata: ::rpc::nico::Metadata,
         current_version: String,
-    ) -> CarbideCliResult<()> {
-        let request = ::rpc::forge::PowerShelfMetadataUpdateRequest {
+    ) -> NicoCliResult<()> {
+        let request = ::rpc::nico::PowerShelfMetadataUpdateRequest {
             power_shelf_id: Some(power_shelf_id),
             if_version_match: Some(current_version),
             metadata: Some(metadata),
@@ -1781,7 +1781,7 @@ impl ApiClient {
     pub async fn get_single_network_security_group(
         &self,
         id: String,
-    ) -> CarbideCliResult<rpc::NetworkSecurityGroup> {
+    ) -> NicoCliResult<rpc::NetworkSecurityGroup> {
         self.0
             .find_network_security_groups_by_ids(FindNetworkSecurityGroupsByIdsRequest {
                 tenant_organization_id: None,
@@ -1790,13 +1790,13 @@ impl ApiClient {
             .await?
             .network_security_groups
             .pop()
-            .ok_or(CarbideCliError::Empty)
+            .ok_or(NicoCliError::Empty)
     }
 
     pub async fn get_network_security_group_attachments(
         &self,
         id: String,
-    ) -> CarbideCliResult<rpc::NetworkSecurityGroupAttachments> {
+    ) -> NicoCliResult<rpc::NetworkSecurityGroupAttachments> {
         self.0
             .get_network_security_group_attachments(GetNetworkSecurityGroupAttachmentsRequest {
                 network_security_group_ids: vec![id],
@@ -1804,7 +1804,7 @@ impl ApiClient {
             .await?
             .attachments
             .pop()
-            .ok_or(CarbideCliError::Empty)
+            .ok_or(NicoCliError::Empty)
     }
 
     pub async fn get_network_security_group_propagation_status(
@@ -1812,7 +1812,7 @@ impl ApiClient {
         id: String,
         vpc_ids: Option<Vec<String>>,
         instance_ids: Option<Vec<String>>,
-    ) -> CarbideCliResult<(
+    ) -> NicoCliResult<(
         Vec<rpc::NetworkSecurityGroupPropagationObjectStatus>,
         Vec<rpc::NetworkSecurityGroupPropagationObjectStatus>,
     )> {
@@ -1835,7 +1835,7 @@ impl ApiClient {
     pub async fn get_all_network_security_groups(
         &self,
         page_size: usize,
-    ) -> CarbideCliResult<Vec<rpc::NetworkSecurityGroup>> {
+    ) -> NicoCliResult<Vec<rpc::NetworkSecurityGroup>> {
         let all_nsg_ids = self
             .0
             .find_network_security_group_ids(rpc::FindNetworkSecurityGroupIdsRequest {
@@ -1870,7 +1870,7 @@ impl ApiClient {
         if_version_match: Option<String>,
         stateful_egress: bool,
         rules: Vec<rpc::NetworkSecurityGroupRuleAttributes>,
-    ) -> CarbideCliResult<rpc::NetworkSecurityGroup> {
+    ) -> NicoCliResult<rpc::NetworkSecurityGroup> {
         let request = UpdateNetworkSecurityGroupRequest {
             id,
             tenant_organization_id,
@@ -1886,7 +1886,7 @@ impl ApiClient {
 
         response
             .network_security_group
-            .ok_or(CarbideCliError::Empty)
+            .ok_or(NicoCliError::Empty)
     }
 
     // TODO: add other hardware info
@@ -1895,7 +1895,7 @@ impl ApiClient {
         id: MachineId,
         hardware_info_update_type: MachineHardwareInfoUpdateType,
         gpus: Vec<::rpc::machine_discovery::Gpu>,
-    ) -> CarbideCliResult<()> {
+    ) -> NicoCliResult<()> {
         let hardware_info = MachineHardwareInfo { gpus };
         Ok(self
             .0
@@ -1911,7 +1911,7 @@ impl ApiClient {
         &self,
         machine_id: MachineId,
         nvlink_info: rpc::MachineNvLinkInfo,
-    ) -> CarbideCliResult<()> {
+    ) -> NicoCliResult<()> {
         Ok(self
             .0
             .update_machine_nv_link_info(rpc::UpdateMachineNvLinkInfoRequest {
@@ -1924,7 +1924,7 @@ impl ApiClient {
     pub async fn get_all_instance_types(
         &self,
         page_size: usize,
-    ) -> CarbideCliResult<Vec<rpc::InstanceType>> {
+    ) -> NicoCliResult<Vec<rpc::InstanceType>> {
         let all_ids = self.0.find_instance_type_ids().await?.instance_type_ids;
 
         let mut all_itypes = Vec::with_capacity(all_ids.len());
@@ -1948,7 +1948,7 @@ impl ApiClient {
     pub async fn get_power_options(
         &self,
         machine_id: Vec<MachineId>,
-    ) -> CarbideCliResult<Vec<rpc::PowerOptions>> {
+    ) -> NicoCliResult<Vec<rpc::PowerOptions>> {
         let all_options = self
             .0
             .get_power_options(rpc::PowerOptionRequest { machine_id })
@@ -1963,7 +1963,7 @@ impl ApiClient {
         tenant_org_id: Option<String>,
         name: Option<String>,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::NvLinkPartitionList> {
+    ) -> NicoCliResult<rpc::NvLinkPartitionList> {
         let all_ids = self.get_nv_link_partition_ids(tenant_org_id, name).await?;
         let mut all_list = rpc::NvLinkPartitionList {
             partitions: Vec::with_capacity(all_ids.partition_ids.len()),
@@ -1980,13 +1980,13 @@ impl ApiClient {
     pub async fn get_one_nv_link_partition(
         &self,
         nvl_partition_id: NvLinkPartitionId,
-    ) -> CarbideCliResult<rpc::NvLinkPartition> {
+    ) -> NicoCliResult<rpc::NvLinkPartition> {
         let partitions = self
             .get_nv_link_partitions_by_ids(std::slice::from_ref(&nvl_partition_id))
             .await?;
 
         partitions.partitions.into_only_one_or_else(|_| {
-            CarbideCliError::GenericError("Unknown NvLink Partition ID".to_string())
+            NicoCliError::GenericError("Unknown NvLink Partition ID".to_string())
         })
     }
 
@@ -1994,7 +1994,7 @@ impl ApiClient {
         &self,
         tenant_organization_id: Option<String>,
         name: Option<String>,
-    ) -> CarbideCliResult<rpc::NvLinkPartitionIdList> {
+    ) -> NicoCliResult<rpc::NvLinkPartitionIdList> {
         let request = rpc::NvLinkPartitionSearchFilter {
             tenant_organization_id,
             name,
@@ -2002,13 +2002,13 @@ impl ApiClient {
         self.0
             .find_nv_link_partition_ids(request)
             .await
-            .map_err(CarbideCliError::ApiInvocationError)
+            .map_err(NicoCliError::ApiInvocationError)
     }
 
     async fn get_nv_link_partitions_by_ids(
         &self,
         ids: &[NvLinkPartitionId],
-    ) -> CarbideCliResult<rpc::NvLinkPartitionList> {
+    ) -> NicoCliResult<rpc::NvLinkPartitionList> {
         let request = rpc::NvLinkPartitionsByIdsRequest {
             partition_ids: Vec::from(ids),
             include_history: ids.len() == 1,
@@ -2016,14 +2016,14 @@ impl ApiClient {
         self.0
             .find_nv_link_partitions_by_ids(request)
             .await
-            .map_err(CarbideCliError::ApiInvocationError)
+            .map_err(NicoCliError::ApiInvocationError)
     }
 
     pub async fn get_all_logical_partitions(
         &self,
         name: Option<String>,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::NvLinkLogicalPartitionList> {
+    ) -> NicoCliResult<rpc::NvLinkLogicalPartitionList> {
         let all_ids = self.get_logical_partition_ids(name).await?;
         let mut all_list = rpc::NvLinkLogicalPartitionList {
             partitions: Vec::with_capacity(all_ids.partition_ids.len()),
@@ -2040,13 +2040,13 @@ impl ApiClient {
     pub async fn get_one_logical_partition(
         &self,
         partition_id: NvLinkLogicalPartitionId,
-    ) -> CarbideCliResult<rpc::NvLinkLogicalPartition> {
+    ) -> NicoCliResult<rpc::NvLinkLogicalPartition> {
         let partitions = self
             .get_logical_partitions_by_ids(std::slice::from_ref(&partition_id))
             .await?;
 
         partitions.partitions.into_only_one_or_else(|len| {
-            CarbideCliError::GenericError(format!(
+            NicoCliError::GenericError(format!(
                 "Expected a single logical partition found for ID: {partition_id}, found {len}",
             ))
         })
@@ -2055,18 +2055,18 @@ impl ApiClient {
     async fn get_logical_partition_ids(
         &self,
         name: Option<String>,
-    ) -> CarbideCliResult<rpc::NvLinkLogicalPartitionIdList> {
+    ) -> NicoCliResult<rpc::NvLinkLogicalPartitionIdList> {
         let request = rpc::NvLinkLogicalPartitionSearchFilter { name };
         self.0
             .find_nv_link_logical_partition_ids(request)
             .await
-            .map_err(CarbideCliError::ApiInvocationError)
+            .map_err(NicoCliError::ApiInvocationError)
     }
 
     async fn get_logical_partitions_by_ids(
         &self,
         ids: &[NvLinkLogicalPartitionId],
-    ) -> CarbideCliResult<rpc::NvLinkLogicalPartitionList> {
+    ) -> NicoCliResult<rpc::NvLinkLogicalPartitionList> {
         let request = rpc::NvLinkLogicalPartitionsByIdsRequest {
             partition_ids: Vec::from(ids),
             include_history: ids.len() == 1,
@@ -2074,14 +2074,14 @@ impl ApiClient {
         self.0
             .find_nv_link_logical_partitions_by_ids(request)
             .await
-            .map_err(CarbideCliError::ApiInvocationError)
+            .map_err(NicoCliError::ApiInvocationError)
     }
 
     pub async fn enable_infinite_boot(
         &self,
         bmc_endpoint_request: Option<BmcEndpointRequest>,
         machine_id: Option<String>,
-    ) -> CarbideCliResult<rpc::EnableInfiniteBootResponse> {
+    ) -> NicoCliResult<rpc::EnableInfiniteBootResponse> {
         let request = rpc::EnableInfiniteBootRequest {
             bmc_endpoint_request,
             machine_id,
@@ -2094,7 +2094,7 @@ impl ApiClient {
         bmc_endpoint_request: Option<BmcEndpointRequest>,
         machine_id: MachineId,
         action: rpc::LockdownAction,
-    ) -> CarbideCliResult<rpc::LockdownResponse> {
+    ) -> NicoCliResult<rpc::LockdownResponse> {
         let request = rpc::LockdownRequest {
             bmc_endpoint_request,
             machine_id: Some(machine_id),
@@ -2106,7 +2106,7 @@ impl ApiClient {
     pub async fn get_remediation(
         &self,
         remediation_id: RemediationId,
-    ) -> CarbideCliResult<Remediation> {
+    ) -> NicoCliResult<Remediation> {
         let remediation_list = RemediationIdList {
             remediation_ids: vec![remediation_id],
         };
@@ -2117,13 +2117,13 @@ impl ApiClient {
             .remediations
             .into_iter()
             .next()
-            .ok_or(CarbideCliError::RemediationNotFound(remediation_id))
+            .ok_or(NicoCliError::RemediationNotFound(remediation_id))
     }
 
     pub async fn get_all_remediations(
         &self,
         page_size: usize,
-    ) -> CarbideCliResult<RemediationList> {
+    ) -> NicoCliResult<RemediationList> {
         let all_remediation_ids = self.0.find_remediation_ids().await?;
 
         use futures::{StreamExt, TryStreamExt, stream};
@@ -2132,7 +2132,7 @@ impl ApiClient {
                 self.0
                     .find_remediations_by_ids(remediation_ids)
                     .await
-                    .map_err(CarbideCliError::ApiInvocationError)
+                    .map_err(NicoCliError::ApiInvocationError)
             })
             .try_fold(vec![], |mut accum, remediations| async move {
                 accum.extend(remediations.remediations);
@@ -2148,7 +2148,7 @@ impl ApiClient {
         name: Option<String>,
         tenant_organization_id: Option<String>,
         page_size: usize,
-    ) -> CarbideCliResult<rpc::DpuExtensionServiceList> {
+    ) -> NicoCliResult<rpc::DpuExtensionServiceList> {
         let filter = rpc::DpuExtensionServiceSearchFilter {
             service_type,
             name,
@@ -2174,7 +2174,7 @@ impl ApiClient {
     pub async fn get_extension_service_by_id(
         &self,
         service_id: String,
-    ) -> CarbideCliResult<rpc::DpuExtensionService> {
+    ) -> NicoCliResult<rpc::DpuExtensionService> {
         let request = rpc::DpuExtensionServicesByIdsRequest {
             service_ids: vec![service_id],
         };
@@ -2183,9 +2183,9 @@ impl ApiClient {
 
         service_response.services.into_only_one_or_else(|len| {
             if len == 0 {
-                CarbideCliError::GenericError("Extension service not found".to_string())
+                NicoCliError::GenericError("Extension service not found".to_string())
             } else {
-                CarbideCliError::GenericError(
+                NicoCliError::GenericError(
                     "Multiple extension services found for the same ID".to_string(),
                 )
             }
@@ -2196,7 +2196,7 @@ impl ApiClient {
         &self,
         machine_id: MachineId,
         state: bool,
-    ) -> CarbideCliResult<()> {
+    ) -> NicoCliResult<()> {
         let request = ModifyDpfStateRequest {
             machine_id: Some(machine_id),
             dpf_enabled: state,
@@ -2209,7 +2209,7 @@ impl ApiClient {
         &self,
         machine_ids: Vec<MachineId>,
         page_size: usize,
-    ) -> CarbideCliResult<Vec<rpc::dpf_state_response::DpfState>> {
+    ) -> NicoCliResult<Vec<rpc::dpf_state_response::DpfState>> {
         let mut all_dpf_states = Vec::with_capacity(machine_ids.len());
 
         for machine_ids in machine_ids.chunks(page_size) {
@@ -2226,7 +2226,7 @@ impl ApiClient {
     pub async fn get_dpf_host_snapshot(
         &self,
         host_machine_id: MachineId,
-    ) -> CarbideCliResult<String> {
+    ) -> NicoCliResult<String> {
         let request = GetDpfHostSnapshotRequest {
             host_machine_id: Some(host_machine_id),
         };
@@ -2234,7 +2234,7 @@ impl ApiClient {
         Ok(response.json_payload)
     }
 
-    pub async fn get_dpf_service_versions(&self) -> CarbideCliResult<Vec<rpc::DpfServiceVersion>> {
+    pub async fn get_dpf_service_versions(&self) -> NicoCliResult<Vec<rpc::DpfServiceVersion>> {
         let response = self.0.get_dpf_service_versions().await?;
         Ok(response.services)
     }

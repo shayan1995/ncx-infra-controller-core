@@ -17,8 +17,8 @@
 
 use std::str::FromStr;
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
-use carbide_libmlx_model::firmware::result::FirmwareFlashReport;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::firmware::result::FirmwareFlashReport;
 use mac_address::MacAddress;
 
 use crate::protos::mlx_device::{

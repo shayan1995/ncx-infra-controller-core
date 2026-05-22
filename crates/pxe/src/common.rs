@@ -18,7 +18,7 @@ use std::net::IpAddr;
 
 use axum_template::engine::Engine;
 use metrics_exporter_prometheus::PrometheusHandle;
-use rpc::forge::CloudInitInstructions;
+use rpc::nico::CloudInitInstructions;
 use serde::{Deserialize, Serialize};
 use tera::Tera;
 
@@ -34,9 +34,9 @@ pub(crate) struct Machine {
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct MachineInterface {
     pub architecture: Option<machine_architecture::MachineArchitecture>,
-    /// IP carbide-pxe observed for the booting machine: `X-Forwarded-For`
+    /// IP nico-pxe observed for the booting machine: `X-Forwarded-For`
     /// when fronted by a proxy that injects it, TCP socket peer otherwise.
-    /// Forwarded to carbide-api which resolves it via `find_by_ip` to
+    /// Forwarded to nico-api which resolves it via `find_by_ip` to
     /// fetch the machine_interface_id.
     pub client_ip: IpAddr,
     pub platform: Option<String>,

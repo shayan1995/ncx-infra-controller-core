@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::{self as rpc, HealthReportEntry};
-use carbide_uuid::machine::MachineId;
+use ::rpc::nico::{self as rpc, HealthReportEntry};
+use nico_uuid::machine::MachineId;
 use health_report::HealthReportApplyMode;
 use model::machine::machine_search_config::MachineSearchConfig;
 use sqlx::PgConnection;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::Api;
 use crate::auth::AuthContext;
 use crate::handlers::utils::convert_and_log_machine_id;
@@ -37,7 +37,7 @@ pub async fn list_machine_health_reports(
 
     let machine = db::machine::find_one(&mut txn, &machine_id, MachineSearchConfig::default())
         .await?
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "machine",
             id: machine_id.to_string(),
         })?;
@@ -61,7 +61,7 @@ async fn remove_by_source(
     txn: &mut PgConnection,
     machine_id: MachineId,
     source: String,
-) -> Result<(), CarbideError> {
+) -> Result<(), NicoError> {
     let machine = db::machine::find_one(
         &mut *txn,
         &machine_id,
@@ -73,7 +73,7 @@ async fn remove_by_source(
         },
     )
     .await?
-    .ok_or_else(|| CarbideError::NotFoundError {
+    .ok_or_else(|| NicoError::NotFoundError {
         kind: "machine",
         id: machine_id.to_string(),
     })?;
@@ -84,7 +84,7 @@ async fn remove_by_source(
     } else if machine.health_reports.merges.contains_key(&source) {
         HealthReportApplyMode::Merge
     } else {
-        return Err(CarbideError::NotFoundError {
+        return Err(NicoError::NotFoundError {
             kind: "machine with source",
             id: source.to_string(),
         });
@@ -110,26 +110,26 @@ pub async fn insert_machine_health_report(
         health_report_entry: Some(rpc::HealthReportEntry { report, mode }),
     } = request.into_inner()
     else {
-        return Err(CarbideError::MissingArgument("health_report_entry").into());
+        return Err(NicoError::MissingArgument("health_report_entry").into());
     };
     let machine_id = convert_and_log_machine_id(machine_id.as_ref())?;
     let Some(report) = report else {
-        return Err(CarbideError::MissingArgument("report").into());
+        return Err(NicoError::MissingArgument("report").into());
     };
     let Ok(mode) = rpc::HealthReportApplyMode::try_from(mode) else {
-        return Err(CarbideError::InvalidArgument("mode".to_string()).into());
+        return Err(NicoError::InvalidArgument("mode".to_string()).into());
     };
     let mode: HealthReportApplyMode = mode.into();
     let mut txn = api.txn_begin().await?;
     let _machine = db::machine::find_one(&mut txn, &machine_id, MachineSearchConfig::default())
         .await?
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "machine",
             id: machine_id.to_string(),
         })?;
 
     let mut report = health_report::HealthReport::try_from(report.clone())
-        .map_err(|e| CarbideError::internal(e.to_string()))?;
+        .map_err(|e| NicoError::internal(e.to_string()))?;
     if report.observed_at.is_none() {
         report.observed_at = Some(chrono::Utc::now());
     }
@@ -139,7 +139,7 @@ pub async fn insert_machine_health_report(
     // In case a report with the same source exists, either as merge or replace,
     // remove it. If such a report does not exist, ignore error.
     match remove_by_source(&mut txn, machine_id, report.source.clone()).await {
-        Ok(_) | Err(CarbideError::NotFoundError { .. }) => {}
+        Ok(_) | Err(NicoError::NotFoundError { .. }) => {}
         Err(e) => return Err(e.into()),
     }
 

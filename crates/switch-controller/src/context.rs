@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use forge_secrets::credentials::CredentialManager;
+use nico_secrets::credentials::CredentialManager;
 use librms::RmsApi;
 use sqlx::PgPool;
 use state_controller::state_handler::StateHandlerContextObjects;

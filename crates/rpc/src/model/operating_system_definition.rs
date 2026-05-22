@@ -21,19 +21,19 @@
 //! this model (in api-db), then this model is converted to RPC types (here).
 //! The model type name matches the RPC message name (OperatingSystem).
 
-use carbide_ipxe_renderer::IpxeTemplateArtifactCacheStrategy;
-use carbide_uuid::ipxe_template::IpxeTemplateId;
-use carbide_uuid::operating_system::OperatingSystemId;
+use nico_ipxe_renderer::IpxeTemplateArtifactCacheStrategy;
+use nico_uuid::ipxe_template::IpxeTemplateId;
+use nico_uuid::operating_system::OperatingSystemId;
 use model::operating_system_definition::{OS_TYPE_IPXE, OS_TYPE_TEMPLATED_IPXE, OperatingSystem};
 
-use crate::forge as forgerpc;
+use crate::nico as nicorpc;
 
-impl From<OperatingSystem> for forgerpc::OperatingSystem {
+impl From<OperatingSystem> for nicorpc::OperatingSystem {
     fn from(m: OperatingSystem) -> Self {
         let os_type = match m.type_.as_str() {
-            OS_TYPE_IPXE => forgerpc::OperatingSystemType::OsTypeIpxe,
-            OS_TYPE_TEMPLATED_IPXE => forgerpc::OperatingSystemType::OsTypeTemplatedIpxe,
-            _ => forgerpc::OperatingSystemType::OsTypeUnspecified,
+            OS_TYPE_IPXE => nicorpc::OperatingSystemType::OsTypeIpxe,
+            OS_TYPE_TEMPLATED_IPXE => nicorpc::OperatingSystemType::OsTypeTemplatedIpxe,
+            _ => nicorpc::OperatingSystemType::OsTypeUnspecified,
         };
         Self {
             id: Some(
@@ -44,7 +44,7 @@ impl From<OperatingSystem> for forgerpc::OperatingSystem {
             description: m.description,
             tenant_organization_id: m.tenant_organization_id,
             r#type: os_type as i32,
-            status: forgerpc::TenantState::from_str_name(&m.status.to_uppercase())
+            status: nicorpc::TenantState::from_str_name(&m.status.to_uppercase())
                 .unwrap_or_default() as i32,
             is_active: m.is_active,
             allow_override: m.allow_override,
@@ -60,7 +60,7 @@ impl From<OperatingSystem> for forgerpc::OperatingSystem {
             ipxe_template_parameters: m
                 .ipxe_template_parameters
                 .into_iter()
-                .map(|p| forgerpc::IpxeTemplateParameter {
+                .map(|p| nicorpc::IpxeTemplateParameter {
                     name: p.name,
                     value: p.value,
                 })
@@ -68,7 +68,7 @@ impl From<OperatingSystem> for forgerpc::OperatingSystem {
             ipxe_template_artifacts: m
                 .ipxe_template_artifacts
                 .into_iter()
-                .map(|a| forgerpc::IpxeTemplateArtifact {
+                .map(|a| nicorpc::IpxeTemplateArtifact {
                     name: a.name,
                     url: a.url,
                     sha: a.sha,

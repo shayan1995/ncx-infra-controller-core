@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::DeleteOperatingSystemRequest;
+use ::rpc::nico::DeleteOperatingSystemRequest;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::operating_system::common::str_to_os_id;
 use crate::rpc::ApiClient;
 
-pub async fn delete(opts: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn delete(opts: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     let id = str_to_os_id(&opts.id)?;
 
     api_client
         .0
         .delete_operating_system(DeleteOperatingSystemRequest { id: Some(id) })
         .await
-        .map_err(CarbideCliError::from)?;
+        .map_err(NicoCliError::from)?;
 
     println!("Operating system {} deleted.", opts.id);
     Ok(())

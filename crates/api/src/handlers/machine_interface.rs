@@ -18,14 +18,14 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use db::WithTransaction;
 use futures_util::FutureExt;
 use itertools::Itertools;
 use model::machine_interface::InterfaceType;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 
 pub(crate) async fn find_interfaces(
@@ -44,14 +44,14 @@ pub(crate) async fn find_interfaces(
             Ok(ip) => match db::machine_interface::find_by_ip(&mut txn, ip).await? {
                 Some(interface) => vec![interface.into()],
                 None => {
-                    return Err(CarbideError::internal(format!(
+                    return Err(NicoError::internal(format!(
                         "No machine interface with IP {ip} was found"
                     ))
                     .into());
                 }
             },
             Err(_) => {
-                return Err(CarbideError::internal(
+                return Err(NicoError::internal(
                     "Could not marshall an IP from the request".to_string(),
                 )
                 .into());
@@ -81,7 +81,7 @@ pub(crate) async fn delete_interface(
 
     let rpc::InterfaceDeleteQuery { id } = request.into_inner();
     let Some(id) = id else {
-        return Err(CarbideError::MissingArgument("delete interface.interface_id").into());
+        return Err(NicoError::MissingArgument("delete interface.interface_id").into());
     };
 
     let interface = db::machine_interface::find_one(&mut txn, id).await?;
@@ -89,12 +89,12 @@ pub(crate) async fn delete_interface(
     // There should not be any machine associated with this interface.
     if let Some(machine_id) = interface.machine_id {
         if interface.interface_type == InterfaceType::Bmc {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "This looks like a BMC interface and attached with machine: {machine_id}. Delete that first."
             ))
             .into());
         }
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "Already a machine {machine_id} is attached to this interface. Delete that first."
         ))
         .into());
@@ -107,7 +107,7 @@ pub(crate) async fn delete_interface(
                 .await?;
 
         if let Some(machine_id) = machine_id {
-            return Err(CarbideError::InvalidArgument(format!(
+            return Err(NicoError::InvalidArgument(format!(
                 "This looks like a BMC interface and attached with machine: {machine_id}. Delete that first."
             ))
             .into());
@@ -134,10 +134,10 @@ pub(crate) async fn find_mac_address_by_bmc_ip(
         &api.database_connection,
         bmc_ip
             .parse()
-            .map_err(|e| CarbideError::InvalidArgument(format!("Invalid IP address: {e}")))?,
+            .map_err(|e| NicoError::InvalidArgument(format!("Invalid IP address: {e}")))?,
     )
     .await?
-    .ok_or_else(|| CarbideError::NotFoundError {
+    .ok_or_else(|| NicoError::NotFoundError {
         kind: "machine_interface",
         id: bmc_ip.clone(),
     })?;
@@ -163,7 +163,7 @@ pub(crate) async fn find_bmc_ips(
             db::machine_interface::lookup_bmc_ip_by_mac_address(
                 &api.database_connection,
                 mac_address.parse().map_err(|e| {
-                    CarbideError::InvalidArgument(format!("Invalid MAC address: {e}"))
+                    NicoError::InvalidArgument(format!("Invalid MAC address: {e}"))
                 })?,
             )
             .await?
@@ -208,7 +208,7 @@ pub(crate) async fn find_bmc_ips(
 
             vec![bmc_ip]
         }
-        None => return Err(CarbideError::MissingArgument("lookup_by").into()),
+        None => return Err(NicoError::MissingArgument("lookup_by").into()),
     };
 
     Ok(Response::new(rpc::BmcIpList {

@@ -19,21 +19,21 @@ use std::collections::BTreeMap;
 use std::fmt::Write;
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as forgerpc;
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
+use ::rpc::nico as nicorpc;
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
 use prettytable::{Cell, Row, Table};
-use rpc::forge::InterfaceAssociationType;
+use rpc::nico::InterfaceAssociationType;
 use tracing::warn;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn handle_show(
     args: Args,
     output_format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
     if let (false, Some(interface_id)) = (args.all, args.interface_id) {
         show_machine_interfaces_information(Some(interface_id), is_json, api_client).await?;
@@ -56,7 +56,7 @@ async fn show_all_machine_interfaces(
     is_json: bool,
     has_more: bool,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let machine_interfaces = api_client.get_all_machines_interfaces(None).await?;
 
     if is_json {
@@ -73,7 +73,7 @@ async fn show_machine_interfaces_information(
     interface_id: Option<MachineInterfaceId>,
     is_json: bool,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let machine_interfaces = api_client.get_all_machines_interfaces(interface_id).await?;
     if !machine_interfaces.interfaces.is_empty() {
         if is_json {
@@ -96,7 +96,7 @@ async fn show_machine_interfaces_information(
 
 fn convert_machines_to_nice_table(
     has_more: bool,
-    machine_interfaces: forgerpc::InterfaceList,
+    machine_interfaces: nicorpc::InterfaceList,
     domain_list: ::rpc::protos::dns::DomainList,
 ) -> Box<Table> {
     let mut table = Table::new();
@@ -147,9 +147,9 @@ fn convert_machines_to_nice_table(
 
 ///Function to print the machine interface in Table format
 fn convert_machine_to_nice_format(
-    machine_interface: forgerpc::MachineInterface,
+    machine_interface: nicorpc::MachineInterface,
     domain_list: ::rpc::protos::dns::DomainList,
-) -> CarbideCliResult<String> {
+) -> NicoCliResult<String> {
     let domainlist_map = domain_list
         .domains
         .into_iter()

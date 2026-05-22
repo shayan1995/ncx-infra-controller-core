@@ -24,8 +24,8 @@ pub mod config;
 pub mod snapshot;
 pub mod status;
 
-impl From<rpc::forge::InstanceSearchFilter> for InstanceSearchFilter {
-    fn from(filter: rpc::forge::InstanceSearchFilter) -> Self {
+impl From<rpc::nico::InstanceSearchFilter> for InstanceSearchFilter {
+    fn from(filter: rpc::nico::InstanceSearchFilter) -> Self {
         InstanceSearchFilter {
             label: filter.label.map(LabelFilter::from),
             tenant_org_id: filter.tenant_org_id,
@@ -38,12 +38,12 @@ impl From<rpc::forge::InstanceSearchFilter> for InstanceSearchFilter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::forge as rpc_forge;
+    use crate::nico as rpc_nico;
 
     #[test]
     fn instance_search_filter_from_rpc_all_fields() {
-        let rpc_filter = rpc_forge::InstanceSearchFilter {
-            label: Some(rpc_forge::Label {
+        let rpc_filter = rpc_nico::InstanceSearchFilter {
+            label: Some(rpc_nico::Label {
                 key: "env".to_string(),
                 value: Some("staging".to_string()),
             }),
@@ -62,7 +62,7 @@ mod tests {
 
     #[test]
     fn instance_search_filter_from_rpc_no_fields() {
-        let rpc_filter = rpc_forge::InstanceSearchFilter {
+        let rpc_filter = rpc_nico::InstanceSearchFilter {
             label: None,
             tenant_org_id: None,
             vpc_id: None,

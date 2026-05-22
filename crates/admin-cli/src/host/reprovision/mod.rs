@@ -22,10 +22,10 @@ pub use args::Args;
 
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 impl Run for Args {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         match self {
             Args::Set(data) => cmd::trigger_reprovisioning_set(data, &ctx.api_client).await,
             Args::Clear(data) => cmd::trigger_reprovisioning_clear(data, &ctx.api_client).await,

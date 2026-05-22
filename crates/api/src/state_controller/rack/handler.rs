@@ -17,21 +17,21 @@
 
 //! State Handler implementation for Racks.
 
-use carbide_rack_controller::context::RackStateHandlerContextObjects;
-use carbide_rack_controller::created::handle_created;
-use carbide_rack_controller::deleting::handle_deleting;
-use carbide_rack_controller::discovering::handle_discovering;
-use carbide_rack_controller::error_state::handle_error;
-use carbide_rack_controller::maintenance::handle_maintenance;
-use carbide_rack_controller::ready::handle_ready;
-use carbide_rack_controller::validating::handle_validating;
-use carbide_uuid::rack::RackId;
+use nico_rack_controller::context::RackStateHandlerContextObjects;
+use nico_rack_controller::created::handle_created;
+use nico_rack_controller::deleting::handle_deleting;
+use nico_rack_controller::discovering::handle_discovering;
+use nico_rack_controller::error_state::handle_error;
+use nico_rack_controller::maintenance::handle_maintenance;
+use nico_rack_controller::ready::handle_ready;
+use nico_rack_controller::validating::handle_validating;
+use nico_uuid::rack::RackId;
 use model::rack::{Rack, RackState, derive_rack_aggregate_health};
 use state_controller::state_handler::{
     StateHandler, StateHandlerContext, StateHandlerError, StateHandlerOutcome,
 };
 
-use crate::state_controller::rack as carbide_rack_controller;
+use crate::state_controller::rack as nico_rack_controller;
 
 //------------------------------------------------------------------------------
 

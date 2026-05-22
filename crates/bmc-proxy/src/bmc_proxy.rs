@@ -29,12 +29,12 @@ use axum::middleware::{Next, from_fn_with_state};
 use axum::response::IntoResponse;
 use axum::routing::{any, get};
 use bytes::Bytes;
-use carbide_authn::SpiffeContext;
-use carbide_authn::middleware::{
+use nico_authn::SpiffeContext;
+use nico_authn::middleware::{
     AuthContext, Authorization, CertDescriptionMiddleware, ConnectionAttributes, Principal,
 };
-use carbide_utils::HostPortPair;
-use forge_tls::client_config::ClientCert;
+use nico_utils::HostPortPair;
+use nico_tls::client_config::ClientCert;
 use http::{HeaderMap, Method, Request, Response, StatusCode, Uri};
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use hyper_util::server::conn::auto;
@@ -42,10 +42,10 @@ use hyper_util::service::TowerToHyperService;
 use mac_address::{MacAddress, MacParseError};
 use opentelemetry::KeyValue;
 use opentelemetry::metrics::Meter;
-use rpc::forge;
-use rpc::forge::find_bmc_ips_request::LookupBy;
-use rpc::forge_api_client::ForgeApiClient;
-use rpc::forge_tls_client::{ApiConfig, ForgeClientConfig};
+use rpc::nico;
+use rpc::nico::find_bmc_ips_request::LookupBy;
+use rpc::nico_api_client::NicoApiClient;
+use rpc::nico_tls_client::{ApiConfig, NicoClientConfig};
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tokio::task::JoinSet;
@@ -62,7 +62,7 @@ const MAX_BODY_SIZE: usize = 8 * 1024 * 1024; // 8MiB body size limit (matches n
 
 #[derive(thiserror::Error, Debug)]
 pub enum BmcProxyError {
-    #[error("Error resolving BMC information through Carbide API: {0}")]
+    #[error("Error resolving BMC information through NICo API: {0}")]
     Api(String),
     #[error("Invalid configuration: {0}")]
     InvalidConfiguration(String),
@@ -85,7 +85,7 @@ pub struct BmcProxyParams {
 struct BmcProxyState {
     config: Arc<crate::Config>,
     meter: Meter,
-    api_client: ForgeApiClient,
+    api_client: NicoApiClient,
     credential_cache: CredentialCache,
     client_cache: HttpClientCache,
     ip_cache: LookupToIpCache,
@@ -148,25 +148,25 @@ pub async fn start(
 
     tracing::info!(
         address = config.listen.to_string(),
-        build_version = carbide_version::v!(build_version),
-        build_date = carbide_version::v!(build_date),
-        rust_version = carbide_version::v!(rust_version),
-        "Start carbide BMC proxy",
+        build_version = nico_version::v!(build_version),
+        build_date = nico_version::v!(build_date),
+        rust_version = nico_version::v!(rust_version),
+        "Start nico BMC proxy",
     );
 
     let listener = TcpListener::bind(config.listen)
         .await
         .map_err(BmcProxyError::Listen)?;
 
-    let client_config = ForgeClientConfig::new(
-        config.carbide_api.root_ca.clone(),
+    let client_config = NicoClientConfig::new(
+        config.nico_api.root_ca.clone(),
         Some(ClientCert {
-            cert_path: config.carbide_api.client_cert.clone(),
-            key_path: config.carbide_api.client_key.clone(),
+            cert_path: config.nico_api.client_cert.clone(),
+            key_path: config.nico_api.client_key.clone(),
         }),
     );
-    let api_config = ApiConfig::new(config.carbide_api.api_url.as_str(), &client_config);
-    let api_client = ForgeApiClient::new(&api_config);
+    let api_config = ApiConfig::new(config.nico_api.api_url.as_str(), &client_config);
+    let api_client = NicoApiClient::new(&api_config);
 
     let state = BmcProxyState {
         config,
@@ -238,19 +238,19 @@ impl BmcProxy {
         let connection_total_counter = self
             .state
             .meter
-            .u64_counter("carbide-bmc-proxy.tls.connection_attempted")
+            .u64_counter("nico-bmc-proxy.tls.connection_attempted")
             .with_description("The amount of tls connections that were attempted")
             .build();
         let connection_succeeded_counter = self
             .state
             .meter
-            .u64_counter("carbide-bmc-proxy.tls.connection_success")
+            .u64_counter("nico-bmc-proxy.tls.connection_success")
             .with_description("The amount of tls connections that were successful")
             .build();
         let connection_failed_counter = self
             .state
             .meter
-            .u64_counter("carbide-bmc-proxy.tls.connection_fail")
+            .u64_counter("nico-bmc-proxy.tls.connection_fail")
             .with_description("The amount of tcp connections that were failures")
             .build();
 
@@ -336,7 +336,7 @@ impl BmcProxy {
                 .expect("could not spawn task to handle HTTP connection");
         }
 
-        tracing::info!("carbide-bmc-proxy shutting down");
+        tracing::info!("nico-bmc-proxy shutting down");
     }
 }
 
@@ -470,12 +470,12 @@ pub fn cert_description_layer<AZ: Authorization>(
 }
 
 async fn root_url() -> &'static str {
-    const ROOT_CONTENTS: &str = if carbide_version::literal!(build_version).is_empty() {
-        "Carbide BMC proxy development build\n"
+    const ROOT_CONTENTS: &str = if nico_version::literal!(build_version).is_empty() {
+        "NICo BMC proxy development build\n"
     } else {
         concat!(
-            "Carbide BMC proxy ",
-            carbide_version::literal!(build_version),
+            "NICo BMC proxy ",
+            nico_version::literal!(build_version),
             "\n"
         )
     };
@@ -609,7 +609,7 @@ async fn ip_for_forwarded_target(
 
     let ips = state
         .api_client
-        .find_bmc_ips(forge::FindBmcIpsRequest {
+        .find_bmc_ips(nico::FindBmcIpsRequest {
             lookup_by: Some(lookup_by.clone()),
         })
         .await?
@@ -861,18 +861,18 @@ impl BmcCredentials {
     }
 }
 
-impl TryFrom<forge::BmcCredentials> for BmcCredentials {
+impl TryFrom<nico::BmcCredentials> for BmcCredentials {
     type Error = BmcProxyError;
 
-    fn try_from(value: forge::BmcCredentials) -> Result<Self, Self::Error> {
+    fn try_from(value: nico::BmcCredentials) -> Result<Self, Self::Error> {
         match value.r#type {
-            Some(forge::bmc_credentials::Type::UsernamePassword(value)) => {
+            Some(nico::bmc_credentials::Type::UsernamePassword(value)) => {
                 Ok(Self::UsernamePassword {
                     username: value.username,
                     password: value.password,
                 })
             }
-            Some(forge::bmc_credentials::Type::SessionToken(value)) => {
+            Some(nico::bmc_credentials::Type::SessionToken(value)) => {
                 Ok(Self::SessionToken { token: value.token })
             }
             None => Err(BmcProxyError::Api(
@@ -884,7 +884,7 @@ impl TryFrom<forge::BmcCredentials> for BmcCredentials {
 
 async fn create_client(
     ip: IpAddr,
-    api_client: &ForgeApiClient,
+    api_client: &NicoApiClient,
     credential_cache: &CredentialCache,
     client_cache: &HttpClientCache,
     bmc_proxy: &Option<HostPortPair>,
@@ -931,7 +931,7 @@ async fn create_client(
 
 async fn get_bmc_credentials(
     ip: IpAddr,
-    api_client: &ForgeApiClient,
+    api_client: &NicoApiClient,
     credential_cache: &CredentialCache,
 ) -> Result<BmcCredentials, BmcProxyError> {
     if let Some(credentials) = credential_cache.lock().await.get(&ip).cloned() {
@@ -939,9 +939,9 @@ async fn get_bmc_credentials(
         return Ok(credentials);
     }
 
-    tracing::debug!(%ip, "Fetching BMC credentials from Carbide API");
+    tracing::debug!(%ip, "Fetching BMC credentials from NICo API");
     let bmc_mac_address = api_client
-        .find_mac_address_by_bmc_ip(forge::BmcIp {
+        .find_mac_address_by_bmc_ip(nico::BmcIp {
             bmc_ip: ip.to_string(),
         })
         .await
@@ -949,7 +949,7 @@ async fn get_bmc_credentials(
         .mac_address;
 
     let credentials: BmcCredentials = api_client
-        .get_bmc_credentials(forge::GetBmcCredentialsRequest {
+        .get_bmc_credentials(nico::GetBmcCredentialsRequest {
             mac_addr: bmc_mac_address,
         })
         .await
@@ -1011,9 +1011,9 @@ mod tests {
     use axum::http::{HeaderMap, HeaderName, HeaderValue};
     use mac_address::MacAddress;
     use opentelemetry::global;
-    use rpc::forge::find_bmc_ips_request::LookupBy;
-    use rpc::forge_api_client::ForgeApiClient;
-    use rpc::forge_tls_client::{ApiConfig, ForgeClientConfig};
+    use rpc::nico::find_bmc_ips_request::LookupBy;
+    use rpc::nico_api_client::NicoApiClient;
+    use rpc::nico_tls_client::{ApiConfig, NicoClientConfig};
     use tokio::sync::Mutex;
 
     use super::{
@@ -1022,7 +1022,7 @@ mod tests {
     };
 
     fn test_state_with_ip_cache(ip_cache: HashMap<LookupBy, IpAddr>) -> BmcProxyState {
-        let client_config = ForgeClientConfig::default();
+        let client_config = NicoClientConfig::default();
         let api_config = ApiConfig::new("https://example.com", &client_config);
 
         BmcProxyState {
@@ -1040,8 +1040,8 @@ mod tests {
                 )
                 .expect("test config should parse"),
             ),
-            meter: global::meter("carbide-bmc-proxy-test"),
-            api_client: ForgeApiClient::new(&api_config),
+            meter: global::meter("nico-bmc-proxy-test"),
+            api_client: NicoApiClient::new(&api_config),
             credential_cache: Default::default(),
             client_cache: Default::default(),
             ip_cache: Arc::new(Mutex::new(ip_cache)),

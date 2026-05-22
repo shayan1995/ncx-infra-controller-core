@@ -16,10 +16,10 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn admin_power_control(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn admin_power_control(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     api_client.0.admin_power_control(args).await?;
     Ok(())
 }

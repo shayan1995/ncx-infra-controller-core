@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use rpc::admin_cli::OutputFormat;
 
 use crate::dpf::common::DpfQuery;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn modify_dpf_state(
@@ -27,7 +27,7 @@ pub async fn modify_dpf_state(
     _format: OutputFormat, // TODO: Implement json output handling.
     api_client: &ApiClient,
     enabled: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let host: MachineId = query.try_into()?;
     api_client.modify_dpf_state(host, enabled).await?;
     println!("DPF state modified for machine {host} with state {enabled} successfully!!",);

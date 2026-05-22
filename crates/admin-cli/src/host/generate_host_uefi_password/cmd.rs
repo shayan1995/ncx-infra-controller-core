@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use forge_secrets::credentials::Credentials;
+use nico_secrets::credentials::Credentials;
 
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
-pub fn generate_uefi_password() -> CarbideCliResult<()> {
+pub fn generate_uefi_password() -> NicoCliResult<()> {
     let password = Credentials::generate_password_no_special_char();
     println!("Generated Bios Admin Password: {password}");
     Ok(())

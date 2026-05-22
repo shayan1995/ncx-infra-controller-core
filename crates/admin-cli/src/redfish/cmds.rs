@@ -146,7 +146,7 @@ pub async fn action(action: RedfishAction) -> color_eyre::Result<()> {
                     .await?
             );
         }
-        SetForgePasswordPolicy => {
+        SetNicoPasswordPolicy => {
             redfish.set_machine_password_policy().await?;
         }
         GetPowerState => {

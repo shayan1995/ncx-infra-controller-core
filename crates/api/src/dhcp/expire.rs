@@ -18,16 +18,16 @@
 use std::net::IpAddr;
 
 use mac_address::MacAddress;
-use rpc::forge as rpc;
+use rpc::nico as rpc;
 use tonic::{Request, Response};
 
 use crate::api::Api;
-use crate::errors::CarbideError;
+use crate::errors::NicoError;
 
 pub async fn expire_dhcp_lease(
     api: &Api,
     request: Request<rpc::ExpireDhcpLeaseRequest>,
-) -> Result<Response<rpc::ExpireDhcpLeaseResponse>, CarbideError> {
+) -> Result<Response<rpc::ExpireDhcpLeaseResponse>, NicoError> {
     let rpc::ExpireDhcpLeaseRequest {
         ip_address,
         mac_address,
@@ -35,7 +35,7 @@ pub async fn expire_dhcp_lease(
     let ip_address: IpAddr = ip_address.parse()?;
     let mac_address: Option<MacAddress> = mac_address
         .as_deref()
-        .map(|m| m.parse::<MacAddress>().map_err(CarbideError::from))
+        .map(|m| m.parse::<MacAddress>().map_err(NicoError::from))
         .transpose()?;
 
     let mut txn = api.txn_begin().await?;

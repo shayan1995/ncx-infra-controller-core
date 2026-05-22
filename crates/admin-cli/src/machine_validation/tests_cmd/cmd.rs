@@ -18,8 +18,8 @@
 use std::fmt::Write;
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::{
-    self as forgerpc, MachineValidationTestEnableDisableTestRequest,
+use ::rpc::nico::{
+    self as nicorpc, MachineValidationTestEnableDisableTestRequest,
     MachineValidationTestUpdateRequest, MachineValidationTestVerfiedRequest,
 };
 use prettytable::{Table, row};
@@ -27,7 +27,7 @@ use prettytable::{Table, row};
 use super::args::{
     AddTestOptions, EnableDisableTestOptions, ShowTestOptions, UpdateTestOptions, VerifyTestOptions,
 };
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn show_tests(
@@ -35,7 +35,7 @@ pub async fn show_tests(
     args: ShowTestOptions,
     output_format: OutputFormat,
     extended: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let tests = api_client
         .get_machine_validation_tests(
             args.test_id,
@@ -55,8 +55,8 @@ pub async fn show_tests(
 
 fn show_tests_details(
     is_json: bool,
-    test: forgerpc::MachineValidationTestsGetResponse,
-) -> CarbideCliResult<()> {
+    test: nicorpc::MachineValidationTestsGetResponse,
+) -> NicoCliResult<()> {
     if is_json {
         for test in test.tests {
             println!("{}", serde_json::to_string_pretty(&test)?);
@@ -70,7 +70,7 @@ fn show_tests_details(
     Ok(())
 }
 
-fn convert_tests_to_nice_table(tests: Vec<forgerpc::MachineValidationTest>) -> Box<Table> {
+fn convert_tests_to_nice_table(tests: Vec<nicorpc::MachineValidationTest>) -> Box<Table> {
     let mut table = Table::new();
 
     table.set_titles(row![
@@ -99,8 +99,8 @@ fn convert_tests_to_nice_table(tests: Vec<forgerpc::MachineValidationTest>) -> B
 }
 
 fn convert_tests_to_nice_format(
-    tests: Vec<forgerpc::MachineValidationTest>,
-) -> CarbideCliResult<String> {
+    tests: Vec<nicorpc::MachineValidationTest>,
+) -> NicoCliResult<String> {
     let width = 14;
     let mut lines = String::new();
     if tests.is_empty() {
@@ -178,7 +178,7 @@ fn convert_tests_to_nice_format(
 pub async fn machine_validation_test_verfied(
     api_client: &ApiClient,
     options: VerifyTestOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     api_client
         .0
         .machine_validation_test_verfied(MachineValidationTestVerfiedRequest {
@@ -192,7 +192,7 @@ pub async fn machine_validation_test_verfied(
 pub async fn machine_validation_test_enable(
     api_client: &ApiClient,
     options: EnableDisableTestOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     api_client
         .0
         .machine_validation_test_enable_disable_test(
@@ -209,7 +209,7 @@ pub async fn machine_validation_test_enable(
 pub async fn machine_validation_test_disable(
     api_client: &ApiClient,
     options: EnableDisableTestOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     api_client
         .0
         .machine_validation_test_enable_disable_test(
@@ -226,8 +226,8 @@ pub async fn machine_validation_test_disable(
 pub async fn machine_validation_test_update(
     api_client: &ApiClient,
     options: UpdateTestOptions,
-) -> CarbideCliResult<()> {
-    let payload = forgerpc::machine_validation_test_update_request::Payload {
+) -> NicoCliResult<()> {
+    let payload = nicorpc::machine_validation_test_update_request::Payload {
         contexts: options.contexts,
         img_name: options.img_name,
         execute_in_host: options.execute_in_host,
@@ -261,7 +261,7 @@ pub async fn machine_validation_test_update(
 pub async fn machine_validation_test_add(
     api_client: &ApiClient,
     options: AddTestOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let mut contexts = vec!["OnDemand".to_string()];
     if !options.contexts.is_empty() {
         contexts = options.contexts;
@@ -275,7 +275,7 @@ pub async fn machine_validation_test_add(
     if options.description.is_some() {
         description = options.description;
     }
-    let request = forgerpc::MachineValidationTestAddRequest {
+    let request = nicorpc::MachineValidationTestAddRequest {
         name: options.name,
         description,
         contexts,

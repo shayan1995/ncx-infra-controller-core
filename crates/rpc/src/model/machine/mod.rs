@@ -18,7 +18,7 @@ use std::collections::HashSet;
 use std::ops::Deref;
 
 use base64::prelude::*;
-use carbide_uuid::machine::{MachineId, MachineType};
+use nico_uuid::machine::{MachineId, MachineType};
 use health_report::HealthReport;
 use model::errors::{ModelError, ModelResult};
 use model::machine::{
@@ -31,7 +31,7 @@ use model::network_segment::NetworkSegmentType;
 
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
-use crate::forge_agent_control_response as fac;
+use crate::nico_agent_control_response as fac;
 use crate::model::RpcTryFrom;
 use crate::model::instance::snapshot::instance_snapshot_derive_status;
 
@@ -43,9 +43,9 @@ pub mod network;
 pub mod nvlink;
 pub mod upgrade_policy;
 
-impl From<DpuInfo> for rpc::forge::DpuInfo {
+impl From<DpuInfo> for rpc::nico::DpuInfo {
     fn from(info: DpuInfo) -> Self {
-        rpc::forge::DpuInfo {
+        rpc::nico::DpuInfo {
             id: info.id,
             loopback_ip: info.loopback_ip,
         }
@@ -112,7 +112,7 @@ impl RpcTryFrom<ManagedHostStateSnapshot> for Option<rpc::Instance> {
     }
 }
 
-impl From<Machine> for rpc::forge::dpf_state_response::DpfState {
+impl From<Machine> for rpc::nico::dpf_state_response::DpfState {
     fn from(value: Machine) -> Self {
         Self {
             machine_id: value.id.into(),
@@ -122,25 +122,25 @@ impl From<Machine> for rpc::forge::dpf_state_response::DpfState {
     }
 }
 
-pub struct RpcMachineTypeWrapper(rpc::forge::MachineType);
+pub struct RpcMachineTypeWrapper(rpc::nico::MachineType);
 
 impl From<MachineType> for RpcMachineTypeWrapper {
     fn from(value: MachineType) -> Self {
         RpcMachineTypeWrapper(match value {
-            MachineType::PredictedHost | MachineType::Host => rpc::forge::MachineType::Host,
-            MachineType::Dpu => rpc::forge::MachineType::Dpu,
+            MachineType::PredictedHost | MachineType::Host => rpc::nico::MachineType::Host,
+            MachineType::Dpu => rpc::nico::MachineType::Dpu,
         })
     }
 }
 
 impl Deref for RpcMachineTypeWrapper {
-    type Target = rpc::forge::MachineType;
+    type Target = rpc::nico::MachineType;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl From<Machine> for rpc::forge::Machine {
+impl From<Machine> for rpc::nico::Machine {
     fn from(mut machine: Machine) -> Self {
         let health = match machine.is_dpu() {
             true => {
@@ -255,7 +255,7 @@ impl From<Machine> for rpc::forge::Machine {
             health_sources: machine
                 .health_reports
                 .into_iter()
-                .map(|(hr, m)| rpc::forge::HealthSourceOrigin {
+                .map(|(hr, m)| rpc::nico::HealthSourceOrigin {
                     mode: m as i32,
                     source: hr.source,
                 })
@@ -286,7 +286,7 @@ impl From<Machine> for rpc::forge::Machine {
             nvlink_status_observation: machine
                 .nvlink_status_observation
                 .map(|status| status.into()),
-            placement_in_rack: Some(rpc::forge::PlacementInRack {
+            placement_in_rack: Some(rpc::nico::PlacementInRack {
                 slot_number: machine.slot_number,
                 tray_index: machine.tray_index,
             }),
@@ -294,10 +294,10 @@ impl From<Machine> for rpc::forge::Machine {
     }
 }
 
-impl From<ReprovisionRequest> for rpc::forge::InstanceUpdateStatus {
+impl From<ReprovisionRequest> for rpc::nico::InstanceUpdateStatus {
     fn from(value: ReprovisionRequest) -> Self {
-        rpc::forge::InstanceUpdateStatus {
-            module: rpc::forge::instance_update_status::Module::Dpu as i32,
+        rpc::nico::InstanceUpdateStatus {
+            module: rpc::nico::instance_update_status::Module::Dpu as i32,
             initiator: value.initiator,
             trigger_received_at: Some(value.requested_at.into()),
             update_triggered_at: value.started_at.map(|x| x.into()),
@@ -306,8 +306,8 @@ impl From<ReprovisionRequest> for rpc::forge::InstanceUpdateStatus {
     }
 }
 
-impl From<rpc::forge_agent_control_response::MachineValidationFilter> for MachineValidationFilter {
-    fn from(filter: rpc::forge_agent_control_response::MachineValidationFilter) -> Self {
+impl From<rpc::nico_agent_control_response::MachineValidationFilter> for MachineValidationFilter {
+    fn from(filter: rpc::nico_agent_control_response::MachineValidationFilter) -> Self {
         Self {
             tags: filter.tags,
             allowed_tests: filter.allowed_tests,
@@ -353,7 +353,7 @@ pub fn get_action_for_dpu_state(
                         dpu_machine_id = %dpu_machine_id,
                         machine_type = "DPU",
                         %state,
-                        "forge agent control",
+                        "nico agent control",
                     );
                     fac::Action::noop()
                 }
@@ -375,7 +375,7 @@ pub fn get_action_for_dpu_state(
                         dpu_machine_id = %dpu_machine_id,
                         machine_type = "DPU",
                         %state,
-                        "forge agent control",
+                        "nico agent control",
                     );
                     fac::Action::noop()
                 }
@@ -387,7 +387,7 @@ pub fn get_action_for_dpu_state(
                 dpu_machine_id = %dpu_machine_id,
                 machine_type = "DPU",
                 %state,
-                "forge agent control",
+                "nico agent control",
             );
             fac::Action::noop()
         }
@@ -430,7 +430,7 @@ pub trait ManagedHostStateSnapshotRpc {
         &self,
         dpu_machine_id: Option<&MachineId>,
         sla_config: &slas::MachineSlaConfig,
-    ) -> Option<rpc::forge::Machine>;
+    ) -> Option<rpc::nico::Machine>;
 }
 
 impl ManagedHostStateSnapshotRpc for ManagedHostStateSnapshot {
@@ -439,10 +439,10 @@ impl ManagedHostStateSnapshotRpc for ManagedHostStateSnapshot {
         &self,
         dpu_machine_id: Option<&MachineId>,
         sla_config: &slas::MachineSlaConfig,
-    ) -> Option<rpc::forge::Machine> {
+    ) -> Option<rpc::nico::Machine> {
         match dpu_machine_id {
             None => {
-                let mut rpc_machine: rpc::forge::Machine = self.host_snapshot.clone().into();
+                let mut rpc_machine: rpc::nico::Machine = self.host_snapshot.clone().into();
                 let state = &self.host_snapshot.state.value;
                 let version = &self.host_snapshot.state.version;
                 rpc_machine.health = Some(self.aggregate_health.clone().into());
@@ -463,7 +463,7 @@ impl ManagedHostStateSnapshotRpc for ManagedHostStateSnapshot {
                     .dpu_snapshots
                     .iter()
                     .find(|dpu| dpu.id == *dpu_machine_id)?;
-                let mut rpc_machine: rpc::forge::Machine = dpu_snapshot.clone().into();
+                let mut rpc_machine: rpc::nico::Machine = dpu_snapshot.clone().into();
                 // In case the DPU does not know the associated Host - we can backfill the data here
                 rpc_machine.associated_host_machine_id = Some(self.host_snapshot.id);
                 rpc_machine.state_sla = Some(
@@ -484,7 +484,7 @@ impl ManagedHostStateSnapshotRpc for ManagedHostStateSnapshot {
 
 fn machine_instance_network_restrictions(
     machine: &Machine,
-) -> rpc::forge::InstanceNetworkRestrictions {
+) -> rpc::nico::InstanceNetworkRestrictions {
     let inband_interfaces = machine
         .interfaces
         .iter()
@@ -494,9 +494,9 @@ fn machine_instance_network_restrictions(
     // If there are no HostInband interfaces, this currently means this machine has DPUs and is
     // not restricted to being in particular network segments
     if inband_interfaces.is_empty() {
-        return rpc::forge::InstanceNetworkRestrictions {
+        return rpc::nico::InstanceNetworkRestrictions {
             network_segment_membership_type:
-                rpc::forge::InstanceNetworkSegmentMembershipType::TenantConfigurable as i32,
+                rpc::nico::InstanceNetworkSegmentMembershipType::TenantConfigurable as i32,
             network_segment_ids: vec![],
         };
     }
@@ -510,8 +510,8 @@ fn machine_instance_network_restrictions(
         .map(|iface| iface.segment_id)
         .collect::<HashSet<_>>();
 
-    rpc::forge::InstanceNetworkRestrictions {
-        network_segment_membership_type: rpc::forge::InstanceNetworkSegmentMembershipType::Static
+    rpc::nico::InstanceNetworkRestrictions {
+        network_segment_membership_type: rpc::nico::InstanceNetworkSegmentMembershipType::Static
             as i32,
         network_segment_ids: inband_network_segment_ids.into_iter().collect(),
     }
@@ -528,7 +528,7 @@ mod test {
             id: "dpu-123".to_string(),
             loopback_ip: "10.0.0.1".to_string(),
         };
-        let rpc_info: rpc::forge::DpuInfo = info.into();
+        let rpc_info: rpc::nico::DpuInfo = info.into();
         assert_eq!(rpc_info.id, "dpu-123");
         assert_eq!(rpc_info.loopback_ip, "10.0.0.1");
     }

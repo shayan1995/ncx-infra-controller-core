@@ -16,7 +16,7 @@
  */
 use std::collections::HashMap;
 
-use carbide_uuid::vpc::{VpcId, VpcPrefixId};
+use nico_uuid::vpc::{VpcId, VpcPrefixId};
 use ipnetwork::IpNetwork;
 use sqlx::Row;
 use sqlx::postgres::PgRow;

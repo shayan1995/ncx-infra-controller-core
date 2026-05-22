@@ -19,7 +19,7 @@ use model::instance::config::infiniband::{InstanceIbInterfaceConfig, InstanceInf
 use model::instance::config::network::{InterfaceFunctionId, InterfaceFunctionType};
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<rpc::InstanceInfinibandConfig> for InstanceInfinibandConfig {
     type Error = RpcDataConversionError;

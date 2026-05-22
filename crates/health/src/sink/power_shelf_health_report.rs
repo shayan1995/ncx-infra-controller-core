@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 
 use super::dedup_queue::DedupQueue;
 use super::{

@@ -22,10 +22,10 @@ use askama::Template;
 use axum::Json;
 use axum::extract::{Form, OriginalUri, Path as AxumPath, Query, State as AxumState};
 use axum::response::{Html, IntoResponse, Redirect, Response};
-use carbide_uuid::compute_allocation::ComputeAllocationId;
+use nico_uuid::compute_allocation::ComputeAllocationId;
 use hyper::http::StatusCode;
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{self as forgerpc};
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{self as nicorpc};
 use serde::Deserialize;
 
 use super::pagination::{PageContext, empty_string_as_none};
@@ -65,8 +65,8 @@ impl Ord for ComputeAllocationRowDisplay {
     }
 }
 
-impl From<forgerpc::ComputeAllocation> for ComputeAllocationRowDisplay {
-    fn from(allocation: forgerpc::ComputeAllocation) -> Self {
+impl From<nicorpc::ComputeAllocation> for ComputeAllocationRowDisplay {
+    fn from(allocation: nicorpc::ComputeAllocation) -> Self {
         let created = allocation.created_at().to_string();
         let metadata = allocation.metadata.unwrap_or_default();
         let attrs = allocation.attributes.unwrap_or_default();
@@ -148,8 +148,8 @@ async fn fetch_compute_allocations(
     current_page: usize,
     limit: usize,
 ) -> Result<(usize, Vec<ComputeAllocationRowDisplay>), tonic::Status> {
-    let request: tonic::Request<forgerpc::FindComputeAllocationIdsRequest> =
-        tonic::Request::new(forgerpc::FindComputeAllocationIdsRequest {
+    let request: tonic::Request<nicorpc::FindComputeAllocationIdsRequest> =
+        tonic::Request::new(nicorpc::FindComputeAllocationIdsRequest {
             name: None,
             tenant_organization_id: None,
             instance_type_id: None,
@@ -186,7 +186,7 @@ async fn fetch_compute_allocations(
 
     let allocations = api
         .find_compute_allocations_by_ids(tonic::Request::new(
-            forgerpc::FindComputeAllocationsByIdsRequest { ids: ids_for_page },
+            nicorpc::FindComputeAllocationsByIdsRequest { ids: ids_for_page },
         ))
         .await
         .map(|response| response.into_inner())?
@@ -218,7 +218,7 @@ pub async fn show_detail(
 
     let Some(allocation) = match api
         .find_compute_allocations_by_ids(tonic::Request::new(
-            forgerpc::FindComputeAllocationsByIdsRequest {
+            nicorpc::FindComputeAllocationsByIdsRequest {
                 ids: vec![allocation_id],
             },
         ))
@@ -317,10 +317,10 @@ pub async fn create(
 
     let resp = match api
         .create_compute_allocation(tonic::Request::new(
-            forgerpc::CreateComputeAllocationRequest {
+            nicorpc::CreateComputeAllocationRequest {
                 id,
                 tenant_organization_id: form.tenant_organization_id,
-                metadata: Some(forgerpc::Metadata {
+                metadata: Some(nicorpc::Metadata {
                     name: form.name,
                     description: form.description,
                     labels: match serde_json::from_str(&labels) {
@@ -334,7 +334,7 @@ pub async fn create(
                         }
                     },
                 }),
-                attributes: Some(forgerpc::ComputeAllocationAttributes {
+                attributes: Some(nicorpc::ComputeAllocationAttributes {
                     instance_type_id: form.instance_type_id,
                     count: form.count,
                 }),
@@ -404,11 +404,11 @@ pub async fn update(
 
     let resp = match api
         .update_compute_allocation(tonic::Request::new(
-            forgerpc::UpdateComputeAllocationRequest {
+            nicorpc::UpdateComputeAllocationRequest {
                 id: Some(allocation_id),
                 if_version_match: Some(form.version),
                 tenant_organization_id: form.tenant_organization_id,
-                metadata: Some(forgerpc::Metadata {
+                metadata: Some(nicorpc::Metadata {
                     name: form.name,
                     description: form.description,
                     labels: match serde_json::from_str(&labels) {
@@ -422,7 +422,7 @@ pub async fn update(
                         }
                     },
                 }),
-                attributes: Some(forgerpc::ComputeAllocationAttributes {
+                attributes: Some(nicorpc::ComputeAllocationAttributes {
                     instance_type_id: form.instance_type_id,
                     count: form.count,
                 }),
@@ -480,7 +480,7 @@ pub async fn delete(
 
     if let Err(e) = api
         .delete_compute_allocation(tonic::Request::new(
-            forgerpc::DeleteComputeAllocationRequest {
+            nicorpc::DeleteComputeAllocationRequest {
                 id: Some(allocation_id),
                 tenant_organization_id: form.tenant_organization_id,
             },

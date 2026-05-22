@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::convert::Into;
 use std::net::IpAddr;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use config_version::{ConfigVersion, Versioned};
 use ipnetwork::IpNetwork;
@@ -57,7 +57,7 @@ pub struct InstanceNetworkStatus {
     /// For auto configs (`InstanceNetworkConfig.auto = true`): on the wire
     /// the config-side `interfaces` is always empty (the request is
     /// preserved verbatim), so this array stands alone and describes the
-    /// interfaces Carbide resolved from the host's HostInband segments.
+    /// interfaces NICo resolved from the host's HostInband segments.
     /// There is no positional relationship to consult on the config side.
     pub interfaces: Vec<InstanceInterfaceStatus>,
 
@@ -71,11 +71,11 @@ pub struct InstanceNetworkStatus {
     ///   is exactly the same version as the version the user desires.
     ///
     /// Note for the implementation: We need to monitor all these config versions
-    /// on the feedback path from DPU to carbide in order to know whether the
+    /// on the feedback path from DPU to nico in order to know whether the
     /// changes have indeed taken effect.
     /// TODO: Do we also want to show all applied versions here, or just track them
     /// internally? Probably not helpful for tenants at all - but it could be helpful
-    /// for the Forge operating team to debug settings that to do do not go in-sync
+    /// for the NICo operating team to debug settings that to do do not go in-sync
     /// without having to attach to the database.
     pub configs_synced: SyncState,
 }
@@ -515,7 +515,7 @@ mod tests {
     use std::fmt::Write;
     use std::str::FromStr;
 
-    use carbide_uuid::network::{NetworkPrefixId, NetworkSegmentId};
+    use nico_uuid::network::{NetworkPrefixId, NetworkSegmentId};
 
     use super::*;
     use crate::instance::config::network::InstanceInterfaceConfig;

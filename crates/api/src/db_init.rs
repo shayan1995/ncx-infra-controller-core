@@ -17,7 +17,7 @@
 
 use std::collections::HashMap;
 
-use carbide_network::virtualization::VpcVirtualizationType;
+use nico_network::virtualization::VpcVirtualizationType;
 use db::dns::domain;
 use db::network_segment::reconcile_network_defs;
 use db::vpc::{self};
@@ -32,7 +32,7 @@ use model::network_segment::{NetworkDefinition, NetworkSegmentType, NewNetworkSe
 use model::vpc::{NewVpc, VpcStatus};
 use sqlx::{Pool, Postgres};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::Api;
 
 /// Create a Domain if we don't already have one.
@@ -40,7 +40,7 @@ use crate::api::Api;
 pub async fn create_initial_domain(
     db_pool: sqlx::pool::Pool<Postgres>,
     domain_name: &str,
-) -> Result<bool, CarbideError> {
+) -> Result<bool, NicoError> {
     let mut txn = Transaction::begin(&db_pool).await?;
     let domains = domain::find_by(&mut txn, ObjectColumnFilter::<domain::IdColumn>::All).await?;
     if domains.is_empty() {
@@ -63,7 +63,7 @@ pub async fn create_initial_networks(
     api: &Api,
     db_pool: &Pool<Postgres>,
     networks: &HashMap<String, NetworkDefinition>,
-) -> Result<(), CarbideError> {
+) -> Result<(), NicoError> {
     let mut txn = Transaction::begin(db_pool).await?;
     let all_domains = db::dns::domain::find_by(
         &mut txn,
@@ -90,7 +90,7 @@ pub async fn create_initial_networks(
             .await
             .is_ok()
         {
-            // Network segments are only created the first time we start carbide-api;
+            // Network segments are only created the first time we start nico-api;
             // `reconcile_network_defs` above has already recorded the snapshot if
             // it was missing (the backfill path).
             tracing::debug!("Network segment {name} exists");
@@ -123,8 +123,8 @@ pub async fn create_initial_networks(
 pub async fn ensure_static_assignments_segment(
     api: &Api,
     txn: &mut db::Transaction<'_>,
-    subdomain_id: Option<carbide_uuid::domain::DomainId>,
-) -> Result<(), CarbideError> {
+    subdomain_id: Option<nico_uuid::domain::DomainId>,
+) -> Result<(), NicoError> {
     let segment_name = network_segment::STATIC_ASSIGNMENTS_SEGMENT_NAME;
     if db::network_segment::find_by_name(txn, segment_name)
         .await
@@ -156,7 +156,7 @@ pub async fn ensure_static_assignments_segment(
     Ok(())
 }
 
-pub async fn update_network_segments_svi_ip(db_pool: &Pool<Postgres>) -> Result<(), CarbideError> {
+pub async fn update_network_segments_svi_ip(db_pool: &Pool<Postgres>) -> Result<(), NicoError> {
     let mut txn = Transaction::begin(db_pool).await?;
     let all_segments = db::network_segment::find_by(
         &mut txn,
@@ -229,7 +229,7 @@ pub async fn update_network_segments_svi_ip(db_pool: &Pool<Postgres>) -> Result<
 pub async fn store_initial_dpu_agent_upgrade_policy(
     db_pool: &Pool<Postgres>,
     initial_dpu_agent_upgrade_policy: Option<AgentUpgradePolicyChoice>,
-) -> Result<(), CarbideError> {
+) -> Result<(), NicoError> {
     let mut txn = Transaction::begin(db_pool).await?;
     let initial_policy: AgentUpgradePolicy = initial_dpu_agent_upgrade_policy
         .unwrap_or(AgentUpgradePolicyChoice::UpDown)
@@ -251,9 +251,9 @@ pub async fn store_initial_dpu_agent_upgrade_policy(
 pub(crate) async fn create_admin_vpc(
     db_pool: &Pool<Postgres>,
     vpc_vni: Option<u32>,
-) -> Result<(), CarbideError> {
+) -> Result<(), NicoError> {
     let Some(vpc_vni) = vpc_vni else {
-        return Err(CarbideError::internal(
+        return Err(NicoError::internal(
             "No VNI is configured for admin VPC.".to_string(),
         ));
     };
@@ -267,7 +267,7 @@ pub(crate) async fn create_admin_vpc(
         for admin_segment in admin_segments {
             if let Some(vpc_id) = admin_segment.config.vpc_id {
                 if vpc_id != existing_vpc.id {
-                    return Err(CarbideError::internal(format!(
+                    return Err(NicoError::internal(format!(
                         "Mismatch found in admin vpc id {} and admin network segment's attached vpc id {vpc_id}.",
                         existing_vpc.id
                     )));
@@ -294,12 +294,12 @@ pub(crate) async fn create_admin_vpc(
     let admin_vpc = NewVpc {
         id: uuid::Uuid::new_v4().into(),
         vni: Some(vpc_vni as i32),
-        tenant_organization_id: "carbide_internal".to_string(),
+        tenant_organization_id: "nico_internal".to_string(),
         // For consistency, but admin routing profile is defined in-line in the
         // FNN config.
         routing_profile_type: None, // It's purely informational.  Admin profile is pulled from an inline-config and not tied to a name or ID.
         network_security_group_id: None,
-        network_virtualization_type: carbide_network::virtualization::VpcVirtualizationType::Fnn,
+        network_virtualization_type: nico_network::virtualization::VpcVirtualizationType::Fnn,
         metadata: Metadata {
             name: "admin".to_string(),
             labels: HashMap::from([("kind".to_string(), "admin".to_string())]),

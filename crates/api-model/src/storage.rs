@@ -50,7 +50,7 @@ pub struct OsImageAttributes {
 #[sqlx(rename_all = "lowercase")]
 #[sqlx(type_name = "os_image_status")]
 /// Note: "Ready" is the only actually-used variant as of today. Other statuses are meant for when
-/// carbide manages storage volumes, which is not the case today.
+/// nico manages storage volumes, which is not the case today.
 pub enum OsImageStatus {
     Uninitialized = 0, // initial state when db entry created
     InProgress,        // golden volume creation in progress if applicable

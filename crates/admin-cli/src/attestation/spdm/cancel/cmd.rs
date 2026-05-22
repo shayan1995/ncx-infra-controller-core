@@ -16,10 +16,10 @@
  */
 
 use crate::attestation::spdm::cancel::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn cancel(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn cancel(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     api_client
         .0
         .cancel_machine_attestation(args.machine_id)

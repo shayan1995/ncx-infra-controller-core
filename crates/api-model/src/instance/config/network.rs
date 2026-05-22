@@ -19,9 +19,9 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use std::net::IpAddr;
 
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::network::{NetworkPrefixId, NetworkSegmentId};
-use carbide_uuid::vpc::VpcPrefixId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::network::{NetworkPrefixId, NetworkSegmentId};
+use nico_uuid::vpc::VpcPrefixId;
 use ipnetwork::IpNetwork;
 use mac_address::MacAddress;
 use serde::ser::SerializeMap;
@@ -361,7 +361,7 @@ impl InstanceNetworkConfig {
         let mut common_function_ids = Vec::new();
 
         // Virtual function id does not change during the instance life cycle.
-        // If a VF is deleted, cloud won't send that id to carbide.
+        // If a VF is deleted, cloud won't send that id to nico.
         // e.g. VF configured 0,1,2,3; tenant deletes vf id 2. In this case cloud will forward new
         // config only with vf id as 0,1,3.
         for interface in &mut self.interfaces {
@@ -528,7 +528,7 @@ pub struct InstanceInterfaceConfig {
     /// Uniquely identifies the interface on the instance
     pub function_id: InterfaceFunctionId,
     /// Tenant can provide vpc_prefix_id instead of network segment id.
-    /// In case of vpc_prefix_id, carbide should allocate a new network segment and use it for
+    /// In case of vpc_prefix_id, nico should allocate a new network segment and use it for
     /// further IP allocation.
     pub network_details: Option<NetworkDetails>,
     /// The network segment this interface is attached to.
@@ -582,7 +582,7 @@ pub struct InstanceInterfaceConfig {
     /// zero-DPU instances, the instance interface is just the host's network interface, so we can
     /// assign the host's MAC here. This is opposed to instances with DPUs, where we do not know the
     /// MAC address that the instance will see until we start getting status observations from the
-    /// forge agent.
+    /// nico agent.
     pub host_inband_mac_address: Option<MacAddress>,
 
     /// The DPU device this interface corresponds to.  The device/instance pair will be mapped to a specific DPU

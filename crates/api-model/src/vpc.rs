@@ -17,11 +17,11 @@
 use std::collections::HashMap;
 use std::net::IpAddr;
 
-use carbide_network::virtualization::VpcVirtualizationType;
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::network_security_group::NetworkSecurityGroupId;
-use carbide_uuid::vpc::VpcId;
-use carbide_uuid::vpc_peering::VpcPeeringId;
+use nico_network::virtualization::VpcVirtualizationType;
+use nico_uuid::machine::MachineId;
+use nico_uuid::network_security_group::NetworkSecurityGroupId;
+use nico_uuid::vpc::VpcId;
+use nico_uuid::vpc_peering::VpcPeeringId;
 use chrono::{DateTime, Utc};
 use config_version::ConfigVersion;
 use serde::{Deserialize, Serialize};

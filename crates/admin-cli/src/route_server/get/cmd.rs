@@ -16,13 +16,13 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use prettytable::{Cell, Row, Table};
 
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
-pub async fn get(format: OutputFormat, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn get(format: OutputFormat, api_client: &ApiClient) -> NicoCliResult<()> {
     let route_servers = api_client.0.get_route_servers().await?;
 
     match format {
@@ -51,7 +51,7 @@ pub async fn get(format: OutputFormat, api_client: &ApiClient) -> CarbideCliResu
 // response into a pretty ASCII table.
 fn route_servers_to_table(
     route_server_entries: &rpc::RouteServerEntries,
-) -> CarbideCliResult<Table> {
+) -> NicoCliResult<Table> {
     let mut table = Table::new();
 
     table.add_row(Row::new(vec![
@@ -62,7 +62,7 @@ fn route_servers_to_table(
     for route_server in &route_server_entries.route_servers {
         let source_type = rpc::RouteServerSourceType::try_from(route_server.source_type)
             .map_err(|e| e.to_string())
-            .map_err(CarbideCliError::GenericError)?;
+            .map_err(NicoCliError::GenericError)?;
 
         table.add_row(Row::new(vec![
             Cell::new(&route_server.address),

@@ -5,13 +5,13 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-EnvironmentFile=-/opt/forge/forge-scout.env
-ExecStartPre=/opt/forge/forge-scout-pre.sh 
+EnvironmentFile=-/opt/nico/nico-scout.env
+ExecStartPre=/opt/nico/nico-scout-pre.sh 
 User=root
 Group=root
 RestartSec=5
-WorkingDirectory=/opt/forge/
-ExecStart=/opt/forge/forge-scout --api=${server_uri} --machine-interface-id=${machine_id}
+WorkingDirectory=/opt/nico/
+ExecStart=/opt/nico/nico-scout --api=${server_uri} --machine-interface-id=${machine_id}
 OOMScoreAdjust=-1000
 Restart=on-failure
 RestartPreventExitStatus=255

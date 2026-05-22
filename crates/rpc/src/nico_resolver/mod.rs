@@ -19,7 +19,7 @@ use std::io;
 use std::io::Read;
 use std::path::Path;
 
-use crate::forge_resolver::resolver::ResolverError;
+use crate::nico_resolver::resolver::ResolverError;
 
 pub mod resolver;
 

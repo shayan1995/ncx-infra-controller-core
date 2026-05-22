@@ -19,10 +19,10 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 use std::net::IpAddr;
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
-use carbide_libmlx_model::firmware::result::FirmwareFlashReport;
-use carbide_uuid::dpa_interface::DpaInterfaceId;
-use carbide_uuid::machine::MachineId;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::firmware::result::FirmwareFlashReport;
+use nico_uuid::dpa_interface::DpaInterfaceId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use config_version::{ConfigVersion, Versioned};
 use mac_address::MacAddress;
@@ -379,7 +379,7 @@ impl TryFrom<DpaInterfaceSnapshotPgJson> for DpaInterface {
 mod tests {
     use std::str::FromStr;
 
-    use carbide_libmlx_model::device::info::MlxDeviceInfo;
+    use nico_libmlx_model::device::info::MlxDeviceInfo;
 
     use super::*;
 

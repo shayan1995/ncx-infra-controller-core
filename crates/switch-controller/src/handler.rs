@@ -17,7 +17,7 @@
 
 //! State Handler implementation for Switches (mirrors Machine state handler structure).
 
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 use model::switch::{Switch, SwitchControllerState, derive_switch_aggregate_health};
 use state_controller::state_handler::{
     StateHandler, StateHandlerContext, StateHandlerError, StateHandlerOutcome,

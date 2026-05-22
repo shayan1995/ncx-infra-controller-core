@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 use mac_address::MacAddress;
 use model::switch::{
     FabricManagerConfig, FabricManagerState, NewSwitch, Switch, SwitchConfig, SwitchSearchFilter,
@@ -23,7 +23,7 @@ use model::switch::{
 };
 
 use crate::errors::RpcDataConversionError;
-use crate::forge::{self as rpc, LifecycleStatus};
+use crate::nico::{self as rpc, LifecycleStatus};
 
 impl TryFrom<rpc::SwitchCreationRequest> for NewSwitch {
     type Error = RpcDataConversionError;

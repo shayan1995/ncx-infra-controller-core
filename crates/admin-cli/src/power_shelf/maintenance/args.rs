@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use clap::Parser;
-use rpc::forge as forgerpc;
+use rpc::nico as nicorpc;
 
 /// Drive one or more power shelves into maintenance and request a power
 /// operation (PowerOn / PowerOff). All listed power shelves receive the same
@@ -55,12 +55,12 @@ pub struct MaintenancePowerArgs {
 }
 
 impl Args {
-    pub fn into_request(self) -> forgerpc::PowerShelfMaintenanceRequest {
+    pub fn into_request(self) -> nicorpc::PowerShelfMaintenanceRequest {
         let (operation, args) = match self {
-            Args::PowerOn(args) => (forgerpc::PowerShelfMaintenanceOperation::PowerOn, args),
-            Args::PowerOff(args) => (forgerpc::PowerShelfMaintenanceOperation::PowerOff, args),
+            Args::PowerOn(args) => (nicorpc::PowerShelfMaintenanceOperation::PowerOn, args),
+            Args::PowerOff(args) => (nicorpc::PowerShelfMaintenanceOperation::PowerOff, args),
         };
-        forgerpc::PowerShelfMaintenanceRequest {
+        nicorpc::PowerShelfMaintenanceRequest {
             power_shelf_ids: args.power_shelf_ids,
             operation: operation.into(),
             reference: args.reference,

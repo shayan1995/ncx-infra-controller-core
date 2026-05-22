@@ -17,8 +17,8 @@
 
 use std::sync::Arc;
 
-use carbide_redfish::libredfish::RedfishClientPool;
-use carbide_uuid::machine::MachineId;
+use nico_redfish::libredfish::RedfishClientPool;
+use nico_uuid::machine::MachineId;
 use chrono::Utc;
 use model::attestation::spdm::{
     SpdmAttestationState, SpdmAttestationStatus, SpdmDeviceAttestationDetails, SpdmHandlerError,

@@ -17,7 +17,7 @@
 
 //use std::collections::HashSet;
 
-use carbide_uuid::nvlink::NvLinkLogicalPartitionId;
+use nico_uuid::nvlink::NvLinkLogicalPartitionId;
 use serde::{Deserialize, Serialize};
 
 use crate::ConfigValidationError;

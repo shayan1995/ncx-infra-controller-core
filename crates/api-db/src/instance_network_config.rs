@@ -16,9 +16,9 @@
  */
 use std::collections::HashMap;
 
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::network::NetworkSegmentId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::network::NetworkSegmentId;
 use model::instance::config::network::{
     InstanceInterfaceConfig, InstanceNetworkConfig, InterfaceFunctionId,
 };

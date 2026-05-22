@@ -18,11 +18,11 @@
 use std::ops::DerefMut;
 use std::time::SystemTime;
 
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::machine_validation::MachineValidationId;
-use carbide_uuid::network::NetworkSegmentId;
-use carbide_uuid::vpc::VpcPrefixId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::machine_validation::MachineValidationId;
+use nico_uuid::network::NetworkSegmentId;
+use nico_uuid::vpc::VpcPrefixId;
 use model::instance::config::network::DeviceLocator;
 use model::instance::config::nvlink::InstanceNvLinkConfig;
 use model::instance::snapshot::InstanceSnapshot;
@@ -32,9 +32,9 @@ use model::machine::{
     CleanupContext, CleanupState, Machine, MachineState, MachineValidatingState, ManagedHostState,
     ValidationState,
 };
-use rpc::forge::InstanceDpuExtensionServicesConfig;
-use rpc::forge::forge_server::Forge;
-use rpc::forge::instance_interface_config::NetworkDetails;
+use rpc::nico::InstanceDpuExtensionServicesConfig;
+use rpc::nico::nico_server::NICo;
+use rpc::nico::instance_interface_config::NetworkDetails;
 use rpc::{InstanceReleaseRequest, Timestamp};
 
 use super::{TestEnv, inject_machine_measurements, persist_machine_validation_result};
@@ -166,7 +166,7 @@ impl<'a, 'b> TestInstance<'a, 'b> {
         let mut result = self
             .env
             .api
-            .find_instances_by_ids(tonic::Request::new(rpc::forge::InstancesByIdsRequest {
+            .find_instances_by_ids(tonic::Request::new(rpc::nico::InstancesByIdsRequest {
                 instance_ids: vec![self.id],
             }))
             .await
@@ -184,7 +184,7 @@ impl<'a, 'b> TestInstance<'a, 'b> {
 pub async fn create_instance_with_ib_config<'a, 'b>(
     env: &'a TestEnv,
     mh: &'b TestManagedHost,
-    ib_config: rpc::forge::InstanceInfinibandConfig,
+    ib_config: rpc::nico::InstanceInfinibandConfig,
     network_segment_id: NetworkSegmentId,
 ) -> (TestInstance<'a, 'b>, RpcInstance) {
     mh.instance_builer(env)
@@ -286,13 +286,13 @@ pub fn single_interface_network_config_with_vpc_prefix(
     }
 }
 
-pub fn default_os_config() -> rpc::forge::InstanceOperatingSystemConfig {
-    rpc::forge::InstanceOperatingSystemConfig {
+pub fn default_os_config() -> rpc::nico::InstanceOperatingSystemConfig {
+    rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("SomeRandomData".to_string()),
-        variant: Some(rpc::forge::instance_operating_system_config::Variant::Ipxe(
-            rpc::forge::InlineIpxe {
+        variant: Some(rpc::nico::instance_operating_system_config::Variant::Ipxe(
+            rpc::nico::InlineIpxe {
                 ipxe_script: "SomeRandomiPxe".to_string(),
             },
         )),
@@ -308,10 +308,10 @@ pub fn default_tenant_config() -> rpc::TenantConfig {
 }
 
 pub fn config_for_ib_config(
-    ib_config: rpc::forge::InstanceInfinibandConfig,
+    ib_config: rpc::nico::InstanceInfinibandConfig,
     network_segment_id: NetworkSegmentId,
-) -> rpc::forge::InstanceConfig {
-    rpc::forge::InstanceConfig {
+) -> rpc::nico::InstanceConfig {
+    rpc::nico::InstanceConfig {
         tenant: Some(default_tenant_config()),
         os: Some(default_os_config()),
         network: Some(single_interface_network_config(network_segment_id)),
@@ -323,10 +323,10 @@ pub fn config_for_ib_config(
 }
 
 pub fn config_for_nvlink_config(
-    nvl_config: rpc::forge::InstanceNvLinkConfig,
+    nvl_config: rpc::nico::InstanceNvLinkConfig,
     network_segment_id: NetworkSegmentId,
-) -> rpc::forge::InstanceConfig {
-    rpc::forge::InstanceConfig {
+) -> rpc::nico::InstanceConfig {
+    rpc::nico::InstanceConfig {
         tenant: Some(default_tenant_config()),
         os: Some(default_os_config()),
         network: Some(single_interface_network_config(network_segment_id)),
@@ -569,7 +569,7 @@ pub async fn handle_delete_post_bootingwithdiscoveryimage(env: &TestEnv, mh: &Te
     )
     .await;
 
-    let mut machine_validation_result = rpc::forge::MachineValidationResult {
+    let mut machine_validation_result = rpc::nico::MachineValidationResult {
         validation_id: None,
         name: "instance".to_string(),
         description: "desc".to_string(),
@@ -584,7 +584,7 @@ pub async fn handle_delete_post_bootingwithdiscoveryimage(env: &TestEnv, mh: &Te
         test_id: Some("instance".to_string()),
     };
 
-    let response = mh.host().forge_agent_control().await;
+    let response = mh.host().nico_agent_control().await;
     let validation_id = &response.data.unwrap().pair[1].value;
 
     machine_validation_result.validation_id = Some(validation_id.parse().unwrap());
@@ -639,7 +639,7 @@ pub async fn update_instance_network_status_observation(
 pub async fn create_instance_with_nvlink_config<'a, 'b>(
     env: &'a TestEnv,
     mh: &'b TestManagedHost,
-    nvl_config: rpc::forge::InstanceNvLinkConfig,
+    nvl_config: rpc::nico::InstanceNvLinkConfig,
     network_segment_id: NetworkSegmentId,
 ) -> (TestInstance<'a, 'b>, RpcInstance) {
     mh.instance_builer(env)

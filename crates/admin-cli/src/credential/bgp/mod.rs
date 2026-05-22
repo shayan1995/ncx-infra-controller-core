@@ -23,7 +23,7 @@ use clap::Parser;
 use crate::cfg::dispatch::Dispatch;
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 #[derive(Parser, Debug, Clone, Dispatch)]
 #[clap(rename_all = "kebab_case")]
@@ -38,7 +38,7 @@ pub enum Cmd {
 }
 
 impl Run for Cmd {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         match self {
             Cmd::Set(args) => args.run(ctx).await,
             Cmd::Delete(args) => args.run(ctx).await,

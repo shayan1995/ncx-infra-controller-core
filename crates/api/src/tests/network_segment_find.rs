@@ -17,9 +17,9 @@
 
 #![allow(deprecated)]
 
-use ::rpc::forge as rpc;
-use carbide_uuid::network::NetworkSegmentId;
-use rpc::forge_server::Forge;
+use ::rpc::nico as rpc;
+use nico_uuid::network::NetworkSegmentId;
+use rpc::nico_server::NICo;
 
 use crate::tests::common::api_fixtures::network_segment::create_network_segment;
 use crate::tests::common::api_fixtures::vpc::create_vpc;

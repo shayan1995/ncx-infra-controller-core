@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use carbide_uuid::instance_type::InstanceTypeId;
+use nico_uuid::instance_type::InstanceTypeId;
 use model::machine::machine_search_config::MachineSearchConfig;
 
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
 
-impl TryFrom<rpc::forge::MachineSearchConfig> for MachineSearchConfig {
+impl TryFrom<rpc::nico::MachineSearchConfig> for MachineSearchConfig {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::MachineSearchConfig) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineSearchConfig) -> Result<Self, Self::Error> {
         Ok(MachineSearchConfig {
             include_dpus: value.include_dpus,
             include_history: value.include_history,

@@ -18,7 +18,7 @@
 use model::instance_type::{InstanceType, InstanceTypeMachineCapabilityFilter};
 
 use crate::errors::RpcDataConversionError;
-use crate::{common as rpc_common, forge as rpc};
+use crate::{common as rpc_common, nico as rpc};
 
 impl TryFrom<rpc::InstanceTypeMachineCapabilityFilterAttributes>
     for InstanceTypeMachineCapabilityFilter
@@ -137,7 +137,7 @@ mod tests {
     use model::metadata::Metadata;
 
     use super::*;
-    use crate::forge as rpc;
+    use crate::nico as rpc;
 
     #[test]
     fn test_model_instance_type_to_rpc_conversion() {

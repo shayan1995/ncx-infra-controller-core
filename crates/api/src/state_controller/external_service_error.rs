@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_dpf::DpfError;
+use nico_dpf::DpfError;
 
 use crate::state_controller::state_handler::{ExternalServiceError, StateHandlerError};
 

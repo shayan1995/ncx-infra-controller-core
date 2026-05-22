@@ -25,7 +25,7 @@
 use std::convert::Into;
 use std::str::FromStr;
 
-use carbide_uuid::measured_boot::TrustedMachineId;
+use nico_uuid::measured_boot::TrustedMachineId;
 use measured_boot::records::{
     CandidateMachineSummary, MeasurementApprovedMachineRecord, MeasurementApprovedProfileRecord,
     MeasurementApprovedType, MeasurementBundleRecord, MeasurementBundleState,

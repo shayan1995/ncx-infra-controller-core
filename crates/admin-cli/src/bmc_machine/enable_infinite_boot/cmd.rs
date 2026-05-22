@@ -16,13 +16,13 @@
  */
 
 use crate::bmc_machine::common::{AdminPowerControlAction, InfiniteBootArgs};
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn enable_infinite_boot(
     args: InfiniteBootArgs,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let machine = args.machine;
     api_client
         .enable_infinite_boot(None, Some(machine.clone()))

@@ -18,10 +18,10 @@
 use model::nvl_partition::{NvLinkPartitionSearchFilter, NvlPartition};
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc_forge;
+use crate::nico as rpc_nico;
 
-impl From<rpc_forge::NvLinkPartitionSearchFilter> for NvLinkPartitionSearchFilter {
-    fn from(filter: rpc_forge::NvLinkPartitionSearchFilter) -> Self {
+impl From<rpc_nico::NvLinkPartitionSearchFilter> for NvLinkPartitionSearchFilter {
+    fn from(filter: rpc_nico::NvLinkPartitionSearchFilter) -> Self {
         NvLinkPartitionSearchFilter {
             tenant_organization_id: filter.tenant_organization_id,
             name: filter.name,
@@ -29,10 +29,10 @@ impl From<rpc_forge::NvLinkPartitionSearchFilter> for NvLinkPartitionSearchFilte
     }
 }
 
-impl TryFrom<NvlPartition> for rpc_forge::NvLinkPartition {
+impl TryFrom<NvlPartition> for rpc_nico::NvLinkPartition {
     type Error = RpcDataConversionError;
     fn try_from(src: NvlPartition) -> Result<Self, Self::Error> {
-        Ok(rpc_forge::NvLinkPartition {
+        Ok(rpc_nico::NvLinkPartition {
             id: Some(src.id),
             name: src.name.clone().into(),
             nmx_m_id: src.nmx_m_id,

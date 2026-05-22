@@ -20,10 +20,10 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use eyre::Result;
-use forge_http_connector::connector::ForgeHttpConnector;
-use forge_http_connector::resolver::{ForgeResolver, ForgeResolverOpts};
-use forge_tls::client_config::ClientCert;
-use forge_tls::dummy_tls_verifier::DummyTlsVerifier;
+use nico_http_connector::connector::NicoHttpConnector;
+use nico_http_connector::resolver::{NicoResolver, NicoResolverOpts};
+use nico_tls::client_config::ClientCert;
+use nico_tls::dummy_tls_verifier::DummyTlsVerifier;
 use hickory_resolver::config::ResolverConfig;
 use hyper::body::Incoming;
 use hyper_util::client::legacy;
@@ -38,12 +38,12 @@ use tryhard::backoff_strategies::FixedBackoff;
 use tryhard::{NoOnRetry, RetryFutureConfig};
 use x509_parser::prelude::{FromDer, X509Certificate};
 
-use crate::forge::VersionRequest;
-use crate::forge_resolver::resolver::ResolverError;
-use crate::forge_tls_client::ConfigurationError::CouldNotReadRootCa;
-use crate::protos::forge::forge_client::ForgeClient;
+use crate::nico::VersionRequest;
+use crate::nico_resolver::resolver::ResolverError;
+use crate::nico_tls_client::ConfigurationError::CouldNotReadRootCa;
+use crate::protos::nico::nico_client::NicoClient;
 use crate::protos::nmx_c::nmx_controller_client::NmxControllerClient;
-use crate::{forge_resolver, protos};
+use crate::{nico_resolver, protos};
 
 /// Formats an error as `"{top}: {root}"` using the deepest source in its chain,
 /// since `Display` alone doesn't walk `source()` and would hide the root cause.
@@ -72,7 +72,7 @@ pub type NmxCClientT = NmxControllerClient<
     >,
 >;
 
-pub type ForgeClientT = ForgeClient<
+pub type NicoClientT = NicoClient<
     BoxCloneService<
         hyper::Request<Body>,
         hyper::Response<Incoming>,
@@ -80,12 +80,12 @@ pub type ForgeClientT = ForgeClient<
     >,
 >;
 
-pub const DEFAULT_DOMAIN: &str = "forge.local";
+pub const DEFAULT_DOMAIN: &str = "nico.local";
 
 const VRF_NAME: &str = "mgmt";
 
 #[derive(Clone, Debug, Default)]
-pub struct ForgeClientConfig {
+pub struct NicoClientConfig {
     pub root_ca_path: String,
     pub client_cert: Option<ClientCert>,
     pub enforce_tls: bool,
@@ -96,7 +96,7 @@ pub struct ForgeClientConfig {
     pub connect_retries_interval: Option<Duration>,
 }
 
-impl ForgeClientConfig {
+impl NicoClientConfig {
     pub fn new(root_ca_path: String, client_cert: Option<ClientCert>) -> Self {
         let mut disabled = std::env::var("DISABLE_TLS_ENFORCEMENT").is_ok();
         if client_cert.is_none() {
@@ -118,7 +118,7 @@ impl ForgeClientConfig {
             // We can change this if needed, or just make it
             // easier to set at initialization time (callers
             // can also call set_connect_retries_max and
-            // set_connect_retries_interval on the ForgeHttpConnector
+            // set_connect_retries_interval on the NicoHttpConnector
             // to override).
             //
             // TODO(chet): Really, what would be nice here is,
@@ -133,7 +133,7 @@ impl ForgeClientConfig {
         }
     }
 
-    /// This is required when using `ForgeTlsConfig` on a DPU to communicate with site-controller.
+    /// This is required when using `NicoTlsConfig` on a DPU to communicate with site-controller.
     /// The mgmt interface exists in the mgmt VRF. `use_mgmt_vrf` sets the
     /// `SO_BINDTODEVICE` socket option on the client socket used when performing DNS queries
     /// and establishing a TCP connection with site-controller.
@@ -162,7 +162,7 @@ impl ForgeClientConfig {
             ..self
         };
 
-        log::debug!("ForgeClientConfig {res:?}");
+        log::debug!("NicoClientConfig {res:?}");
 
         Ok(res)
     }
@@ -288,21 +288,21 @@ impl Default for RetryConfig {
 }
 
 // ApiConfig holds configuration used to connect
-// to a given Carbide API URL, including the client
+// to a given NICo API URL, including the client
 // configuration itself, as well as retry config.
 #[derive(Debug, Clone, Copy)]
 pub struct ApiConfig<'a> {
     pub url: &'a str,
     pub additional_urls: &'a [String],
-    pub client_config: &'a ForgeClientConfig,
+    pub client_config: &'a NicoClientConfig,
     pub retry_config: RetryConfig,
 }
 
 impl<'a> ApiConfig<'a> {
     // new creates a new ApiConfig, for the given
-    // Carbide API URL and ForgeClientConfig, with
+    // NICo API URL and NicoClientConfig, with
     // a default retry configuration.
-    pub fn new(url: &'a str, client_config: &'a ForgeClientConfig) -> Self {
+    pub fn new(url: &'a str, client_config: &'a NicoClientConfig) -> Self {
         Self {
             url,
             additional_urls: &[],
@@ -314,7 +314,7 @@ impl<'a> ApiConfig<'a> {
     pub fn new_with_multiple_urls(
         url: &'a str,
         additional_urls: &'a [String],
-        client_config: &'a ForgeClientConfig,
+        client_config: &'a NicoClientConfig,
         retry_config: RetryConfig,
     ) -> Self {
         Self {
@@ -345,28 +345,28 @@ impl<'a> ApiConfig<'a> {
 }
 
 #[derive(Clone, Debug)]
-pub struct ForgeTlsClient<'a> {
-    forge_client_config: &'a ForgeClientConfig,
+pub struct NicoTlsClient<'a> {
+    nico_client_config: &'a NicoClientConfig,
 }
 
-impl<'a> ForgeTlsClient<'a> {
-    pub fn new(forge_client_config: &'a ForgeClientConfig) -> Self {
+impl<'a> NicoTlsClient<'a> {
+    pub fn new(nico_client_config: &'a NicoClientConfig) -> Self {
         Self {
-            forge_client_config,
+            nico_client_config,
         }
     }
 
-    /// retry_build creates a new ForgeTlsClient from
-    /// the given API URL and ForgeClientConfig, then attempts to build
+    /// retry_build creates a new NicoTlsClient from
+    /// the given API URL and NicoClientConfig, then attempts to build
     /// and return a client, integrating retries into the
     /// building attempts.
-    pub async fn retry_build(api_config: &ApiConfig<'a>) -> ForgeTlsClientResult<ForgeClientT> {
-        // In the retrying function, if the ForgeTlsClient just fails to even build, return _that_
+    pub async fn retry_build(api_config: &ApiConfig<'a>) -> NicoTlsClientResult<NicoClientT> {
+        // In the retrying function, if the NicoTlsClient just fails to even build, return _that_
         // error early by putting it in the Ok(Err(e)) variant, so that tryhard doesn't keep
         // retrying a configuration error.
-        let result: Result<Result<ForgeClientT, ForgeTlsClientError>, ForgeTlsClientError> =
+        let result: Result<Result<NicoClientT, NicoTlsClientError>, NicoTlsClientError> =
             tryhard::retry_fn(|| async move {
-                let mut client = match ForgeTlsClient::new(api_config.client_config)
+                let mut client = match NicoTlsClient::new(api_config.client_config)
                     .build(api_config.url)
                     .await
                 {
@@ -383,12 +383,12 @@ impl<'a> ForgeTlsClient<'a> {
                     .await
                     .inspect_err(|err| {
                         tracing::error!(
-                            "error connecting client to forge api (url: {}), will retry: {}",
+                            "error connecting client to nico api (url: {}), will retry: {}",
                             api_config.url,
                             format_error_chain(err)
                         );
                     })
-                    .map_err(|e| ForgeTlsClientError::Connection(format_error_chain(&e)))?;
+                    .map_err(|e| NicoTlsClientError::Connection(format_error_chain(&e)))?;
 
                 // ok, ok
                 Ok(Ok(client))
@@ -397,7 +397,7 @@ impl<'a> ForgeTlsClient<'a> {
             .await
             .inspect_err(|err| {
                 tracing::error!(
-                    "error connecting client to forge api (url: {}, attempts: {}): {}",
+                    "error connecting client to nico api (url: {}, attempts: {}): {}",
                     api_config.url,
                     api_config.retry_config.retries,
                     err
@@ -411,7 +411,7 @@ impl<'a> ForgeTlsClient<'a> {
         }
     }
 
-    /// Builds a new Client for for the Forge API which uses a HTTPS/TLS connector
+    /// Builds a new Client for for the NICo API which uses a HTTPS/TLS connector
     /// and appropriate certificates for connecting to the API server.
     ///
     /// Note that calling this API will not establish any connection.
@@ -421,7 +421,7 @@ impl<'a> ForgeTlsClient<'a> {
     /// connection establishment internally.
     /// However using a fresh client could avoid getting a stale connection from
     /// a pool.
-    pub async fn build<S: AsRef<str>>(&self, url: S) -> ForgeTlsClientResult<ForgeClientT> {
+    pub async fn build<S: AsRef<str>>(&self, url: S) -> NicoTlsClientResult<NicoClientT> {
         let uri = Uri::from_str(url.as_ref()).map_err(|e| ConfigurationError::InvalidUri {
             uri_string: url.as_ref().to_string(),
             error: e,
@@ -440,26 +440,26 @@ impl<'a> ForgeTlsClient<'a> {
             // Send PING even when no active http2 streams
             .http2_keep_alive_while_idle(true)
             // How many connections will be kept open, per host.
-            // We never make more than a single connection to carbide at a time.
+            // We never make more than a single connection to nico at a time.
             .pool_max_idle_per_host(2)
             .timer(TokioTimer::new())
             .build(connector)
             .boxed_clone();
 
-        let mut forge_client = ForgeClient::with_origin(hyper_client, uri);
+        let mut nico_client = NicoClient::with_origin(hyper_client, uri);
 
-        if let Some(max_decoding_message_size) = self.forge_client_config.max_decoding_message_size
+        if let Some(max_decoding_message_size) = self.nico_client_config.max_decoding_message_size
         {
-            forge_client = forge_client.max_decoding_message_size(max_decoding_message_size);
+            nico_client = nico_client.max_decoding_message_size(max_decoding_message_size);
         }
 
-        Ok(forge_client)
+        Ok(nico_client)
     }
 
     pub async fn build_https_client<S: AsRef<str>>(
         &self,
         url: S,
-    ) -> ForgeHttpsClientResult<hyper_rustls::HttpsConnector<ForgeHttpConnector>> {
+    ) -> NicoHttpsClientResult<hyper_rustls::HttpsConnector<NicoHttpConnector>> {
         let mut roots = RootCertStore::empty();
         let uri = Uri::from_str(url.as_ref()).map_err(|e| ConfigurationError::InvalidUri {
             uri_string: url.as_ref().to_string(),
@@ -473,7 +473,7 @@ impl<'a> ForgeTlsClient<'a> {
         {
             // TODO: by reading the pemfile every time, we're automatically getting hot-reload
             // TODO: -- but we could use inotify in order to make this more performant.
-            match tokio::fs::read(&self.forge_client_config.root_ca_path).await {
+            match tokio::fs::read(&self.nico_client_config.root_ca_path).await {
                 Ok(pem_file) => {
                     let mut cert_cursor = std::io::Cursor::new(&pem_file[..]);
                     let (_added, _ignored) = roots.add_parsable_certificates(
@@ -482,14 +482,14 @@ impl<'a> ForgeTlsClient<'a> {
                 }
                 Err(error) => {
                     return Err(CouldNotReadRootCa {
-                        path: self.forge_client_config.root_ca_path.clone(),
+                        path: self.nico_client_config.root_ca_path.clone(),
                         error,
                     }
                     .into());
                 }
             }
 
-            if let Some(cert_expiry) = self.forge_client_config.client_cert_expiry() {
+            if let Some(cert_expiry) = self.nico_client_config.client_cert_expiry() {
                 let start = SystemTime::now();
                 let current_time = start
                     .duration_since(UNIX_EPOCH)
@@ -519,7 +519,7 @@ impl<'a> ForgeTlsClient<'a> {
 
         let tls = {
             let builder = || {
-                if self.forge_client_config.enforce_tls {
+                if self.nico_client_config.enforce_tls {
                     base_config_builder().with_root_certificates(roots)
                 } else {
                     base_config_builder()
@@ -530,7 +530,7 @@ impl<'a> ForgeTlsClient<'a> {
                 }
             };
 
-            if let Some((certs, key)) = self.forge_client_config.read_client_cert() {
+            if let Some((certs, key)) = self.nico_client_config.read_client_cert() {
                 builder()
                     .with_client_auth_cert(certs, key)
                     .map_err(ConfigurationError::InvalidClientCert)?
@@ -539,30 +539,30 @@ impl<'a> ForgeTlsClient<'a> {
             }
         };
 
-        let forge_resolv_config =
-            forge_resolver::resolver::ForgeResolveConf::with_system_resolv_conf()
+        let nico_resolv_config =
+            nico_resolver::resolver::NicoResolveConf::with_system_resolv_conf()
                 .map_err(ConfigurationError::Resolver)?;
-        let forge_resolver_config = forge_resolver::resolver::into_forge_resolver_config(
-            forge_resolv_config.parsed_configuration(),
+        let nico_resolver_config = nico_resolver::resolver::into_nico_resolver_config(
+            nico_resolv_config.parsed_configuration(),
         )
         .map_err(ConfigurationError::Resolver)?;
 
         let resolver_config = ResolverConfig::from_parts(
-            forge_resolver_config.0.domain,
-            forge_resolver_config.0.search_domain,
-            forge_resolver_config.0.inner,
+            nico_resolver_config.0.domain,
+            nico_resolver_config.0.search_domain,
+            nico_resolver_config.0.inner,
         );
         // Five seconds is the default, but setting anyway for documentation and future proofing
-        let mut resolver_opts = ForgeResolverOpts::default().timeout(Duration::from_secs(5));
-        if self.forge_client_config.use_mgmt_vrf {
+        let mut resolver_opts = NicoResolverOpts::default().timeout(Duration::from_secs(5));
+        if self.nico_client_config.use_mgmt_vrf {
             resolver_opts = resolver_opts.use_mgmt_vrf();
         }
-        let resolver = ForgeResolver::with_config_and_options(resolver_config, resolver_opts);
-        let mut http = ForgeHttpConnector::new_with_resolver(resolver);
-        if self.forge_client_config.use_mgmt_vrf {
+        let resolver = NicoResolver::with_config_and_options(resolver_config, resolver_opts);
+        let mut http = NicoHttpConnector::new_with_resolver(resolver);
+        if self.nico_client_config.use_mgmt_vrf {
             http.set_interface("mgmt".to_string());
         }
-        http.set_socks5_proxy(self.forge_client_config.socks_proxy.clone());
+        http.set_socks5_proxy(self.nico_client_config.socks_proxy.clone());
         http.enforce_http(false);
 
         // Wait this long for `connect` syscall to return.
@@ -590,8 +590,8 @@ impl<'a> ForgeTlsClient<'a> {
         http.set_keepalive_interval(Some(Duration::from_secs(4)));
         http.set_keepalive_retries(Some(3)); // initial probe at 20s, then 24s, 28s and 32s
 
-        http.set_connect_retries_max(self.forge_client_config.connect_retries_max);
-        http.set_connect_retries_interval(self.forge_client_config.connect_retries_interval);
+        http.set_connect_retries_max(self.nico_client_config.connect_retries_max);
+        http.set_connect_retries_interval(self.nico_client_config.connect_retries_interval);
 
         let connector = tower::ServiceBuilder::new()
             .layer_fn(move |s| {
@@ -619,7 +619,7 @@ impl<'a> ForgeTlsClient<'a> {
     pub async fn build_nmx_c_client<S: AsRef<str>>(
         &self,
         url: S,
-    ) -> ForgeTlsClientResult<NmxCClientT> {
+    ) -> NicoTlsClientResult<NmxCClientT> {
         let uri = Uri::from_str(url.as_ref()).map_err(|e| ConfigurationError::InvalidUri {
             uri_string: url.as_ref().to_string(),
             error: e,
@@ -637,7 +637,7 @@ impl<'a> ForgeTlsClient<'a> {
             // Send PING even when no active http2 streams
             .http2_keep_alive_while_idle(true)
             // How many connections will be kept open, per host.
-            // We never make more than a single connection to carbide at a time.
+            // We never make more than a single connection to nico at a time.
             .pool_max_idle_per_host(2)
             .timer(TokioTimer::new())
             .build(connector)
@@ -645,7 +645,7 @@ impl<'a> ForgeTlsClient<'a> {
 
         let mut nmx_c_client = NmxControllerClient::with_origin(hyper_client, uri);
 
-        if let Some(max_decoding_message_size) = self.forge_client_config.max_decoding_message_size
+        if let Some(max_decoding_message_size) = self.nico_client_config.max_decoding_message_size
         {
             nmx_c_client = nmx_c_client.max_decoding_message_size(max_decoding_message_size);
         }
@@ -655,13 +655,13 @@ impl<'a> ForgeTlsClient<'a> {
 
     pub async fn retry_build_nmx_c(
         api_config: &ApiConfig<'a>,
-    ) -> ForgeTlsClientResult<NmxCClientT> {
-        // In the retrying function, if the ForgeTlsClient just fails to even build, return _that_
+    ) -> NicoTlsClientResult<NmxCClientT> {
+        // In the retrying function, if the NicoTlsClient just fails to even build, return _that_
         // error early by putting it in the Ok(Err(e)) variant, so that tryhard doesn't keep
         // retrying a configuration error.
-        let result: Result<Result<NmxCClientT, ForgeTlsClientError>, ForgeTlsClientError> =
+        let result: Result<Result<NmxCClientT, NicoTlsClientError>, NicoTlsClientError> =
             tryhard::retry_fn(|| async move {
-                let mut client = match ForgeTlsClient::new(api_config.client_config)
+                let mut client = match NicoTlsClient::new(api_config.client_config)
                     .build_nmx_c_client(api_config.url)
                     .await
                 {
@@ -684,12 +684,12 @@ impl<'a> ForgeTlsClient<'a> {
                     .await
                     .inspect_err(|err| {
                         tracing::error!(
-                            "error connecting client to forge api (url: {}), will retry: {}",
+                            "error connecting client to nico api (url: {}), will retry: {}",
                             api_config.url,
                             format_error_chain(err)
                         );
                     })
-                    .map_err(|e| ForgeTlsClientError::Connection(format_error_chain(&e)))?;
+                    .map_err(|e| NicoTlsClientError::Connection(format_error_chain(&e)))?;
 
                 // ok, ok
                 Ok(Ok(client))
@@ -714,7 +714,7 @@ impl<'a> ForgeTlsClient<'a> {
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum ForgeTlsClientError {
+pub enum NicoTlsClientError {
     #[error("ConnectError error: {0}")]
     Connection(String),
     #[error("Configuration error: {0}")]
@@ -736,61 +736,61 @@ pub enum ConfigurationError {
     Resolver(#[from] ResolverError),
 }
 
-impl From<ForgeTlsClientError> for tonic::Status {
-    fn from(value: ForgeTlsClientError) -> Self {
+impl From<NicoTlsClientError> for tonic::Status {
+    fn from(value: NicoTlsClientError) -> Self {
         tonic::Status::unavailable(value.to_string())
     }
 }
 
-pub type ForgeTlsClientResult<T> = Result<T, ForgeTlsClientError>;
-pub type ForgeHttpsClientResult<T> = Result<T, ForgeTlsClientError>;
+pub type NicoTlsClientResult<T> = Result<T, NicoTlsClientError>;
+pub type NicoHttpsClientResult<T> = Result<T, NicoTlsClientError>;
 
 #[cfg(test)]
 mod tests {
     use std::net::SocketAddr;
 
-    use forge_http_connector::connector::ConnectorMetrics;
+    use nico_http_connector::connector::ConnectorMetrics;
     use hyper_rustls::HttpsConnector;
 
     use super::*;
 
     #[tokio::test]
     // test_max_retries builds up an instance of hyper client using
-    // the ForgeHttpConnector, which is the same configuration used
-    // for creating a ForgeTlsClient. In this case, it is NOT
-    // used to create a ForgeTlsClient, but instead is used directly
+    // the NicoHttpConnector, which is the same configuration used
+    // for creating a NicoTlsClient. In this case, it is NOT
+    // used to create a NicoTlsClient, but instead is used directly
     // to make an HTTP call (so we maintain access to the underlying
     // connector for querying retry count.
     async fn test_max_retries() {
         let max_retries = 3; // 4 total attempts
 
         // Set up all of the resolver config stuff
-        // to pass to the ForgeHttpConnector.
-        let forge_resolv_config =
-            forge_resolver::resolver::ForgeResolveConf::with_system_resolv_conf().unwrap();
-        let forge_resolver_config = forge_resolver::resolver::into_forge_resolver_config(
-            forge_resolv_config.parsed_configuration(),
+        // to pass to the NicoHttpConnector.
+        let nico_resolv_config =
+            nico_resolver::resolver::NicoResolveConf::with_system_resolv_conf().unwrap();
+        let nico_resolver_config = nico_resolver::resolver::into_nico_resolver_config(
+            nico_resolv_config.parsed_configuration(),
         )
         .unwrap();
 
         let resolver_config = ResolverConfig::from_parts(
-            forge_resolver_config.0.domain,
-            forge_resolver_config.0.search_domain,
-            forge_resolver_config.0.inner,
+            nico_resolver_config.0.domain,
+            nico_resolver_config.0.search_domain,
+            nico_resolver_config.0.inner,
         );
 
-        let resolver_opts = ForgeResolverOpts::default().timeout(Duration::from_secs(5));
-        let resolver = ForgeResolver::with_config_and_options(resolver_config, resolver_opts);
+        let resolver_opts = NicoResolverOpts::default().timeout(Duration::from_secs(5));
+        let resolver = NicoResolver::with_config_and_options(resolver_config, resolver_opts);
 
         // Create the ConnectorMetrics instance used for
         // collecting some stats for connections that go
-        // through the ForgeHttpConnector.
+        // through the NicoHttpConnector.
         let mut metrics = ConnectorMetrics::default();
 
-        // Now create the ForgeHttpConnector, setting our
+        // Now create the NicoHttpConnector, setting our
         // test-specific `max_retries` with a 1 second interval,
         // and passing it our Connectormetrics.
-        let mut http = ForgeHttpConnector::new_with_resolver(resolver);
+        let mut http = NicoHttpConnector::new_with_resolver(resolver);
         http.set_connect_retries_max(Some(max_retries));
         http.set_connect_retries_interval(Some(Duration::from_secs(1)));
         http.set_metrics(metrics.clone());
@@ -817,11 +817,11 @@ mod tests {
             .service(http);
 
         // And then create a new hyper HTTP client with the connector.
-        let hyper_client: legacy::Client<HttpsConnector<ForgeHttpConnector>, Body> =
+        let hyper_client: legacy::Client<HttpsConnector<NicoHttpConnector>, Body> =
             legacy::Client::builder(TokioExecutor::new()).build(connector);
 
         // We're finally here. Fire off an HTTP request. Behind he scenes,
-        // the ForgeHttpConnector is going to attempt to connect, fail, and
+        // the NicoHttpConnector is going to attempt to connect, fail, and
         // subsequently fire off 3 retries. This assumes you don't have
         // anything listening on :12345. If you do, this test will obviously
         // fail, because the connection will be successful. :P

@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-use carbide_uuid::operating_system::OperatingSystemId;
+use nico_uuid::operating_system::OperatingSystemId;
 use common::api_fixtures::instance::{default_tenant_config, single_interface_network_config};
 use common::api_fixtures::{create_managed_host, create_test_env};
 use config_version::ConfigVersion;
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{IpxeTemplateArtifact, IpxeTemplateArtifactCacheStrategy, IpxeTemplateParameter};
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{IpxeTemplateArtifact, IpxeTemplateArtifactCacheStrategy, IpxeTemplateParameter};
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 
 use crate::tests::common;
@@ -32,12 +32,12 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     let segment_id = env.create_vpc_and_tenant_segment().await;
     let mh = create_managed_host(&env).await;
 
-    let initial_os = rpc::forge::InstanceOperatingSystemConfig {
+    let initial_os = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("SomeRandomData1".to_string()),
-        variant: Some(rpc::forge::instance_operating_system_config::Variant::Ipxe(
-            rpc::forge::InlineIpxe {
+        variant: Some(rpc::nico::instance_operating_system_config::Variant::Ipxe(
+            rpc::nico::InlineIpxe {
                 ipxe_script: "SomeRandomiPxe1".to_string(),
             },
         )),
@@ -57,19 +57,19 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
 
     let instance = tinstance.rpc_instance().await;
 
-    assert_eq!(instance.status().tenant(), rpc::forge::TenantState::Ready);
+    assert_eq!(instance.status().tenant(), rpc::nico::TenantState::Ready);
 
     let os = instance.config().os();
     assert_eq!(os, &initial_os);
     let initial_config_version = instance.config_version();
     assert_eq!(initial_config_version.version_nr(), 1);
 
-    let updated_os_1 = rpc::forge::InstanceOperatingSystemConfig {
+    let updated_os_1 = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: true,
         run_provisioning_instructions_on_every_boot: true,
         user_data: Some("SomeRandomData2".to_string()),
-        variant: Some(rpc::forge::instance_operating_system_config::Variant::Ipxe(
-            rpc::forge::InlineIpxe {
+        variant: Some(rpc::nico::instance_operating_system_config::Variant::Ipxe(
+            rpc::nico::InlineIpxe {
                 ipxe_script: "SomeRandomiPxe2".to_string(),
             },
         )),
@@ -78,7 +78,7 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     let instance = env
         .api
         .update_instance_operating_system(tonic::Request::new(
-            rpc::forge::InstanceOperatingSystemUpdateRequest {
+            rpc::nico::InstanceOperatingSystemUpdateRequest {
                 instance_id: Some(tinstance.id),
                 if_version_match: None,
                 os: Some(updated_os_1.clone()),
@@ -92,12 +92,12 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     let updated_config_version = instance.config_version.parse::<ConfigVersion>().unwrap();
     assert_eq!(updated_config_version.version_nr(), 2);
 
-    let updated_os_2 = rpc::forge::InstanceOperatingSystemConfig {
+    let updated_os_2 = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("SomeRandomData3".to_string()),
-        variant: Some(rpc::forge::instance_operating_system_config::Variant::Ipxe(
-            rpc::forge::InlineIpxe {
+        variant: Some(rpc::nico::instance_operating_system_config::Variant::Ipxe(
+            rpc::nico::InlineIpxe {
                 ipxe_script: "SomeRandomiPxe3".to_string(),
             },
         )),
@@ -108,7 +108,7 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     let status = env
         .api
         .update_instance_operating_system(tonic::Request::new(
-            rpc::forge::InstanceOperatingSystemUpdateRequest {
+            rpc::nico::InstanceOperatingSystemUpdateRequest {
                 instance_id: Some(tinstance.id),
                 if_version_match: Some(initial_config_version.version_string()),
                 os: Some(updated_os_2.clone()),
@@ -131,7 +131,7 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     let instance = env
         .api
         .update_instance_operating_system(tonic::Request::new(
-            rpc::forge::InstanceOperatingSystemUpdateRequest {
+            rpc::nico::InstanceOperatingSystemUpdateRequest {
                 instance_id: Some(tinstance.id),
                 if_version_match: Some(updated_config_version.version_string()),
                 os: Some(updated_os_2.clone()),
@@ -151,7 +151,7 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     let status = env
         .api
         .update_instance_operating_system(tonic::Request::new(
-            rpc::forge::InstanceOperatingSystemUpdateRequest {
+            rpc::nico::InstanceOperatingSystemUpdateRequest {
                 instance_id: Some(unknown_instance.into()),
                 if_version_match: None,
                 os: Some(updated_os_2.clone()),
@@ -168,12 +168,12 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     );
 
     // Try to update to an invalid OS
-    let invalid_os = rpc::forge::InstanceOperatingSystemConfig {
+    let invalid_os = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: true,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("SomeRandomData2".to_string()),
-        variant: Some(rpc::forge::instance_operating_system_config::Variant::Ipxe(
-            rpc::forge::InlineIpxe {
+        variant: Some(rpc::nico::instance_operating_system_config::Variant::Ipxe(
+            rpc::nico::InlineIpxe {
                 ipxe_script: "".to_string(),
             },
         )),
@@ -182,7 +182,7 @@ async fn test_update_instance_operating_system(_: PgPoolOptions, options: PgConn
     let err = env
         .api
         .update_instance_operating_system(tonic::Request::new(
-            rpc::forge::InstanceOperatingSystemUpdateRequest {
+            rpc::nico::InstanceOperatingSystemUpdateRequest {
                 instance_id: Some(tinstance.id),
                 if_version_match: None,
                 os: Some(invalid_os),
@@ -207,7 +207,7 @@ async fn test_create_instance_with_ipxe_template_os(_: PgPoolOptions, options: P
     let os_def = env
         .api
         .create_operating_system(tonic::Request::new(
-            rpc::forge::CreateOperatingSystemRequest {
+            rpc::nico::CreateOperatingSystemRequest {
                 id: None,
                 name: "template-os".to_string(),
                 tenant_organization_id: "test-org".to_string(),
@@ -218,7 +218,7 @@ async fn test_create_instance_with_ipxe_template_os(_: PgPoolOptions, options: P
                 user_data: Some("os-level-userdata".to_string()),
                 ipxe_script: None,
                 ipxe_template_id: Some("ddbf83c0-a753-5fde-96c1-6b74e9c9db10".parse().unwrap()),
-                ipxe_template_parameters: vec![rpc::forge::IpxeTemplateParameter {
+                ipxe_template_parameters: vec![rpc::nico::IpxeTemplateParameter {
                     name: "ipxe".to_string(),
                     value: "chain http://boot.example.com".to_string(),
                 }],
@@ -231,16 +231,16 @@ async fn test_create_instance_with_ipxe_template_os(_: PgPoolOptions, options: P
 
     assert_eq!(
         os_def.r#type,
-        rpc::forge::OperatingSystemType::OsTypeTemplatedIpxe as i32
+        rpc::nico::OperatingSystemType::OsTypeTemplatedIpxe as i32
     );
     let os_id = os_def.id.unwrap();
 
-    let instance_os = rpc::forge::InstanceOperatingSystemConfig {
+    let instance_os = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("instance-userdata".to_string()),
         variant: Some(
-            rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(os_id),
+            rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(os_id),
         ),
     };
 
@@ -257,11 +257,11 @@ async fn test_create_instance_with_ipxe_template_os(_: PgPoolOptions, options: P
     let tinstance = mh.instance_builer(&env).config(config).build().await;
     let instance = tinstance.rpc_instance().await;
 
-    assert_eq!(instance.status().tenant(), rpc::forge::TenantState::Ready);
+    assert_eq!(instance.status().tenant(), rpc::nico::TenantState::Ready);
 
     let os = instance.config().os();
     match &os.variant {
-        Some(rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(id)) => {
+        Some(rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(id)) => {
             assert_eq!(*id, os_id);
         }
         other => panic!("expected OperatingSystemId variant, got {other:?}"),
@@ -276,7 +276,7 @@ async fn test_create_instance_with_ipxe_template_os(_: PgPoolOptions, options: P
     txn.rollback().await.unwrap();
 
     let pxe = host_interface
-        .get_pxe_instructions(rpc::forge::MachineArchitecture::X86)
+        .get_pxe_instructions(rpc::nico::MachineArchitecture::X86)
         .await;
     assert!(
         pxe.pxe_script.contains("chain http://boot.example.com"),
@@ -293,7 +293,7 @@ async fn create_os_definition(
 ) -> OperatingSystemId {
     env.api
         .create_operating_system(tonic::Request::new(
-            rpc::forge::CreateOperatingSystemRequest {
+            rpc::nico::CreateOperatingSystemRequest {
                 id: None,
                 name: name.to_string(),
                 tenant_organization_id: "test-org".to_string(),
@@ -329,16 +329,16 @@ async fn test_allocate_instance_rejects_inactive_os(_: PgPoolOptions, options: P
 
     let result = env
         .api
-        .allocate_instance(tonic::Request::new(rpc::forge::InstanceAllocationRequest {
+        .allocate_instance(tonic::Request::new(rpc::nico::InstanceAllocationRequest {
             machine_id: mh.id.into(),
             config: Some(rpc::InstanceConfig {
                 tenant: Some(default_tenant_config()),
-                os: Some(rpc::forge::InstanceOperatingSystemConfig {
+                os: Some(rpc::nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
                     variant: Some(
-                        rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(
+                        rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(
                             os_id,
                         ),
                     ),
@@ -351,7 +351,7 @@ async fn test_allocate_instance_rejects_inactive_os(_: PgPoolOptions, options: P
             }),
             instance_id: None,
             instance_type_id: None,
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "test-inactive-os".to_string(),
                 description: String::new(),
                 labels: vec![],
@@ -380,7 +380,7 @@ async fn test_allocate_instance_rejects_not_ready_os(_: PgPoolOptions, options: 
     let os = env
         .api
         .create_operating_system(tonic::Request::new(
-            rpc::forge::CreateOperatingSystemRequest {
+            rpc::nico::CreateOperatingSystemRequest {
                 id: None,
                 name: "not-ready-os".to_string(),
                 tenant_organization_id: "test-org".to_string(),
@@ -401,7 +401,7 @@ async fn test_allocate_instance_rejects_not_ready_os(_: PgPoolOptions, options: 
                     sha: None,
                     auth_type: None,
                     auth_token: None,
-                    cache_strategy: rpc::forge::IpxeTemplateArtifactCacheStrategy::CachedOnly
+                    cache_strategy: rpc::nico::IpxeTemplateArtifactCacheStrategy::CachedOnly
                         as i32,
                     cached_url: None,
                 }],
@@ -411,20 +411,20 @@ async fn test_allocate_instance_rejects_not_ready_os(_: PgPoolOptions, options: 
         .unwrap()
         .into_inner();
     let os_id = os.id.unwrap();
-    assert_eq!(os.status, rpc::forge::TenantState::Provisioning as i32);
+    assert_eq!(os.status, rpc::nico::TenantState::Provisioning as i32);
 
     let result = env
         .api
-        .allocate_instance(tonic::Request::new(rpc::forge::InstanceAllocationRequest {
+        .allocate_instance(tonic::Request::new(rpc::nico::InstanceAllocationRequest {
             machine_id: mh.id.into(),
             config: Some(rpc::InstanceConfig {
                 tenant: Some(default_tenant_config()),
-                os: Some(rpc::forge::InstanceOperatingSystemConfig {
+                os: Some(rpc::nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
                     variant: Some(
-                        rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(
+                        rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(
                             os_id,
                         ),
                     ),
@@ -437,7 +437,7 @@ async fn test_allocate_instance_rejects_not_ready_os(_: PgPoolOptions, options: 
             }),
             instance_id: None,
             instance_type_id: None,
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "test-not-ready-os".to_string(),
                 description: String::new(),
                 labels: vec![],
@@ -463,12 +463,12 @@ async fn test_update_instance_os_rejects_inactive_os(_: PgPoolOptions, options: 
     let mh = create_managed_host(&env).await;
 
     // Create an instance with an inline iPXE OS first
-    let initial_os = rpc::forge::InstanceOperatingSystemConfig {
+    let initial_os = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: None,
-        variant: Some(rpc::forge::instance_operating_system_config::Variant::Ipxe(
-            rpc::forge::InlineIpxe {
+        variant: Some(rpc::nico::instance_operating_system_config::Variant::Ipxe(
+            rpc::nico::InlineIpxe {
                 ipxe_script: "chain http://example.com".to_string(),
             },
         )),
@@ -490,15 +490,15 @@ async fn test_update_instance_os_rejects_inactive_os(_: PgPoolOptions, options: 
     let err = env
         .api
         .update_instance_operating_system(tonic::Request::new(
-            rpc::forge::InstanceOperatingSystemUpdateRequest {
+            rpc::nico::InstanceOperatingSystemUpdateRequest {
                 instance_id: Some(tinstance.id),
                 if_version_match: None,
-                os: Some(rpc::forge::InstanceOperatingSystemConfig {
+                os: Some(rpc::nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
                     variant: Some(
-                        rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(
+                        rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(
                             os_id,
                         ),
                     ),
@@ -532,7 +532,7 @@ async fn test_create_instance_with_os_image_and_verify_pxe_rendering(
 
     let image = env
         .api
-        .create_os_image(tonic::Request::new(rpc::forge::OsImageAttributes {
+        .create_os_image(tonic::Request::new(rpc::nico::OsImageAttributes {
             id: Some(rpc::Uuid::from(os_image_id)),
             source_url: source_url.to_string(),
             digest: digest.to_string(),
@@ -557,12 +557,12 @@ async fn test_create_instance_with_os_image_and_verify_pxe_rendering(
         uuid::Uuid::try_from(image.attributes.as_ref().unwrap().id.clone().unwrap()).unwrap();
     assert_eq!(actual_id, os_image_id);
 
-    let instance_os = rpc::forge::InstanceOperatingSystemConfig {
+    let instance_os = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("os-image-userdata".to_string()),
         variant: Some(
-            rpc::forge::instance_operating_system_config::Variant::OsImageId(rpc::Uuid::from(
+            rpc::nico::instance_operating_system_config::Variant::OsImageId(rpc::Uuid::from(
                 os_image_id,
             )),
         ),
@@ -580,14 +580,14 @@ async fn test_create_instance_with_os_image_and_verify_pxe_rendering(
 
     let tinstance = mh.instance_builer(&env).config(config).build().await;
     let instance = tinstance.rpc_instance().await;
-    assert_eq!(instance.status().tenant(), rpc::forge::TenantState::Ready);
+    assert_eq!(instance.status().tenant(), rpc::nico::TenantState::Ready);
 
     let mut txn = env.pool.begin().await.unwrap();
     let host_interface = mh.host().first_interface(&mut txn).await;
     txn.rollback().await.unwrap();
 
     let pxe = host_interface
-        .get_pxe_instructions(rpc::forge::MachineArchitecture::X86)
+        .get_pxe_instructions(rpc::nico::MachineArchitecture::X86)
         .await;
 
     assert!(
@@ -641,7 +641,7 @@ async fn test_create_instance_with_raw_ipxe_os_and_verify_pxe_rendering(
     let os_def = env
         .api
         .create_operating_system(tonic::Request::new(
-            rpc::forge::CreateOperatingSystemRequest {
+            rpc::nico::CreateOperatingSystemRequest {
                 id: None,
                 name: "raw-ipxe-os".to_string(),
                 tenant_organization_id: "test-org".to_string(),
@@ -662,16 +662,16 @@ async fn test_create_instance_with_raw_ipxe_os_and_verify_pxe_rendering(
 
     assert_eq!(
         os_def.r#type,
-        rpc::forge::OperatingSystemType::OsTypeIpxe as i32
+        rpc::nico::OperatingSystemType::OsTypeIpxe as i32
     );
     let os_id = os_def.id.unwrap();
 
-    let instance_os = rpc::forge::InstanceOperatingSystemConfig {
+    let instance_os = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("instance-userdata".to_string()),
         variant: Some(
-            rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(os_id),
+            rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(os_id),
         ),
     };
 
@@ -687,10 +687,10 @@ async fn test_create_instance_with_raw_ipxe_os_and_verify_pxe_rendering(
 
     let tinstance = mh.instance_builer(&env).config(config).build().await;
     let instance = tinstance.rpc_instance().await;
-    assert_eq!(instance.status().tenant(), rpc::forge::TenantState::Ready);
+    assert_eq!(instance.status().tenant(), rpc::nico::TenantState::Ready);
 
     match &instance.config().os().variant {
-        Some(rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(id)) => {
+        Some(rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(id)) => {
             assert_eq!(*id, os_id);
         }
         other => panic!("expected OperatingSystemId variant, got {other:?}"),
@@ -701,7 +701,7 @@ async fn test_create_instance_with_raw_ipxe_os_and_verify_pxe_rendering(
     txn.rollback().await.unwrap();
 
     let pxe = host_interface
-        .get_pxe_instructions(rpc::forge::MachineArchitecture::X86)
+        .get_pxe_instructions(rpc::nico::MachineArchitecture::X86)
         .await;
     assert!(
         pxe.pxe_script.contains(raw_script),
@@ -725,7 +725,7 @@ async fn test_create_instance_with_templated_ipxe_os_with_artifacts_and_verify_p
     let os_def = env
         .api
         .create_operating_system(tonic::Request::new(
-            rpc::forge::CreateOperatingSystemRequest {
+            rpc::nico::CreateOperatingSystemRequest {
                 id: None,
                 name: "templated-os-with-artifacts".to_string(),
                 tenant_organization_id: "test-org".to_string(),
@@ -757,11 +757,11 @@ async fn test_create_instance_with_templated_ipxe_os_with_artifacts_and_verify_p
 
     assert_eq!(
         os_def.r#type,
-        rpc::forge::OperatingSystemType::OsTypeTemplatedIpxe as i32,
+        rpc::nico::OperatingSystemType::OsTypeTemplatedIpxe as i32,
     );
     assert_eq!(
         os_def.status,
-        rpc::forge::TenantState::Provisioning as i32,
+        rpc::nico::TenantState::Provisioning as i32,
         "OS with CachedOnly artifact and no cached_url must start as PROVISIONING"
     );
     let os_id = os_def.id.unwrap();
@@ -769,9 +769,9 @@ async fn test_create_instance_with_templated_ipxe_os_with_artifacts_and_verify_p
     // Set the cached_url for the CachedOnly artifact so the OS becomes READY.
     env.api
         .update_operating_system_cachable_ipxe_template_artifacts(tonic::Request::new(
-            rpc::forge::UpdateOperatingSystemIpxeTemplateArtifactRequest {
+            rpc::nico::UpdateOperatingSystemIpxeTemplateArtifactRequest {
                 id: Some(os_id),
-                updates: vec![rpc::forge::IpxeTemplateArtifactUpdateRequest {
+                updates: vec![rpc::nico::IpxeTemplateArtifactUpdateRequest {
                     name: "firmware".to_string(),
                     cached_url: Some("http://local-cache.site/firmware.bin".to_string()),
                 }],
@@ -788,17 +788,17 @@ async fn test_create_instance_with_templated_ipxe_os_with_artifacts_and_verify_p
         .into_inner();
     assert_eq!(
         fetched.status,
-        rpc::forge::TenantState::Ready as i32,
+        rpc::nico::TenantState::Ready as i32,
         "OS should be READY after setting all CachedOnly cached_urls"
     );
 
     // Allocate an instance referencing this OS.
-    let instance_os = rpc::forge::InstanceOperatingSystemConfig {
+    let instance_os = rpc::nico::InstanceOperatingSystemConfig {
         phone_home_enabled: false,
         run_provisioning_instructions_on_every_boot: false,
         user_data: Some("instance-userdata".to_string()),
         variant: Some(
-            rpc::forge::instance_operating_system_config::Variant::OperatingSystemId(os_id),
+            rpc::nico::instance_operating_system_config::Variant::OperatingSystemId(os_id),
         ),
     };
 
@@ -814,14 +814,14 @@ async fn test_create_instance_with_templated_ipxe_os_with_artifacts_and_verify_p
 
     let tinstance = mh.instance_builer(&env).config(config).build().await;
     let instance = tinstance.rpc_instance().await;
-    assert_eq!(instance.status().tenant(), rpc::forge::TenantState::Ready);
+    assert_eq!(instance.status().tenant(), rpc::nico::TenantState::Ready);
 
     let mut txn = env.pool.begin().await.unwrap();
     let host_interface = mh.host().first_interface(&mut txn).await;
     txn.rollback().await.unwrap();
 
     let pxe = host_interface
-        .get_pxe_instructions(rpc::forge::MachineArchitecture::X86)
+        .get_pxe_instructions(rpc::nico::MachineArchitecture::X86)
         .await;
 
     assert!(

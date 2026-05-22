@@ -19,15 +19,15 @@ use ::rpc::admin_cli::OutputFormat;
 use prettytable::{Table, row};
 
 use super::args::Args;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 pub async fn create(
     opts: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
-    let request: rpc::forge::RackFirmwareCreateRequest = opts.try_into()?;
+) -> Result<(), NicoCliError> {
+    let request: rpc::nico::RackFirmwareCreateRequest = opts.try_into()?;
     let result = api_client.0.create_rack_firmware(request).await?;
 
     if format == OutputFormat::Json {

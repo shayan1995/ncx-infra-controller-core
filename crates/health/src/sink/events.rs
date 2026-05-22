@@ -17,14 +17,14 @@
 
 use std::sync::Arc;
 
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::nvlink::NvLinkDomainId;
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::nvlink::NvLinkDomainId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
 use health_report::{
     HealthAlertClassification, HealthProbeAlert, HealthProbeId, HealthProbeSuccess,
-    HealthReport as CarbideHealthReport, HealthReportConversionError,
+    HealthReport as NicoHealthReport, HealthReportConversionError,
 };
 use nv_redfish::resource::Health as BmcHealth;
 
@@ -329,7 +329,7 @@ impl TryFrom<&HealthReportAlert> for HealthProbeAlert {
     }
 }
 
-impl TryFrom<&HealthReport> for CarbideHealthReport {
+impl TryFrom<&HealthReport> for NicoHealthReport {
     type Error = HealthReportConversionError;
 
     fn try_from(value: &HealthReport) -> Result<Self, Self::Error> {

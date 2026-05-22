@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use carbide_uuid::instance_type::InstanceTypeId;
-use carbide_uuid::rack::RackId;
+use nico_uuid::instance_type::InstanceTypeId;
+use nico_uuid::rack::RackId;
 
 /// MachineSearchConfig: Search parameters
 #[derive(Default, Debug, Clone)]

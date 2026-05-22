@@ -22,9 +22,9 @@ use askama::Template;
 use axum::Json;
 use axum::extract::{Path as AxumPath, State as AxumState};
 use axum::response::{Html, IntoResponse, Response};
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 use hyper::http::StatusCode;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 
 use super::state_history::StateHistoryTable;
 use super::{Base, filters};
@@ -100,12 +100,12 @@ pub async fn show_json(state: AxumState<Arc<Api>>) -> Response {
     (StatusCode::OK, Json(switches)).into_response()
 }
 
-async fn fetch_switches(api: &Api) -> Result<rpc::forge::SwitchList, tonic::Status> {
+async fn fetch_switches(api: &Api) -> Result<rpc::nico::SwitchList, tonic::Status> {
     // Use find_switch_ids (which respects DeletedFilter::Exclude by default)
     // followed by find_switches_by_ids.
     let switch_ids = api
         .find_switch_ids(tonic::Request::new(
-            rpc::forge::SwitchSearchFilter::default(),
+            rpc::nico::SwitchSearchFilter::default(),
         ))
         .await?
         .into_inner()
@@ -122,7 +122,7 @@ async fn fetch_switches(api: &Api) -> Result<rpc::forge::SwitchList, tonic::Stat
         let page_size = PAGE_SIZE.min(switch_ids.len() - offset);
         let next_ids = &switch_ids[offset..offset + page_size];
         let page = api
-            .find_switches_by_ids(tonic::Request::new(rpc::forge::SwitchesByIdsRequest {
+            .find_switches_by_ids(tonic::Request::new(rpc::nico::SwitchesByIdsRequest {
                 switch_ids: next_ids.to_vec(),
             }))
             .await?
@@ -132,7 +132,7 @@ async fn fetch_switches(api: &Api) -> Result<rpc::forge::SwitchList, tonic::Stat
         offset += page_size;
     }
 
-    Ok(rpc::forge::SwitchList { switches })
+    Ok(rpc::nico::SwitchList { switches })
 }
 
 #[derive(Template)]
@@ -147,14 +147,14 @@ struct SwitchDetail {
     lifecycle_detail: super::LifecycleDetail,
     power_state: Option<String>,
     health_status: Option<String>,
-    bmc_info: Option<rpc::forge::BmcInfo>,
+    bmc_info: Option<rpc::nico::BmcInfo>,
     metadata_detail: super::MetadataDetail,
     health_detail: super::HealthDetail,
     history: StateHistoryTable,
 }
 
 impl SwitchDetail {
-    fn new(switch: rpc::forge::Switch, history: StateHistoryTable) -> Self {
+    fn new(switch: rpc::nico::Switch, history: StateHistoryTable) -> Self {
         let id = switch
             .id
             .as_ref()
@@ -240,14 +240,14 @@ pub async fn detail(
     (StatusCode::OK, Html(detail.render().unwrap())).into_response()
 }
 
-async fn fetch_switch(api: &Api, switch_id: &str) -> Result<Option<rpc::forge::Switch>, Response> {
+async fn fetch_switch(api: &Api, switch_id: &str) -> Result<Option<rpc::nico::Switch>, Response> {
     let switch_id_parsed = match SwitchId::from_str(switch_id) {
         Ok(id) => id,
         Err(_) => return Err((StatusCode::BAD_REQUEST, "Invalid switch ID").into_response()),
     };
 
     let response = match api
-        .find_switches(tonic::Request::new(rpc::forge::SwitchQuery {
+        .find_switches(tonic::Request::new(rpc::nico::SwitchQuery {
             name: None,
             switch_id: Some(switch_id_parsed),
         }))

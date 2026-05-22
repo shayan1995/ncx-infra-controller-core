@@ -19,7 +19,7 @@ use ::rpc::admin_cli::OutputFormat;
 use prettytable::{Cell, Row, Table, row};
 
 use super::Opts;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 macro_rules! r {
@@ -51,26 +51,26 @@ pub async fn handle_show_version(
     opts: &Opts,
     api_client: &ApiClient,
     format: OutputFormat,
-) -> Result<(), CarbideCliError> {
+) -> Result<(), NicoCliError> {
     let v = api_client.0.version(opts.show_runtime_config).await?;
     if format == OutputFormat::Json {
         println!("{}", serde_json::to_string(&v)?);
         return Ok(());
     }
 
-    // Same as running `carbide-api --version`
+    // Same as running `nico-api --version`
     println!(
-        "carbide-api:\n\tbuild_version={}, build_date={}, git_sha={}, rust_version={}, build_user={}, build_hostname={}",
+        "nico-api:\n\tbuild_version={}, build_date={}, git_sha={}, rust_version={}, build_user={}, build_hostname={}",
         v.build_version, v.build_date, v.git_sha, v.rust_version, v.build_user, v.build_hostname,
     );
-    // Same as running `forge-admin-cli --version`
+    // Same as running `nico-admin-cli --version`
     println!();
-    println!("forge-admin-cli:\n\t{}", carbide_version::version!());
+    println!("nico-admin-cli:\n\t{}", nico_version::version!());
 
     if opts.show_runtime_config {
         let config = v
             .runtime_config
-            .ok_or_else(|| CarbideCliError::GenericError("Config not found.".to_owned()))?;
+            .ok_or_else(|| NicoCliError::GenericError("Config not found.".to_owned()))?;
 
         println!();
         println!("Runtime Config:");

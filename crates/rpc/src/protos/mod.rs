@@ -27,8 +27,8 @@ pub mod common {
 
 #[allow(non_snake_case, unknown_lints, clippy::all)]
 #[rustfmt::skip]
-pub mod forge {
-    include!(concat!(env!("OUT_DIR"), "/forge.rs"));
+pub mod nico {
+    include!(concat!(env!("OUT_DIR"), "/nico.rs"));
 }
 
 #[allow(non_snake_case, unknown_lints, clippy::all)]
@@ -75,8 +75,8 @@ pub mod fmds {
 
 #[allow(clippy::all, deprecated)]
 #[rustfmt::skip]
-pub mod forge_api_client {
-    include!(concat!(env!("OUT_DIR"), "/forge_api_client.rs"));
+pub mod nico_api_client {
+    include!(concat!(env!("OUT_DIR"), "/nico_api_client.rs"));
 }
 
 #[allow(clippy::all)]

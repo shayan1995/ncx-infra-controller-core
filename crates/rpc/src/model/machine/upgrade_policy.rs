@@ -21,13 +21,13 @@ use crate as rpc;
 use crate::model::RpcFrom;
 
 // To the RPC
-impl From<AgentUpgradePolicy> for rpc::forge::AgentUpgradePolicy {
+impl From<AgentUpgradePolicy> for rpc::nico::AgentUpgradePolicy {
     fn from(p: AgentUpgradePolicy) -> Self {
         use AgentUpgradePolicy::*;
         match p {
-            Off => rpc::forge::AgentUpgradePolicy::Off,
-            UpOnly => rpc::forge::AgentUpgradePolicy::UpOnly,
-            UpDown => rpc::forge::AgentUpgradePolicy::UpDown,
+            Off => rpc::nico::AgentUpgradePolicy::Off,
+            UpOnly => rpc::nico::AgentUpgradePolicy::UpOnly,
+            UpDown => rpc::nico::AgentUpgradePolicy::UpDown,
         }
     }
 }
@@ -35,7 +35,7 @@ impl From<AgentUpgradePolicy> for rpc::forge::AgentUpgradePolicy {
 // From the RPC
 impl RpcFrom<i32> for AgentUpgradePolicy {
     fn rpc_from(rpc_policy: i32) -> Self {
-        use crate::forge::AgentUpgradePolicy::*;
+        use crate::nico::AgentUpgradePolicy::*;
         match rpc_policy {
             n if n == Off as i32 => AgentUpgradePolicy::Off,
             n if n == UpOnly as i32 => AgentUpgradePolicy::UpOnly,

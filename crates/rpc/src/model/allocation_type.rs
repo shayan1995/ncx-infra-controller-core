@@ -19,14 +19,14 @@ use model::allocation_type::AssignStaticResult;
 
 use crate as rpc;
 
-impl From<AssignStaticResult> for rpc::forge::AssignStaticAddressStatus {
+impl From<AssignStaticResult> for rpc::nico::AssignStaticAddressStatus {
     fn from(result: AssignStaticResult) -> Self {
         match result {
-            AssignStaticResult::Assigned => rpc::forge::AssignStaticAddressStatus::Assigned,
+            AssignStaticResult::Assigned => rpc::nico::AssignStaticAddressStatus::Assigned,
             AssignStaticResult::ReplacedStatic => {
-                rpc::forge::AssignStaticAddressStatus::ReplacedStatic
+                rpc::nico::AssignStaticAddressStatus::ReplacedStatic
             }
-            AssignStaticResult::ReplacedDhcp => rpc::forge::AssignStaticAddressStatus::ReplacedDhcp,
+            AssignStaticResult::ReplacedDhcp => rpc::nico::AssignStaticAddressStatus::ReplacedDhcp,
         }
     }
 }

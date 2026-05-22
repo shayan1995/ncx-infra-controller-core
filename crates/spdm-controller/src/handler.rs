@@ -17,8 +17,8 @@
 
 use std::sync::Arc;
 
-use carbide_redfish::libredfish::conv::IntoModel;
-use carbide_redfish::libredfish::error::state_handler_redfish_error as redfish_error;
+use nico_redfish::libredfish::conv::IntoModel;
+use nico_redfish::libredfish::error::state_handler_redfish_error as redfish_error;
 use itertools::Itertools;
 use libredfish::Redfish;
 use libredfish::model::task::TaskState;

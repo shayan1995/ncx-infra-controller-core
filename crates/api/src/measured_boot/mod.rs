@@ -16,7 +16,7 @@
  */
 
 //!
-//! Carbide API module specific to measured boot/machine attestation.
+//! NICo API module specific to measured boot/machine attestation.
 
 pub mod metrics_collector;
 pub mod rpc;

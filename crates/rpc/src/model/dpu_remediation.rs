@@ -23,16 +23,16 @@ use model::metadata::Metadata;
 
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
-use crate::forge::{
+use crate::nico::{
     ApproveRemediationRequest, CreateRemediationRequest, DisableRemediationRequest,
     EnableRemediationRequest, RevokeRemediationRequest,
 };
 use crate::model::RpcTryFrom;
 
-impl TryFrom<rpc::forge::RemediationApplicationStatus> for RemediationApplicationStatus {
+impl TryFrom<rpc::nico::RemediationApplicationStatus> for RemediationApplicationStatus {
     type Error = RpcDataConversionError;
 
-    fn try_from(status: rpc::forge::RemediationApplicationStatus) -> Result<Self, Self::Error> {
+    fn try_from(status: rpc::nico::RemediationApplicationStatus) -> Result<Self, Self::Error> {
         let metadata = status.metadata.map(Metadata::try_from).transpose()?;
         Ok(RemediationApplicationStatus {
             succeeded: status.succeeded,
@@ -85,7 +85,7 @@ impl RpcTryFrom<(CreateRemediationRequest, String)> for NewRemediation {
     }
 }
 
-impl From<Remediation> for rpc::forge::Remediation {
+impl From<Remediation> for rpc::nico::Remediation {
     fn from(value: Remediation) -> Self {
         Self {
             id: value.id.into(),
@@ -100,15 +100,15 @@ impl From<Remediation> for rpc::forge::Remediation {
     }
 }
 
-impl From<Remediation> for rpc::forge::CreateRemediationResponse {
+impl From<Remediation> for rpc::nico::CreateRemediationResponse {
     fn from(value: Remediation) -> Self {
-        rpc::forge::CreateRemediationResponse {
+        rpc::nico::CreateRemediationResponse {
             remediation_id: value.id.into(),
         }
     }
 }
 
-impl From<AppliedRemediation> for rpc::forge::AppliedRemediation {
+impl From<AppliedRemediation> for rpc::nico::AppliedRemediation {
     fn from(value: AppliedRemediation) -> Self {
         let metadata = Metadata {
             labels: value.status,
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn remediation_application_status_from_rpc_success_no_metadata() {
-        let rpc_status = rpc::forge::RemediationApplicationStatus {
+        let rpc_status = rpc::nico::RemediationApplicationStatus {
             succeeded: true,
             metadata: None,
         };
@@ -210,12 +210,12 @@ mod tests {
 
     #[test]
     fn remediation_application_status_from_rpc_with_metadata() {
-        let rpc_status = rpc::forge::RemediationApplicationStatus {
+        let rpc_status = rpc::nico::RemediationApplicationStatus {
             succeeded: false,
             metadata: Some(rpc::Metadata {
                 name: "test".to_string(),
                 description: "desc".to_string(),
-                labels: vec![rpc::forge::Label {
+                labels: vec![rpc::nico::Label {
                     key: "status".to_string(),
                     value: Some("failed".to_string()),
                 }],

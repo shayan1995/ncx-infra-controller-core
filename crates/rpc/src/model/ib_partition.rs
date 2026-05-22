@@ -24,10 +24,10 @@ use model::metadata::Metadata;
 use model::tenant::TenantOrganizationId;
 
 use crate as rpc;
-use crate::forge as rpc_forge;
+use crate::nico as rpc_nico;
 
-impl From<rpc::forge::IbPartitionSearchFilter> for IbPartitionSearchFilter {
-    fn from(filter: rpc::forge::IbPartitionSearchFilter) -> Self {
+impl From<rpc::nico::IbPartitionSearchFilter> for IbPartitionSearchFilter {
+    fn from(filter: rpc::nico::IbPartitionSearchFilter) -> Self {
         IbPartitionSearchFilter {
             tenant_org_id: filter.tenant_org_id,
             name: filter.name,
@@ -35,9 +35,9 @@ impl From<rpc::forge::IbPartitionSearchFilter> for IbPartitionSearchFilter {
     }
 }
 
-impl TryFrom<rpc_forge::IbPartitionCreationRequest> for NewIBPartition {
+impl TryFrom<rpc_nico::IbPartitionCreationRequest> for NewIBPartition {
     type Error = rpc::errors::RpcDataConversionError;
-    fn try_from(value: rpc_forge::IbPartitionCreationRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc_nico::IbPartitionCreationRequest) -> Result<Self, Self::Error> {
         let conf = value.config.ok_or_else(|| {
             rpc::errors::RpcDataConversionError::InvalidArgument(
                 "IBPartition configuration is empty".to_string(),
@@ -62,9 +62,9 @@ impl TryFrom<rpc_forge::IbPartitionCreationRequest> for NewIBPartition {
     }
 }
 
-impl From<IBPartitionConfig> for rpc_forge::IbPartitionConfig {
+impl From<IBPartitionConfig> for rpc_nico::IbPartitionConfig {
     fn from(conf: IBPartitionConfig) -> Self {
-        rpc_forge::IbPartitionConfig {
+        rpc_nico::IbPartitionConfig {
             name: conf.name, // Deprecated field
             tenant_organization_id: conf.tenant_organization_id.to_string(),
             pkey: conf.pkey.map(|k| k.to_string()),
@@ -72,10 +72,10 @@ impl From<IBPartitionConfig> for rpc_forge::IbPartitionConfig {
     }
 }
 
-impl TryFrom<rpc_forge::IbPartitionConfig> for IBPartitionConfig {
+impl TryFrom<rpc_nico::IbPartitionConfig> for IBPartitionConfig {
     type Error = rpc::errors::RpcDataConversionError;
 
-    fn try_from(conf: rpc_forge::IbPartitionConfig) -> Result<Self, Self::Error> {
+    fn try_from(conf: rpc_nico::IbPartitionConfig) -> Result<Self, Self::Error> {
         if conf.tenant_organization_id.is_empty() {
             return Err(rpc::errors::RpcDataConversionError::InvalidArgument(
                 "IBPartition organization_id is empty".to_string(),
@@ -98,18 +98,18 @@ impl TryFrom<rpc_forge::IbPartitionConfig> for IBPartitionConfig {
     }
 }
 
-impl TryFrom<IBPartition> for rpc_forge::IbPartition {
+impl TryFrom<IBPartition> for rpc_nico::IbPartition {
     type Error = rpc::errors::RpcDataConversionError;
     fn try_from(src: IBPartition) -> Result<Self, Self::Error> {
         let mut state = match &src.controller_state.value {
-            IBPartitionControllerState::Provisioning => rpc_forge::TenantState::Provisioning,
-            IBPartitionControllerState::Ready => rpc_forge::TenantState::Ready,
-            IBPartitionControllerState::Error { cause: _cause } => rpc_forge::TenantState::Failed,
-            IBPartitionControllerState::Deleting => rpc_forge::TenantState::Terminating,
+            IBPartitionControllerState::Provisioning => rpc_nico::TenantState::Provisioning,
+            IBPartitionControllerState::Ready => rpc_nico::TenantState::Ready,
+            IBPartitionControllerState::Error { cause: _cause } => rpc_nico::TenantState::Failed,
+            IBPartitionControllerState::Deleting => rpc_nico::TenantState::Terminating,
         };
 
         if src.is_marked_as_deleted() {
-            state = rpc_forge::TenantState::Terminating;
+            state = rpc_nico::TenantState::Terminating;
         }
 
         let pkey = src
@@ -127,7 +127,7 @@ impl TryFrom<IBPartition> for rpc_forge::IbPartition {
             None => (None, None, None, None),
         };
 
-        let status = Some(rpc_forge::IbPartitionStatus {
+        let status = Some(rpc_nico::IbPartitionStatus {
             state: state as i32,
             state_reason: src.controller_state_outcome.map(|r| r.into()),
             state_sla: Some(
@@ -143,7 +143,7 @@ impl TryFrom<IBPartition> for rpc_forge::IbPartition {
 
         let metadata = src.metadata.into();
 
-        Ok(rpc_forge::IbPartition {
+        Ok(rpc_nico::IbPartition {
             id: Some(src.id),
             config_version: src.version.version_string(),
             config: Some(src.config.into()),

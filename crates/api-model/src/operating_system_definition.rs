@@ -21,7 +21,7 @@
 //! this model (in api-db), then this model is converted to RPC types (here).
 //! The model type name matches the RPC message name (OperatingSystem).
 
-use carbide_ipxe_renderer::{IpxeTemplateArtifact, IpxeTemplateParameter};
+use nico_ipxe_renderer::{IpxeTemplateArtifact, IpxeTemplateParameter};
 
 /// Database value for the raw inline iPXE script OS type.
 pub const OS_TYPE_IPXE: &str = "iPXE";
@@ -30,7 +30,7 @@ pub const OS_TYPE_TEMPLATED_IPXE: &str = "ipxe_os_definition";
 
 /// Operating system definition (list/get/create/update response).
 ///
-/// Name matches the RPC message `rpc::forge::OperatingSystem`;
+/// Name matches the RPC message `rpc::nico::OperatingSystem`;
 /// DB row type is `OperatingSystem` (in api-db).
 #[derive(Clone, Debug)]
 pub struct OperatingSystem {

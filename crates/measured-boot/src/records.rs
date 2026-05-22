@@ -31,9 +31,9 @@ use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
 
-use carbide_uuid::DbTable;
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::measured_boot::{
+use nico_uuid::DbTable;
+use nico_uuid::machine::MachineId;
+use nico_uuid::measured_boot::{
     MeasurementApprovedMachineId, MeasurementApprovedProfileId, MeasurementBundleId,
     MeasurementBundleValueId, MeasurementJournalId, MeasurementReportId, MeasurementReportValueId,
     MeasurementSystemProfileAttrId, MeasurementSystemProfileId, TrustedMachineId,

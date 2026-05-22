@@ -16,10 +16,10 @@
  */
 
 use crate::attestation::spdm::list::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn list(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn list(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     let attestations = api_client
         .0
         .list_attestations_for_machine_id(args.machine_id)

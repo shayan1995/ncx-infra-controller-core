@@ -17,7 +17,7 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use serde::{Deserialize, Serialize};
 
 use crate::machine::ReprovisionRequest;

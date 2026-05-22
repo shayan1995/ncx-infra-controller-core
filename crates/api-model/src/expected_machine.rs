@@ -17,8 +17,8 @@
 use std::collections::HashMap;
 use std::net::IpAddr;
 
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
-use carbide_uuid::rack::RackId;
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
+use nico_uuid::rack::RackId;
 use mac_address::MacAddress;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgRow;
@@ -140,7 +140,7 @@ pub struct ExpectedMachineData {
     pub dpf_enabled: Option<bool>,
     /// When set, the API pre-allocates a `machine_interface` for this BMC MAC at this address
     /// (same pattern as expected switches / power shelves) so Site Explorer can reach the BMC
-    /// without DHCP. IPs outside Carbide-managed prefixes land on the `static-assignments` segment.
+    /// without DHCP. IPs outside NICo-managed prefixes land on the `static-assignments` segment.
     #[serde(default)]
     pub bmc_ip_address: Option<IpAddr>,
     /// When true, site-explorer skips BMC password rotation and stores the

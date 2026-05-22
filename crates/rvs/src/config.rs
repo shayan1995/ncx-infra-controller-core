@@ -27,7 +27,7 @@ pub struct Config {
     pub artifact_cache: ArtifactCacheConfig,
 }
 
-/// NICC (Carbide API) connection settings.
+/// NICC (NICo API) connection settings.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct NiccConfig {
@@ -69,7 +69,7 @@ impl Default for Config {
         Self {
             listen: "[::]:1089".parse().unwrap(),
             metrics_endpoint: "[::]:9019".parse().unwrap(),
-            scenario_config_path: "/etc/forge/rvs/scenario.toml".to_string(),
+            scenario_config_path: "/etc/nico/rvs/scenario.toml".to_string(),
             poll_interval_secs: 30,
             nicc: NiccConfig::default(),
             tls: TlsConfig::default(),
@@ -81,7 +81,7 @@ impl Default for Config {
 impl Default for NiccConfig {
     fn default() -> Self {
         Self {
-            url: "https://carbide-api.forge-system.svc.cluster.local:1079".to_string(),
+            url: "https://nico-api.nico-system.svc.cluster.local:1079".to_string(),
             rpc_timeout_secs: 30,
         }
     }
@@ -108,7 +108,7 @@ impl Default for ArtifactCacheConfig {
 }
 
 impl Config {
-    /// Load config: defaults -> TOML file -> CARBIDE_RVS__* env vars.
+    /// Load config: defaults -> TOML file -> NICO_RVS__* env vars.
     pub fn load(config_path: Option<&Path>) -> Result<Self, RvsError> {
         let mut figment = Figment::new().merge(Serialized::defaults(Config::default()));
 
@@ -116,7 +116,7 @@ impl Config {
             figment = figment.merge(Toml::file(path));
         }
 
-        figment = figment.merge(Env::prefixed("CARBIDE_RVS__").split("__"));
+        figment = figment.merge(Env::prefixed("NICO_RVS__").split("__"));
 
         let config: Config = figment
             .extract()
@@ -147,7 +147,7 @@ mod tests {
         let config = Config::load(None).unwrap();
         assert_eq!(
             config.nicc.url,
-            "https://carbide-api.forge-system.svc.cluster.local:1079"
+            "https://nico-api.nico-system.svc.cluster.local:1079"
         );
         assert_eq!(
             config.tls.root_cafile_path,

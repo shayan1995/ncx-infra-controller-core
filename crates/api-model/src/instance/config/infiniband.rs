@@ -17,7 +17,7 @@
 
 use std::collections::HashSet;
 
-use carbide_uuid::infiniband::IBPartitionId;
+use nico_uuid::infiniband::IBPartitionId;
 use serde::{Deserialize, Serialize};
 
 // TODO(k82cn): It's better to move FunctionId/FunctionType to a standalone model.
@@ -90,7 +90,7 @@ pub struct InstanceIbInterfaceConfig {
     /// The GUID which has been assigned to this interface
     /// In case the interface is a PF interface, the GUID will be equivalent to
     /// `pf_guid` - which is the GUID that is stored on the hardware device.
-    /// For a VF interface, this is a GUID that has been allocated by Forge in order
+    /// For a VF interface, this is a GUID that has been allocated by NICo in order
     /// be used for the VF.
     // Tenants have to configure the VF device on their instances to use this GUID.
     pub guid: Option<String>,
@@ -102,7 +102,7 @@ pub struct InstanceIbInterfaceConfig {
     /// fabric - are available, this selects the device among these.
     /// `device_instance == 1` selects the 2nd device of a certain type.
     ///
-    /// Forge will internally order devices of the same type by PCI slot in order
+    /// NICo will internally order devices of the same type by PCI slot in order
     /// to achieve deterministic device selection via `device_instance`.
     pub device_instance: u32,
 }

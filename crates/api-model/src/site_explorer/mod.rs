@@ -20,11 +20,11 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use carbide_network::BaseMac;
-use carbide_utils::arch::CpuArchitecture;
-use carbide_uuid::machine::{MachineId, MachineType};
-use carbide_uuid::power_shelf::{PowerShelfId, PowerShelfIdSource, PowerShelfType};
-use carbide_uuid::switch::{SwitchId, SwitchIdSource, SwitchType};
+use nico_network::BaseMac;
+use nico_utils::arch::CpuArchitecture;
+use nico_uuid::machine::{MachineId, MachineType};
+use nico_uuid::power_shelf::{PowerShelfId, PowerShelfIdSource, PowerShelfType};
+use nico_uuid::switch::{SwitchId, SwitchIdSource, SwitchType};
 use chrono::{DateTime, Utc};
 use config_version::ConfigVersion;
 use itertools::Itertools;
@@ -84,7 +84,7 @@ pub struct EndpointExplorationReport {
     /// Parsed versions, serializtion override means it will always be sorted
     #[serde(
         default,
-        serialize_with = "carbide_utils::ordered_map",
+        serialize_with = "nico_utils::ordered_map",
         skip_serializing_if = "HashMap::is_empty"
     )]
     pub versions: HashMap<FirmwareComponentType, String>,
@@ -94,7 +94,7 @@ pub struct EndpointExplorationReport {
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",
-        alias = "ForgeSetupStatus"
+        alias = "NicoSetupStatus"
     )]
     pub machine_setup_status: Option<MachineSetupStatus>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -273,7 +273,7 @@ impl EndpointExplorationReport {
             .collect::<Vec<MacAddress>>();
 
         // Filter PCI device names only for the interfaces which are mapped to DPU.
-        // Host might have some integrated or embedded interfaces, which are not used by forge.
+        // Host might have some integrated or embedded interfaces, which are not used by nico.
         // Need to ignore them.
         let interfaces = system
             .ethernet_interfaces
@@ -752,12 +752,12 @@ impl EndpointExplorationReport {
         let sys_vendor = if let Some(x) = vendor {
             x.to_string()
         } else {
-            carbide_utils::DEFAULT_DMI_SYSTEM_MANUFACTURER.to_string()
+            nico_utils::DEFAULT_DMI_SYSTEM_MANUFACTURER.to_string()
         };
         let product_name = if let Some(x) = model {
             x.to_string()
         } else {
-            carbide_utils::DEFAULT_DMI_SYSTEM_MODEL.to_string()
+            nico_utils::DEFAULT_DMI_SYSTEM_MODEL.to_string()
         };
         // For DPUs the discovered data contains enough information to
         // calculate a MachineId
@@ -766,8 +766,8 @@ impl EndpointExplorationReport {
         // the same values here.
         DmiData {
             product_serial: serial_number.trim().to_string(),
-            chassis_serial: carbide_utils::DEFAULT_DPU_DMI_CHASSIS_SERIAL_NUMBER.to_string(),
-            board_serial: carbide_utils::DEFAULT_DPU_DMI_BOARD_SERIAL_NUMBER.to_string(),
+            chassis_serial: nico_utils::DEFAULT_DPU_DMI_CHASSIS_SERIAL_NUMBER.to_string(),
+            board_serial: nico_utils::DEFAULT_DPU_DMI_BOARD_SERIAL_NUMBER.to_string(),
             bios_version: "".to_string(),
             sys_vendor,
             board_name: "BlueField SoC".to_string(),
@@ -1211,7 +1211,7 @@ pub struct EthernetInterface {
     #[serde(
         rename = "MACAddress",
         alias = "MacAddress",
-        deserialize_with = "carbide_network::deserialize_optional_mlx_mac"
+        deserialize_with = "nico_network::deserialize_optional_mlx_mac"
     )]
     pub mac_address: Option<MacAddress>,
 

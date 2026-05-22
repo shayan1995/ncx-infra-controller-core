@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::{self as forgerpc};
+use ::rpc::nico::{self as nicorpc};
 use prettytable::{Table, row};
 
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
 /// Produces a table for printing a non-JSON representation of a
 /// network security group to standard out.
@@ -26,9 +26,9 @@ use crate::errors::{CarbideCliError, CarbideCliResult};
 /// * `nsgs`    - A reference to an active DB transaction
 /// * `verbose` - A bool to select more verbose output (e.g., include full rule details)
 pub fn convert_nsgs_to_table(
-    nsgs: &[forgerpc::NetworkSecurityGroup],
+    nsgs: &[nicorpc::NetworkSecurityGroup],
     verbose: bool,
-) -> CarbideCliResult<Box<Table>> {
+) -> NicoCliResult<Box<Table>> {
     let mut table = Box::new(Table::new());
     let default_metadata = Default::default();
 
@@ -64,7 +64,7 @@ pub fn convert_nsgs_to_table(
         let metadata = nsg.metadata.as_ref().unwrap_or(&default_metadata);
         let labels = crate::metadata::fmt_labels_as_kv_pairs(Some(metadata));
 
-        let default_attributes = forgerpc::NetworkSecurityGroupAttributes {
+        let default_attributes = nicorpc::NetworkSecurityGroupAttributes {
             stateful_egress: false,
             rules: vec![],
         };
@@ -87,7 +87,7 @@ pub fn convert_nsgs_to_table(
                 serde_json::to_string_pretty(
                     &nsg.attributes.as_ref().unwrap_or(&default_attributes).rules
                 )
-                .map_err(CarbideCliError::JsonError)?,
+                .map_err(NicoCliError::JsonError)?,
             ]);
         } else {
             table.add_row(row![

@@ -29,12 +29,12 @@
 use ::rpc::protos::measured_boot::{
     AttestCandidateMachineRequest, ShowCandidateMachineRequest, show_candidate_machine_request,
 };
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use clap::Parser;
 use measured_boot::pcr::PcrRegisterValue;
 
 use crate::cfg::measurement::parse_pcr_register_values;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 /// CmdMachine provides a container for the `mock-machine`
 /// subcommand, which itself contains other subcommands
@@ -91,11 +91,11 @@ impl From<Attest> for AttestCandidateMachineRequest {
 }
 
 impl TryFrom<Show> for ShowCandidateMachineRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
     fn try_from(show: Show) -> Result<Self, Self::Error> {
         let machine_id = show
             .machine_id
-            .ok_or(CarbideCliError::GenericError(String::from(
+            .ok_or(NicoCliError::GenericError(String::from(
                 "machine_id must be set to get a machine",
             )))?;
         Ok(Self {

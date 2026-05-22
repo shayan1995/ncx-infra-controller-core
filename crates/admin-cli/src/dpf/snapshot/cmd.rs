@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-use carbide_uuid::machine::MachineType;
+use nico_uuid::machine::MachineType;
 
 use crate::dpf::snapshot::args::SnapshotQuery;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
-pub async fn snapshot(query: &SnapshotQuery, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn snapshot(query: &SnapshotQuery, api_client: &ApiClient) -> NicoCliResult<()> {
     if query.host_machine_id.machine_type() == MachineType::Dpu {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "Only host machine id is expected".to_string(),
         ));
     }

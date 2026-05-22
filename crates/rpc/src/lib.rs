@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//! Carbide gRPC and protobuf module
+//! NICo gRPC and protobuf module
 //!
 //! This module contains the gRPC and protocol buffer definitions to generate a client or server to
 //! interact with the API Service
@@ -36,13 +36,13 @@ use serde::ser::Error;
 use serde_json::{Value, json};
 use tokio_stream::Stream;
 
-use crate::forge_agent_control_response::LegacyAction;
+use crate::nico_agent_control_response::LegacyAction;
 pub use crate::protos::common::{self, Uuid};
 pub use crate::protos::dns::{self};
-pub use crate::protos::forge::machine_credentials_update_request::CredentialPurpose;
-pub use crate::protos::forge::machine_discovery_info::DiscoveryData;
-pub use crate::protos::forge::{
-    self, CredentialType, Domain, DomainList, ForgeScoutErrorReport, ForgeScoutErrorReportResult,
+pub use crate::protos::nico::machine_credentials_update_request::CredentialPurpose;
+pub use crate::protos::nico::machine_discovery_info::DiscoveryData;
+pub use crate::protos::nico::{
+    self, CredentialType, Domain, DomainList, NicoScoutErrorReport, NicoScoutErrorReportResult,
     IbPartition, IbPartitionCreationRequest, IbPartitionDeletionRequest, IbPartitionDeletionResult,
     IbPartitionList, Instance, InstanceAllocationRequest, InstanceConfig,
     InstanceIbInterfaceConfig, InstanceIbInterfaceStatus, InstanceInfinibandConfig,
@@ -52,7 +52,7 @@ pub use crate::protos::forge::{
     InterfaceFunctionType, Machine, MachineCleanupInfo, MachineDiscoveryInfo, MachineEvent,
     MachineInterface, MachineList, Metadata, NetworkSegment, NetworkSegmentList, NvLinkPartition,
     NvLinkPartitionList, NvLinkPartitionQuery, ResourcePoolType, SyncState, TenantConfig,
-    TenantState, forge_agent_control_response,
+    TenantState, nico_agent_control_response,
 };
 pub use crate::protos::machine_discovery::{
     self, BlockDevice, Cpu, DiscoveryInfo, DmiData, NetworkInterface, NvmeDevice,
@@ -61,7 +61,7 @@ pub use crate::protos::machine_discovery::{
 pub use crate::protos::{fmds, health, site_explorer};
 
 pub mod errors;
-pub mod forge_tls_client;
+pub mod nico_tls_client;
 pub mod libmlx;
 pub mod measured_boot;
 pub mod network;
@@ -75,21 +75,21 @@ pub mod model;
 #[cfg(feature = "cli")]
 pub mod admin_cli;
 
-pub mod forge_api_client;
-pub mod forge_resolver;
+pub mod nico_api_client;
+pub mod nico_resolver;
 pub mod nmx_c_client;
 
-pub const REFLECTION_API_SERVICE_DESCRIPTOR: &[u8] = tonic::include_file_descriptor_set!("forge");
+pub const REFLECTION_API_SERVICE_DESCRIPTOR: &[u8] = tonic::include_file_descriptor_set!("nico");
 pub const MAX_ERR_MSG_SIZE: i32 = 1500;
 
-// DynForge exists because, now that we have >= streaming interface,
-// simply passing around `dyn Forge` doesn't work anymore. As any additional
+// DynNICo exists because, now that we have >= streaming interface,
+// simply passing around `dyn NICo` doesn't work anymore. As any additional
 // streaming interfaces are added, we just toss in type defs here, and
-// any users of DynForge don't need to worry about it.
-pub type DynForge = dyn forge::forge_server::Forge<
+// any users of DynNICo don't need to worry about it.
+pub type DynNICo = dyn nico::nico_server::NICo<
         ScoutStreamStream = Pin<
             Box<
-                dyn Stream<Item = Result<forge::ScoutStreamScoutBoundMessage, tonic::Status>>
+                dyn Stream<Item = Result<nico::ScoutStreamScoutBoundMessage, tonic::Status>>
                     + Send,
             >,
         >,
@@ -500,11 +500,11 @@ impl TryFrom<health::HealthReport> for health_report::HealthReport {
     }
 }
 
-impl From<forge::HealthReportApplyMode> for health_report::HealthReportApplyMode {
-    fn from(value: forge::HealthReportApplyMode) -> Self {
+impl From<nico::HealthReportApplyMode> for health_report::HealthReportApplyMode {
+    fn from(value: nico::HealthReportApplyMode) -> Self {
         match value {
-            forge::HealthReportApplyMode::Merge => health_report::HealthReportApplyMode::Merge,
-            forge::HealthReportApplyMode::Replace => health_report::HealthReportApplyMode::Replace,
+            nico::HealthReportApplyMode::Merge => health_report::HealthReportApplyMode::Merge,
+            nico::HealthReportApplyMode::Replace => health_report::HealthReportApplyMode::Replace,
         }
     }
 }
@@ -540,7 +540,7 @@ impl From<JsonDnsResourceRecord> for Value {
     }
 }
 
-impl FromStr for forge::InstanceOperatingSystemConfig {
+impl FromStr for nico::InstanceOperatingSystemConfig {
     type Err = RpcDataConversionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -549,7 +549,7 @@ impl FromStr for forge::InstanceOperatingSystemConfig {
     }
 }
 
-impl FromStr for forge::InstanceInfinibandConfig {
+impl FromStr for nico::InstanceInfinibandConfig {
     type Err = RpcDataConversionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -558,7 +558,7 @@ impl FromStr for forge::InstanceInfinibandConfig {
     }
 }
 
-impl FromStr for forge::InstanceNvLinkConfig {
+impl FromStr for nico::InstanceNvLinkConfig {
     type Err = RpcDataConversionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -573,7 +573,7 @@ impl FromStr for forge::InstanceNvLinkConfig {
 // rules with friendly property values intead of i32.
 /* ******************************************************* */
 
-impl forge::NetworkSecurityGroupRuleDirection {
+impl nico::NetworkSecurityGroupRuleDirection {
     pub fn from_string<'de, D>(deserializer: D) -> Result<i32, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -592,29 +592,29 @@ impl forge::NetworkSecurityGroupRuleDirection {
         S: serde::Serializer,
     {
         s.serialize_str(
-            &forge::NetworkSecurityGroupRuleDirection::to_string_from_enum_i32(*v)
+            &nico::NetworkSecurityGroupRuleDirection::to_string_from_enum_i32(*v)
                 .map_err(Error::custom)?,
         )
     }
 
     pub fn to_string_from_enum_i32(v: i32) -> Result<String, UnknownEnumValue> {
-        let t: forge::NetworkSecurityGroupRuleDirection = (v).try_into()?;
+        let t: nico::NetworkSecurityGroupRuleDirection = (v).try_into()?;
 
         Ok(match t {
-            forge::NetworkSecurityGroupRuleDirection::NsgRuleDirectionIngress => {
+            nico::NetworkSecurityGroupRuleDirection::NsgRuleDirectionIngress => {
                 "INGRESS".to_string()
             }
-            forge::NetworkSecurityGroupRuleDirection::NsgRuleDirectionEgress => {
+            nico::NetworkSecurityGroupRuleDirection::NsgRuleDirectionEgress => {
                 "EGRESS".to_string()
             }
-            forge::NetworkSecurityGroupRuleDirection::NsgRuleDirectionInvalid => {
+            nico::NetworkSecurityGroupRuleDirection::NsgRuleDirectionInvalid => {
                 "INVALID".to_string()
             }
         })
     }
 }
 
-impl forge::NetworkSecurityGroupRuleProtocol {
+impl nico::NetworkSecurityGroupRuleProtocol {
     pub fn from_string<'de, D>(deserializer: D) -> Result<i32, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -636,26 +636,26 @@ impl forge::NetworkSecurityGroupRuleProtocol {
         S: serde::Serializer,
     {
         s.serialize_str(
-            &forge::NetworkSecurityGroupRuleProtocol::to_string_from_enum_i32(*v)
+            &nico::NetworkSecurityGroupRuleProtocol::to_string_from_enum_i32(*v)
                 .map_err(Error::custom)?,
         )
     }
 
     pub fn to_string_from_enum_i32(v: i32) -> Result<String, UnknownEnumValue> {
-        let t: forge::NetworkSecurityGroupRuleProtocol = (v).try_into()?;
+        let t: nico::NetworkSecurityGroupRuleProtocol = (v).try_into()?;
 
         Ok(match t {
-            forge::NetworkSecurityGroupRuleProtocol::NsgRuleProtoAny => "ANY".to_string(),
-            forge::NetworkSecurityGroupRuleProtocol::NsgRuleProtoIcmp => "ICMP".to_string(),
-            forge::NetworkSecurityGroupRuleProtocol::NsgRuleProtoIcmp6 => "ICMP6".to_string(),
-            forge::NetworkSecurityGroupRuleProtocol::NsgRuleProtoUdp => "UDP".to_string(),
-            forge::NetworkSecurityGroupRuleProtocol::NsgRuleProtoTcp => "TCP".to_string(),
-            forge::NetworkSecurityGroupRuleProtocol::NsgRuleProtoInvalid => "INVALID".to_string(),
+            nico::NetworkSecurityGroupRuleProtocol::NsgRuleProtoAny => "ANY".to_string(),
+            nico::NetworkSecurityGroupRuleProtocol::NsgRuleProtoIcmp => "ICMP".to_string(),
+            nico::NetworkSecurityGroupRuleProtocol::NsgRuleProtoIcmp6 => "ICMP6".to_string(),
+            nico::NetworkSecurityGroupRuleProtocol::NsgRuleProtoUdp => "UDP".to_string(),
+            nico::NetworkSecurityGroupRuleProtocol::NsgRuleProtoTcp => "TCP".to_string(),
+            nico::NetworkSecurityGroupRuleProtocol::NsgRuleProtoInvalid => "INVALID".to_string(),
         })
     }
 }
 
-impl forge::NetworkSecurityGroupRuleAction {
+impl nico::NetworkSecurityGroupRuleAction {
     pub fn from_string<'de, D>(deserializer: D) -> Result<i32, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -674,23 +674,23 @@ impl forge::NetworkSecurityGroupRuleAction {
         S: serde::Serializer,
     {
         s.serialize_str(
-            &forge::NetworkSecurityGroupRuleAction::to_string_from_enum_i32(*v)
+            &nico::NetworkSecurityGroupRuleAction::to_string_from_enum_i32(*v)
                 .map_err(Error::custom)?,
         )
     }
 
     pub fn to_string_from_enum_i32(v: i32) -> Result<String, UnknownEnumValue> {
-        let t: forge::NetworkSecurityGroupRuleAction = (v).try_into()?;
+        let t: nico::NetworkSecurityGroupRuleAction = (v).try_into()?;
 
         Ok(match t {
-            forge::NetworkSecurityGroupRuleAction::NsgRuleActionPermit => "PERMIT".to_string(),
-            forge::NetworkSecurityGroupRuleAction::NsgRuleActionDeny => "DENY".to_string(),
-            forge::NetworkSecurityGroupRuleAction::NsgRuleActionInvalid => "INVALID".to_string(),
+            nico::NetworkSecurityGroupRuleAction::NsgRuleActionPermit => "PERMIT".to_string(),
+            nico::NetworkSecurityGroupRuleAction::NsgRuleActionDeny => "DENY".to_string(),
+            nico::NetworkSecurityGroupRuleAction::NsgRuleActionInvalid => "INVALID".to_string(),
         })
     }
 }
 
-impl forge::MachineCapabilityType {
+impl nico::MachineCapabilityType {
     pub fn from_string<'de, D>(deserializer: D) -> Result<i32, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -698,13 +698,13 @@ impl forge::MachineCapabilityType {
         let s: &str = serde::Deserialize::deserialize(deserializer)?;
 
         match s.to_uppercase().as_str() {
-            "CPU" => Ok(forge::MachineCapabilityType::CapTypeCpu as i32),
-            "GPU" => Ok(forge::MachineCapabilityType::CapTypeGpu as i32),
-            "MEMORY" => Ok(forge::MachineCapabilityType::CapTypeMemory as i32),
-            "STORAGE" => Ok(forge::MachineCapabilityType::CapTypeStorage as i32),
-            "NETWORK" => Ok(forge::MachineCapabilityType::CapTypeNetwork as i32),
-            "INFINIBAND" => Ok(forge::MachineCapabilityType::CapTypeInfiniband as i32),
-            "DPU" => Ok(forge::MachineCapabilityType::CapTypeDpu as i32),
+            "CPU" => Ok(nico::MachineCapabilityType::CapTypeCpu as i32),
+            "GPU" => Ok(nico::MachineCapabilityType::CapTypeGpu as i32),
+            "MEMORY" => Ok(nico::MachineCapabilityType::CapTypeMemory as i32),
+            "STORAGE" => Ok(nico::MachineCapabilityType::CapTypeStorage as i32),
+            "NETWORK" => Ok(nico::MachineCapabilityType::CapTypeNetwork as i32),
+            "INFINIBAND" => Ok(nico::MachineCapabilityType::CapTypeInfiniband as i32),
+            "DPU" => Ok(nico::MachineCapabilityType::CapTypeDpu as i32),
             _ => Ok(0),
         }
     }
@@ -714,27 +714,27 @@ impl forge::MachineCapabilityType {
         S: serde::Serializer,
     {
         s.serialize_str(
-            &forge::MachineCapabilityType::to_string_from_enum_i32(*v).map_err(Error::custom)?,
+            &nico::MachineCapabilityType::to_string_from_enum_i32(*v).map_err(Error::custom)?,
         )
     }
 
     pub fn to_string_from_enum_i32(v: i32) -> Result<String, UnknownEnumValue> {
-        let t: forge::MachineCapabilityType = (v).try_into()?;
+        let t: nico::MachineCapabilityType = (v).try_into()?;
 
         Ok(match t {
-            forge::MachineCapabilityType::CapTypeCpu => "CPU".to_string(),
-            forge::MachineCapabilityType::CapTypeGpu => "GPU".to_string(),
-            forge::MachineCapabilityType::CapTypeMemory => "MEMORY".to_string(),
-            forge::MachineCapabilityType::CapTypeStorage => "STORAGE".to_string(),
-            forge::MachineCapabilityType::CapTypeNetwork => "NETWORK".to_string(),
-            forge::MachineCapabilityType::CapTypeInfiniband => "INFINIBAND".to_string(),
-            forge::MachineCapabilityType::CapTypeDpu => "DPU".to_string(),
-            forge::MachineCapabilityType::CapTypeInvalid => "INVALID".to_string(),
+            nico::MachineCapabilityType::CapTypeCpu => "CPU".to_string(),
+            nico::MachineCapabilityType::CapTypeGpu => "GPU".to_string(),
+            nico::MachineCapabilityType::CapTypeMemory => "MEMORY".to_string(),
+            nico::MachineCapabilityType::CapTypeStorage => "STORAGE".to_string(),
+            nico::MachineCapabilityType::CapTypeNetwork => "NETWORK".to_string(),
+            nico::MachineCapabilityType::CapTypeInfiniband => "INFINIBAND".to_string(),
+            nico::MachineCapabilityType::CapTypeDpu => "DPU".to_string(),
+            nico::MachineCapabilityType::CapTypeInvalid => "INVALID".to_string(),
         })
     }
 }
 
-impl forge::MachineCapabilityDeviceType {
+impl nico::MachineCapabilityDeviceType {
     pub fn from_string<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -754,7 +754,7 @@ impl forge::MachineCapabilityDeviceType {
     {
         match v {
             Some(val) => s.serialize_str(
-                &forge::MachineCapabilityDeviceType::to_string_from_enum_i32(*val)
+                &nico::MachineCapabilityDeviceType::to_string_from_enum_i32(*val)
                     .map_err(Error::custom)?,
             ),
             None => s.serialize_none(),
@@ -762,18 +762,18 @@ impl forge::MachineCapabilityDeviceType {
     }
 
     pub fn to_string_from_enum_i32(v: i32) -> Result<String, UnknownEnumValue> {
-        let t: forge::MachineCapabilityDeviceType = (v).try_into()?;
+        let t: nico::MachineCapabilityDeviceType = (v).try_into()?;
 
         Ok(match t {
-            forge::MachineCapabilityDeviceType::Dpu => "DPU".to_string(),
-            forge::MachineCapabilityDeviceType::Unknown => "UNKNOWN".to_string(),
-            forge::MachineCapabilityDeviceType::Nvlink => "NVLINK".to_string(),
+            nico::MachineCapabilityDeviceType::Dpu => "DPU".to_string(),
+            nico::MachineCapabilityDeviceType::Unknown => "UNKNOWN".to_string(),
+            nico::MachineCapabilityDeviceType::Nvlink => "NVLINK".to_string(),
         })
     }
 }
 
-impl forge::ScoutStreamScoutBoundMessage {
-    pub fn new_flow(msg: forge::scout_stream_scout_bound_message::Payload) -> Self {
+impl nico::ScoutStreamScoutBoundMessage {
+    pub fn new_flow(msg: nico::scout_stream_scout_bound_message::Payload) -> Self {
         Self {
             flow_uuid: Some(uuid::Uuid::new_v4().into()),
             payload: Some(msg),
@@ -781,10 +781,10 @@ impl forge::ScoutStreamScoutBoundMessage {
     }
 }
 
-impl forge::ScoutStreamApiBoundMessage {
+impl nico::ScoutStreamApiBoundMessage {
     pub fn from_flow(
         flow_uuid: uuid::Uuid,
-        msg: forge::scout_stream_api_bound_message::Payload,
+        msg: nico::scout_stream_api_bound_message::Payload,
     ) -> Self {
         Self {
             flow_uuid: Some(flow_uuid.into()),
@@ -793,10 +793,10 @@ impl forge::ScoutStreamApiBoundMessage {
     }
 }
 
-impl forge::ForgeAgentControlResponse {
+impl nico::NicoAgentControlResponse {
     pub fn noop() -> Self {
         Self {
-            action: Some(forge_agent_control_response::Action::noop()),
+            action: Some(nico_agent_control_response::Action::noop()),
             legacy_action: LegacyAction::Noop as i32,
             data: None,
         }
@@ -804,7 +804,7 @@ impl forge::ForgeAgentControlResponse {
 
     pub fn reset() -> Self {
         Self {
-            action: Some(forge_agent_control_response::Action::reset()),
+            action: Some(nico_agent_control_response::Action::reset()),
             legacy_action: LegacyAction::Reset as i32,
             data: None,
         }
@@ -812,7 +812,7 @@ impl forge::ForgeAgentControlResponse {
 
     pub fn retry() -> Self {
         Self {
-            action: Some(forge_agent_control_response::Action::retry()),
+            action: Some(nico_agent_control_response::Action::retry()),
             legacy_action: LegacyAction::Retry as i32,
             data: None,
         }
@@ -820,7 +820,7 @@ impl forge::ForgeAgentControlResponse {
 
     pub fn measure() -> Self {
         Self {
-            action: Some(forge_agent_control_response::Action::measure()),
+            action: Some(nico_agent_control_response::Action::measure()),
             legacy_action: LegacyAction::Measure as i32,
             data: None,
         }
@@ -828,7 +828,7 @@ impl forge::ForgeAgentControlResponse {
 
     pub fn discovery() -> Self {
         Self {
-            action: Some(forge_agent_control_response::Action::discovery()),
+            action: Some(nico_agent_control_response::Action::discovery()),
             legacy_action: LegacyAction::Discovery as i32,
             data: None,
         }
@@ -836,36 +836,36 @@ impl forge::ForgeAgentControlResponse {
 
     pub fn log_error() -> Self {
         Self {
-            action: Some(forge_agent_control_response::Action::log_error()),
+            action: Some(nico_agent_control_response::Action::log_error()),
             legacy_action: LegacyAction::Logerror as i32,
             data: None,
         }
     }
 }
 
-impl forge_agent_control_response::Action {
+impl nico_agent_control_response::Action {
     pub fn noop() -> Self {
-        Self::Noop(forge_agent_control_response::Noop {})
+        Self::Noop(nico_agent_control_response::Noop {})
     }
 
     pub fn reset() -> Self {
-        Self::Reset(forge_agent_control_response::Reset {})
+        Self::Reset(nico_agent_control_response::Reset {})
     }
 
     pub fn retry() -> Self {
-        Self::Retry(forge_agent_control_response::Retry {})
+        Self::Retry(nico_agent_control_response::Retry {})
     }
 
     pub fn measure() -> Self {
-        Self::Measure(forge_agent_control_response::Measure {})
+        Self::Measure(nico_agent_control_response::Measure {})
     }
 
     pub fn discovery() -> Self {
-        Self::Discovery(forge_agent_control_response::Discovery {})
+        Self::Discovery(nico_agent_control_response::Discovery {})
     }
 
     pub fn log_error() -> Self {
-        Self::LogError(forge_agent_control_response::LogError {})
+        Self::LogError(nico_agent_control_response::LogError {})
     }
 
     pub fn as_str_name(&self) -> &'static str {
@@ -884,7 +884,7 @@ impl forge_agent_control_response::Action {
     }
 }
 
-impl From<MacAddress> for forge::find_bmc_ips_request::LookupBy {
+impl From<MacAddress> for nico::find_bmc_ips_request::LookupBy {
     fn from(addr: MacAddress) -> Self {
         Self::MacAddress(addr.to_string())
     }
@@ -893,8 +893,8 @@ impl From<MacAddress> for forge::find_bmc_ips_request::LookupBy {
 #[cfg(feature = "cli")]
 // This impl allows us to use the RPC RouteServerSourceType type
 // as a first class enum with clap, for the purpose of allowing
-// users to set --source-type with the forge-admin-cli.
-impl clap::ValueEnum for forge::RouteServerSourceType {
+// users to set --source-type with the nico-admin-cli.
+impl clap::ValueEnum for nico::RouteServerSourceType {
     fn value_variants<'a>() -> &'a [Self] {
         &[Self::AdminApi, Self::ConfigFile]
     }
@@ -911,10 +911,10 @@ impl clap::ValueEnum for forge::RouteServerSourceType {
 mod tests {
     use std::time::Duration;
 
-    use carbide_uuid::machine::MachineId;
+    use nico_uuid::machine::MachineId;
 
-    use self::forge::instance_operating_system_config::Variant;
-    use self::forge::{InlineIpxe, InstanceOperatingSystemConfig};
+    use self::nico::instance_operating_system_config::Variant;
+    use self::nico::{InlineIpxe, InstanceOperatingSystemConfig};
     use super::*;
     use crate::protos::dns::{Domain, Metadata};
 
@@ -970,7 +970,7 @@ mod tests {
     /// Test to check that serializing a type with a custom Timestamp implementation works
     #[test]
     fn test_serialize_domain() {
-        let uuid = carbide_uuid::domain::DomainId::from(::uuid::uuid!(
+        let uuid = nico_uuid::domain::DomainId::from(::uuid::uuid!(
             "91609f10-c91d-470d-a260-1234560c0000"
         ));
         let ts = std::time::SystemTime::now();
@@ -992,7 +992,7 @@ mod tests {
         let encoded = domain.encode_to_vec();
         let decoded = Domain::decode(&encoded[..]).unwrap();
 
-        let deserialized_uuid: carbide_uuid::domain::DomainId = decoded.id.unwrap();
+        let deserialized_uuid: nico_uuid::domain::DomainId = decoded.id.unwrap();
         let created_system_time: std::time::SystemTime =
             decoded.created.unwrap().try_into().unwrap();
         let updated_system_time: std::time::SystemTime =

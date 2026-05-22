@@ -16,9 +16,9 @@
  */
 
 use clap::Parser;
-use rpc::forge::DeleteOsImageRequest;
+use rpc::nico::DeleteOsImageRequest;
 
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::os_image::common::str_to_rpc_uuid;
 
 #[derive(Parser, Debug, Clone)]
@@ -34,9 +34,9 @@ pub struct Args {
 }
 
 impl TryFrom<Args> for DeleteOsImageRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
 
-    fn try_from(args: Args) -> CarbideCliResult<Self> {
+    fn try_from(args: Args) -> NicoCliResult<Self> {
         let id = str_to_rpc_uuid(&args.id)?;
         Ok(DeleteOsImageRequest {
             id: Some(id),

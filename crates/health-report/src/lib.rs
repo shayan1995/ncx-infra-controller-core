@@ -30,7 +30,7 @@ pub const REQUEST_ONLINE_REPAIR_MERGE_SOURCE: &str = "request-online-repair";
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct HealthReport {
     /// Identifies the source of the health report
-    /// This could e.g. be `forge-dpu-agent`, `forge-host-validation`,
+    /// This could e.g. be `nico-dpu-agent`, `nico-host-validation`,
     /// or an override (e.g. `overrides.sre-team`)
     pub source: String,
     /// The person or system (service) that triggered this health report.
@@ -61,7 +61,7 @@ impl Default for HealthReport {
 }
 
 impl HealthReport {
-    pub const DPU_AGENT_SOURCE: &str = "forge-dpu-agent";
+    pub const DPU_AGENT_SOURCE: &str = "nico-dpu-agent";
     pub const MACHINE_VALIDATION_SOURCE: &str = "machine-validation";
     pub const SITE_EXPLORER_SOURCE: &str = "site-explorer";
     pub const SKU_VALIDATION_SOURCE: &str = "sku-validation";
@@ -364,7 +364,7 @@ pub struct HealthProbeAlert {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target: Option<String>,
     /// The first time the probe raised an alert
-    /// If this field is empty while the HealthReport is sent to carbide-api
+    /// If this field is empty while the HealthReport is sent to nico-api
     /// the behavior is as follows:
     /// - If an alert of the same `id` was reported before, the timestamp of the
     ///   previous alert will be retained.
@@ -683,7 +683,7 @@ impl HealthAlertClassification {
         Self("PreventAllocations".to_string())
     }
 
-    /// When present on aggregate health, carbide-api refuses tenant `ReleaseInstance` until cleared.
+    /// When present on aggregate health, nico-api refuses tenant `ReleaseInstance` until cleared.
     /// Storing the classification alone does not enforce policy; callers must interpret it.
     pub fn prevent_instance_deletion() -> Self {
         Self("PreventInstanceDeletion".to_string())

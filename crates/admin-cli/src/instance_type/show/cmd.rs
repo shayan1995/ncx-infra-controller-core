@@ -16,10 +16,10 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::FindInstanceTypesByIdsRequest;
+use ::rpc::nico::FindInstanceTypesByIdsRequest;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::instance_type::common::convert_itypes_to_table;
 use crate::rpc::ApiClient;
 
@@ -32,7 +32,7 @@ pub async fn show(
     api_client: &ApiClient,
     page_size: usize,
     verbose: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
 
     let itypes = if let Some(id) = args.id {
@@ -50,7 +50,7 @@ pub async fn show(
                 .await?
                 .instance_types
                 .pop()
-                .ok_or(CarbideCliError::Empty)?,
+                .ok_or(NicoCliError::Empty)?,
         ]
     } else {
         api_client.get_all_instance_types(page_size).await?
@@ -59,7 +59,7 @@ pub async fn show(
     if is_json {
         println!(
             "{}",
-            serde_json::to_string_pretty(&itypes).map_err(CarbideCliError::JsonError)?
+            serde_json::to_string_pretty(&itypes).map_err(NicoCliError::JsonError)?
         );
     } else if itypes.len() == 1 {
         convert_itypes_to_table(&itypes, true)?.printstd();

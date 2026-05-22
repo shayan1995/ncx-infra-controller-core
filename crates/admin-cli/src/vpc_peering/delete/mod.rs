@@ -22,10 +22,10 @@ pub use args::Args;
 
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 impl Run for Args {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         cmd::delete(&self, ctx.config.format, &ctx.api_client).await
     }
 }

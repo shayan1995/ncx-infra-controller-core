@@ -17,7 +17,7 @@
 
 use std::borrow::Cow;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use clap::Parser;
 use prettytable::{Cell, Row, Table};
@@ -25,7 +25,7 @@ use rpc::admin_cli::OutputFormat;
 
 use crate::cfg::dispatch::Dispatch;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 #[cfg(test)]
@@ -63,7 +63,7 @@ pub struct CliContext<'g, 'a> {
 }
 
 impl Dispatch for ScoutStreamAction {
-    async fn dispatch(self, ctx: RuntimeContext) -> CarbideCliResult<()> {
+    async fn dispatch(self, ctx: RuntimeContext) -> NicoCliResult<()> {
         let mut ctxt = CliContext {
             grpc_conn: &ctx.api_client,
             format: &ctx.config.format,
@@ -81,7 +81,7 @@ impl Dispatch for ScoutStreamAction {
 async fn handle_show(
     _cmd: ConnectionsShowCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let response = ctxt.grpc_conn.0.scout_stream_show_connections().await?;
     let mut connections = response.scout_stream_connections;
     connections.sort_by_key(|connection| connection.machine_id);
@@ -133,8 +133,8 @@ async fn handle_show(
 async fn handle_disconnect(
     cmd: ConnectionsDisconnectCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
-    let request: ::rpc::forge::ScoutStreamDisconnectRequest = cmd.into();
+) -> NicoCliResult<()> {
+    let request: ::rpc::nico::ScoutStreamDisconnectRequest = cmd.into();
     let response = ctxt.grpc_conn.0.scout_stream_disconnect(request).await?;
     let machine_id = match response.machine_id.as_ref() {
         Some(id) => id.to_string(),
@@ -155,8 +155,8 @@ async fn handle_disconnect(
 async fn handle_ping(
     cmd: ConnectionsPingCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
-    let request: ::rpc::forge::ScoutStreamAdminPingRequest = cmd.into();
+) -> NicoCliResult<()> {
+    let request: ::rpc::nico::ScoutStreamAdminPingRequest = cmd.into();
     let response = ctxt.grpc_conn.0.scout_stream_ping(request).await?;
 
     println!("{}", response.pong);
@@ -164,7 +164,7 @@ async fn handle_ping(
 }
 
 // print_connections_table displays connections in an ASCII table format.
-fn print_connections_table(connections: &[rpc::forge::ScoutStreamConnectionInfo]) {
+fn print_connections_table(connections: &[rpc::nico::ScoutStreamConnectionInfo]) {
     let mut table = Table::new();
 
     table.add_row(Row::new(vec![
@@ -194,7 +194,7 @@ fn print_connections_table(connections: &[rpc::forge::ScoutStreamConnectionInfo]
     table.printstd();
 }
 
-impl From<ConnectionsDisconnectCommand> for ::rpc::forge::ScoutStreamDisconnectRequest {
+impl From<ConnectionsDisconnectCommand> for ::rpc::nico::ScoutStreamDisconnectRequest {
     fn from(cmd: ConnectionsDisconnectCommand) -> Self {
         Self {
             machine_id: cmd.machine_id.into(),
@@ -202,7 +202,7 @@ impl From<ConnectionsDisconnectCommand> for ::rpc::forge::ScoutStreamDisconnectR
     }
 }
 
-impl From<ConnectionsPingCommand> for ::rpc::forge::ScoutStreamAdminPingRequest {
+impl From<ConnectionsPingCommand> for ::rpc::nico::ScoutStreamAdminPingRequest {
     fn from(cmd: ConnectionsPingCommand) -> Self {
         Self {
             machine_id: cmd.machine_id.into(),

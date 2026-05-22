@@ -16,10 +16,10 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::SkuList;
+use ::rpc::nico::SkuList;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 use crate::sku::show::cmd::show_skus_table;
 
@@ -28,7 +28,7 @@ pub async fn create(
     api_client: &ApiClient,
     output: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     output_format: &OutputFormat,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let file_data = std::fs::read_to_string(args.filename)?;
     // attempt to deserialize a single sku.  if it fails try to deserialize as a SkuList
     let mut sku_list = match serde_json::de::from_str(&file_data) {
@@ -37,7 +37,7 @@ pub async fn create(
     };
     if let Some(id) = args.id {
         if sku_list.skus.len() != 1 {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "ID cannot be specified when creating multiple SKUs".to_string(),
             ));
         }

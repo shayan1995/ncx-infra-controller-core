@@ -23,7 +23,7 @@
 // Command Structure - Baseline debug_assert() of the entire command.
 // Argument Parsing  - Ensure required/optional arg combinations parse correctly.
 
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 use clap::{CommandFactory, Parser};
 
 use super::*;
@@ -101,7 +101,7 @@ fn parse_list_with_filters() {
 
     match cmd {
         Cmd::List(args) => {
-            assert!(matches!(args.deleted, rpc::forge::DeletedFilter::Only));
+            assert!(matches!(args.deleted, rpc::nico::DeletedFilter::Only));
             assert_eq!(args.controller_state, Some("ready".to_string()));
             assert!(args.bmc_mac.is_some());
         }

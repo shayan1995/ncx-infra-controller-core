@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
 use prettytable::{Cell, Row, Table};
 
 use crate::device::cmd::device::args::{DeviceAction, DeviceArgs, OutputFormat};
@@ -282,7 +282,7 @@ fn wrap_text(text: &str, width: usize) -> String {
 // resolve_device finds a device by its PCI address or identifier.
 pub fn resolve_device(
     device_spec: &str,
-) -> Result<carbide_libmlx_model::device::info::MlxDeviceInfo, Box<dyn std::error::Error>> {
+) -> Result<nico_libmlx_model::device::info::MlxDeviceInfo, Box<dyn std::error::Error>> {
     // Use existing device discovery logic.
     let devices = crate::device::discovery::discover_devices()?;
 

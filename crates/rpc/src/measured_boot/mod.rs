@@ -17,7 +17,7 @@
 
 use std::str::FromStr;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use measured_boot::DisplayName;
 

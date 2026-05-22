@@ -26,8 +26,8 @@ use ::rpc::protos::measured_boot::{
     ListMeasurementSystemProfileMachinesRequest, RenameMeasurementSystemProfileRequest,
     ShowMeasurementSystemProfileRequest,
 };
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::measured_boot::MeasurementBundleId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::measured_boot::MeasurementBundleId;
 use measured_boot::ToTable;
 use measured_boot::profile::MeasurementSystemProfile;
 use measured_boot::records::MeasurementSystemProfileRecord;
@@ -38,7 +38,7 @@ use crate::attestation::measured_boot::profile::args::{
 };
 use crate::attestation::measured_boot::{MachineIdList, global};
 use crate::cli_output;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 /// dispatch matches + dispatches the correct command for
@@ -46,7 +46,7 @@ use crate::rpc::ApiClient;
 pub async fn dispatch(
     cmd: CmdProfile,
     cli: &mut global::cmds::CliData<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match cmd {
         CmdProfile::Create(local_args) => {
             cli_output(
@@ -116,14 +116,14 @@ pub async fn dispatch(
 pub async fn create(
     grpc_conn: &ApiClient,
     create: Create,
-) -> CarbideCliResult<MeasurementSystemProfile> {
+) -> NicoCliResult<MeasurementSystemProfile> {
     let response = grpc_conn
         .0
         .create_measurement_system_profile(create)
         .await?;
 
     MeasurementSystemProfile::from_grpc_opt(response.system_profile)
-        .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+        .map_err(|e| NicoCliError::GenericError(e.to_string()))
 }
 
 /// delete is `delete <profile-id|profile-name>` and is used
@@ -131,34 +131,34 @@ pub async fn create(
 pub async fn delete(
     grpc_conn: &ApiClient,
     delete: Delete,
-) -> CarbideCliResult<MeasurementSystemProfile> {
+) -> NicoCliResult<MeasurementSystemProfile> {
     let response = grpc_conn
         .0
         .delete_measurement_system_profile(DeleteMeasurementSystemProfileRequest::try_from(delete)?)
         .await?;
 
     MeasurementSystemProfile::from_grpc_opt(response.system_profile)
-        .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+        .map_err(|e| NicoCliError::GenericError(e.to_string()))
 }
 
 /// rename renames a measurement bundle with the provided name or ID.
 pub async fn rename(
     grpc_conn: &ApiClient,
     rename: Rename,
-) -> CarbideCliResult<MeasurementSystemProfile> {
+) -> NicoCliResult<MeasurementSystemProfile> {
     let response = grpc_conn
         .0
         .rename_measurement_system_profile(RenameMeasurementSystemProfileRequest::try_from(rename)?)
         .await?;
 
     MeasurementSystemProfile::from_grpc_opt(response.profile)
-        .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+        .map_err(|e| NicoCliError::GenericError(e.to_string()))
 }
 
 /// show_all is `show`, and is used for showing all
 /// profiles with details (when no <profile_id> is
 /// specified on the command line).
-pub async fn show_all(grpc_conn: &ApiClient) -> CarbideCliResult<MeasurementSystemProfileList> {
+pub async fn show_all(grpc_conn: &ApiClient) -> NicoCliResult<MeasurementSystemProfileList> {
     Ok(MeasurementSystemProfileList(
         grpc_conn
             .0
@@ -168,9 +168,9 @@ pub async fn show_all(grpc_conn: &ApiClient) -> CarbideCliResult<MeasurementSyst
             .into_iter()
             .map(|system_profile| {
                 MeasurementSystemProfile::try_from(system_profile)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))
             })
-            .collect::<CarbideCliResult<Vec<MeasurementSystemProfile>>>()?,
+            .collect::<NicoCliResult<Vec<MeasurementSystemProfile>>>()?,
     ))
 }
 
@@ -179,14 +179,14 @@ pub async fn show_all(grpc_conn: &ApiClient) -> CarbideCliResult<MeasurementSyst
 pub async fn show_by_id_or_name(
     grpc_conn: &ApiClient,
     show: Show,
-) -> CarbideCliResult<MeasurementSystemProfile> {
+) -> NicoCliResult<MeasurementSystemProfile> {
     let response = grpc_conn
         .0
         .show_measurement_system_profile(ShowMeasurementSystemProfileRequest::try_from(show)?)
         .await?;
 
     MeasurementSystemProfile::from_grpc_opt(response.system_profile)
-        .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+        .map_err(|e| NicoCliError::GenericError(e.to_string()))
 }
 
 /// list_all is `list all` and is used for listing all
@@ -194,7 +194,7 @@ pub async fn show_by_id_or_name(
 /// details, use `show`.
 pub async fn list_all(
     grpc_conn: &ApiClient,
-) -> CarbideCliResult<MeasurementSystemProfileRecordList> {
+) -> NicoCliResult<MeasurementSystemProfileRecordList> {
     Ok(MeasurementSystemProfileRecordList(
         grpc_conn
             .0
@@ -204,9 +204,9 @@ pub async fn list_all(
             .into_iter()
             .map(|rec| {
                 MeasurementSystemProfileRecord::try_from(rec)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))
             })
-            .collect::<CarbideCliResult<Vec<MeasurementSystemProfileRecord>>>()?,
+            .collect::<NicoCliResult<Vec<MeasurementSystemProfileRecord>>>()?,
     ))
 }
 
@@ -215,7 +215,7 @@ pub async fn list_all(
 pub async fn list_bundles_for_id_or_name(
     grpc_conn: &ApiClient,
     list_bundles: ListBundles,
-) -> CarbideCliResult<MeasurementBundleIdList> {
+) -> NicoCliResult<MeasurementBundleIdList> {
     Ok(MeasurementBundleIdList(
         grpc_conn
             .0
@@ -233,7 +233,7 @@ pub async fn list_bundles_for_id_or_name(
 pub async fn list_machines_for_id_or_name(
     grpc_conn: &ApiClient,
     list_machines: ListMachines,
-) -> CarbideCliResult<MachineIdList> {
+) -> NicoCliResult<MachineIdList> {
     Ok(MachineIdList(
         grpc_conn
             .0
@@ -244,9 +244,9 @@ pub async fn list_machines_for_id_or_name(
             .machine_ids
             .iter()
             .map(|rec| {
-                MachineId::from_str(rec).map_err(|e| CarbideCliError::GenericError(e.to_string()))
+                MachineId::from_str(rec).map_err(|e| NicoCliError::GenericError(e.to_string()))
             })
-            .collect::<CarbideCliResult<Vec<MachineId>>>()?,
+            .collect::<NicoCliResult<Vec<MachineId>>>()?,
     ))
 }
 

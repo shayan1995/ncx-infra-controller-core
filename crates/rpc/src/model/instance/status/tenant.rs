@@ -142,7 +142,7 @@ mod tests {
     use std::collections::HashMap;
     use std::str::FromStr;
 
-    use carbide_uuid::machine::MachineId;
+    use nico_uuid::machine::MachineId;
     use chrono::Utc;
     use health_report::{HealthReport, REPAIR_REQUEST_MERGE_SOURCE};
     use model::health::HealthReportSources;

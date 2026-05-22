@@ -61,9 +61,9 @@ fn map_nsm_update_state(state: i32) -> FirmwareState {
     }
 }
 
-fn credentials_to_nsm(creds: &forge_secrets::credentials::Credentials) -> nsm::Credentials {
+fn credentials_to_nsm(creds: &nico_secrets::credentials::Credentials) -> nsm::Credentials {
     match creds {
-        forge_secrets::credentials::Credentials::UsernamePassword { username, password } => {
+        nico_secrets::credentials::Credentials::UsernamePassword { username, password } => {
             nsm::Credentials {
                 username: username.clone(),
                 password: password.clone(),
@@ -339,7 +339,7 @@ impl NvSwitchManager for NsmSwitchBackend {
 
 #[cfg(test)]
 mod tests {
-    use forge_secrets::credentials::Credentials;
+    use nico_secrets::credentials::Credentials;
 
     use super::*;
 

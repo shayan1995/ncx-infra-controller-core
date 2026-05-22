@@ -23,7 +23,7 @@ use model::machine::capabilities::{
 };
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl From<MachineCapabilityType> for rpc::MachineCapabilityType {
     fn from(t: MachineCapabilityType) -> Self {
@@ -191,7 +191,7 @@ impl TryFrom<rpc::MachineCapabilityDeviceType> for MachineCapabilityDeviceType {
 mod tests {
 
     use super::*;
-    use crate::forge as rpc;
+    use crate::nico as rpc;
 
     #[test]
     fn test_model_cpu_capability_to_rpc_conversion() {

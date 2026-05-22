@@ -22,7 +22,7 @@ use rpc::admin_cli::OutputFormat;
 use crate::cfg::runtime::RuntimeConfig;
 use crate::rpc::ApiClient;
 
-fn build_rack_table(racks: &[rpc::forge::Rack]) -> Table {
+fn build_rack_table(racks: &[rpc::nico::Rack]) -> Table {
     let mut table = Table::new();
     let headers = vec!["Rack ID", "Rack State"];
     table.set_titles(Row::new(
@@ -62,7 +62,7 @@ pub async fn list_racks(api_client: &ApiClient, config: &RuntimeConfig) -> Resul
 
 #[cfg(test)]
 mod tests {
-    use rpc::forge::{Metadata, Rack};
+    use rpc::nico::{Metadata, Rack};
 
     use super::*;
 

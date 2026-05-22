@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use carbide_network::ip::prefix::Ipv4Network;
-use carbide_uuid::network::NetworkSegmentId;
-use rpc::forge::{PrefixMatchType, Vpc, VpcPrefixCreationRequest, VpcPrefixSearchQuery};
+use nico_network::ip::prefix::Ipv4Network;
+use nico_uuid::network::NetworkSegmentId;
+use rpc::nico::{PrefixMatchType, Vpc, VpcPrefixCreationRequest, VpcPrefixSearchQuery};
 use serde::{Deserialize, Serialize};
 
 use super::args::{Args, NetworkChoice};
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -31,7 +31,7 @@ struct DevEnvFileConfig {
 
 const DEVENV_VPC_NAME: &str = "devenv_tenant_vpc";
 
-async fn get_or_create_vpc(api_client: &ApiClient) -> CarbideCliResult<Vpc> {
+async fn get_or_create_vpc(api_client: &ApiClient) -> NicoCliResult<Vpc> {
     // Get or create VPC with name "devenv_tenant_vpc"
     let vpcs = api_client.get_vpc_by_name(DEVENV_VPC_NAME).await?;
     let vpc = vpcs.vpcs.first().cloned();
@@ -57,7 +57,7 @@ async fn get_or_create_vpc(api_client: &ApiClient) -> CarbideCliResult<Vpc> {
 async fn handle_overlay_segment_creation(
     api_client: &ApiClient,
     overlay_networks: &[Ipv4Network],
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     // Overlay network creation request is received.
     // For each overlay_segment, create new segment if not exists.
     let vpc = get_or_create_vpc(api_client).await?;
@@ -148,7 +148,7 @@ async fn handle_devenv_config(
 async fn handle_overlay_vpc_prefix_creation(
     api_client: &ApiClient,
     overlay_networks: &[Ipv4Network],
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let vpc = get_or_create_vpc(api_client).await?;
     for network in overlay_networks {
         let vpc_prefix_name = format!("overlay_prefix_{network}");
@@ -175,10 +175,10 @@ async fn handle_overlay_vpc_prefix_creation(
             id: Some(uuid::Uuid::new_v4().into()),
             prefix: String::new(),
             vpc_id: vpc.id,
-            config: Some(rpc::forge::VpcPrefixConfig {
+            config: Some(rpc::nico::VpcPrefixConfig {
                 prefix: network.to_string(),
             }),
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: vpc_prefix_name,
                 description: "Vpc prefix created for overlay network by dev environment setup"
                     .to_string(),
@@ -203,10 +203,10 @@ async fn handle_overlay_vpc_prefix_creation(
 pub async fn apply_devenv_config(
     config: Args,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
+) -> Result<(), NicoCliError> {
     // Read config file.
     if !std::fs::exists(&config.path)? {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "Config file does not exists.".to_string(),
         ));
     }

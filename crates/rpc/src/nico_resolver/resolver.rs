@@ -21,19 +21,19 @@ use std::str::FromStr;
 use hickory_resolver::config::{NameServerConfig, ResolverOpts};
 use hickory_resolver::proto::rr::Name;
 
-use crate::forge_resolver::read_resolv_conf;
+use crate::nico_resolver::read_resolv_conf;
 
 const RESOLV_CONF_PATH: &str = "/etc/resolv.conf";
 
 #[derive(Clone, Default)]
-pub struct ForgeResolverConfig {
+pub struct NicoResolverConfig {
     pub inner: Vec<NameServerConfig>,
     pub search_domain: Vec<Name>,
     pub domain: Option<Name>,
 }
 
 #[derive(Clone, Debug)]
-pub struct ForgeResolveConf {
+pub struct NicoResolveConf {
     parsed_configuration: Option<resolv_conf::Config>,
 }
 
@@ -53,7 +53,7 @@ pub enum ResolverError {
     },
 }
 
-impl ForgeResolveConf {
+impl NicoResolveConf {
     pub fn new(path: &Path) -> Result<Self, ResolverError> {
         let resolv_conf_file = Path::new(&path);
         let parsed_data = read_resolv_conf(resolv_conf_file)?;
@@ -77,7 +77,7 @@ impl ForgeResolveConf {
     }
 }
 
-impl ForgeResolverConfig {
+impl NicoResolverConfig {
     pub fn new() -> Self {
         Self {
             inner: vec![],
@@ -87,10 +87,10 @@ impl ForgeResolverConfig {
     }
 }
 
-pub fn into_forge_resolver_config(
+pub fn into_nico_resolver_config(
     parsed_config: resolv_conf::Config,
-) -> Result<(ForgeResolverConfig, ResolverOpts), ResolverError> {
-    let mut frc = ForgeResolverConfig::new();
+) -> Result<(NicoResolverConfig, ResolverOpts), ResolverError> {
+    let mut frc = NicoResolverConfig::new();
 
     if let Some(domain) = parsed_config.get_domain() {
         frc.domain = Some(Name::from_str(domain.as_str()).map_err(|error| {

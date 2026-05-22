@@ -240,7 +240,7 @@ pub fn diff_skus(actual_sku: &Sku, expected_sku: &Sku) -> Vec<String> {
         ));
     }
 
-    // FORGE-6856: Disable checking of VRAM because the value can change if ECC mode is enabled on the GPU.
+    // NICO-6856: Disable checking of VRAM because the value can change if ECC mode is enabled on the GPU.
     let mut expected_gpus: HashMap<&str, &SkuComponentGpu> = expected_sku
         .components
         .gpus

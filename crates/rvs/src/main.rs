@@ -26,8 +26,8 @@
 
 use std::path::PathBuf;
 
-use forge_tls::client_config::ClientCert;
-use rpc::forge_tls_client::{ApiConfig, ForgeClientConfig};
+use nico_tls::client_config::ClientCert;
+use rpc::nico_tls_client::{ApiConfig, NicoClientConfig};
 use tokio::signal::unix::{SignalKind, signal};
 use tokio_util::sync::CancellationToken;
 use tracing::level_filters::LevelFilter;
@@ -58,9 +58,9 @@ async fn main() -> Result<(), error::RvsError> {
         .with(env_filter)
         .init();
 
-    tracing::info!("carbide-rvs: Rack Validation Service starting");
+    tracing::info!("nico-rvs: Rack Validation Service starting");
 
-    // Load config: defaults -> optional TOML -> CARBIDE_RVS__* env vars
+    // Load config: defaults -> optional TOML -> NICO_RVS__* env vars
     let config_path = parse_config_path()?;
     let cfg = Config::load(config_path.as_deref())?;
     tracing::info!(config = ?cfg, "config loaded");
@@ -83,7 +83,7 @@ async fn main() -> Result<(), error::RvsError> {
         cert_path: cfg.tls.identity_pemfile_path,
         key_path: cfg.tls.identity_keyfile_path,
     };
-    let client_config = ForgeClientConfig::new(cfg.tls.root_cafile_path, Some(client_cert));
+    let client_config = NicoClientConfig::new(cfg.tls.root_cafile_path, Some(client_cert));
     let api_config = ApiConfig::new(&cfg.nicc.url, &client_config);
     let nicc = NiccClient::new(&api_config);
 

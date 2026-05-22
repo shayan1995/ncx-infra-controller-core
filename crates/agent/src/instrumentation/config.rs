@@ -17,7 +17,7 @@
 use std::ops::Deref;
 use std::sync::LazyLock;
 
-use carbide_metrics_utils::OtelView;
+use nico_metrics_utils::OtelView;
 use eyre::WrapErr;
 use opentelemetry::KeyValue;
 use opentelemetry::metrics::{Meter, MeterProvider};
@@ -55,7 +55,7 @@ impl InstrumentationSingleton {
         let resource_attributes = opentelemetry_sdk::Resource::builder()
             .with_attributes([
                 KeyValue::new(SERVICE_NAME, "dpu-agent"),
-                KeyValue::new(SERVICE_NAMESPACE, "forge-system"),
+                KeyValue::new(SERVICE_NAMESPACE, "nico-system"),
             ])
             .build();
 
@@ -71,7 +71,7 @@ impl InstrumentationSingleton {
             .with_view(create_network_loss_view().context("Couldn't create network loss View")?)
             .build();
 
-        let dpu_agent_meter = meter_provider.meter("forge-dpu-agent");
+        let dpu_agent_meter = meter_provider.meter("nico-dpu-agent");
 
         // We expect our internal users to use the interfaces inside this module,
         // but if there are other OpenTelemetry users in our dependencies, let's
@@ -110,8 +110,8 @@ pub fn get_dpu_agent_meter() -> Meter {
 /// that track the exact amount of retry attempts up to 3, and 2 additional
 /// buckets up to 10. This is more useful than the default histogram range where
 /// the lowest sets of buckets are 0, 5, 10, 25
-fn create_retry_histogram_view() -> carbide_metrics_utils::Result<OtelView> {
-    carbide_metrics_utils::new_view(
+fn create_retry_histogram_view() -> nico_metrics_utils::Result<OtelView> {
+    nico_metrics_utils::new_view(
         "*_(attempts|retries)_*",
         Some(InstrumentKind::Histogram),
         Aggregation::ExplicitBucketHistogram {
@@ -121,8 +121,8 @@ fn create_retry_histogram_view() -> carbide_metrics_utils::Result<OtelView> {
     )
 }
 
-fn create_network_latency_view() -> carbide_metrics_utils::Result<OtelView> {
-    carbide_metrics_utils::new_view(
+fn create_network_latency_view() -> nico_metrics_utils::Result<OtelView> {
+    nico_metrics_utils::new_view(
         "*_network_latency*",
         None,
         Aggregation::ExplicitBucketHistogram {
@@ -134,8 +134,8 @@ fn create_network_latency_view() -> carbide_metrics_utils::Result<OtelView> {
     )
 }
 
-fn create_network_loss_view() -> carbide_metrics_utils::Result<OtelView> {
-    carbide_metrics_utils::new_view(
+fn create_network_loss_view() -> nico_metrics_utils::Result<OtelView> {
+    nico_metrics_utils::new_view(
         "*_network_loss_percentage*",
         None,
         Aggregation::ExplicitBucketHistogram {

@@ -20,7 +20,7 @@
  *  tables in the database, leveraging the bundle-specific record types.
  */
 
-use carbide_uuid::measured_boot::{MeasurementBundleId, MeasurementSystemProfileId};
+use nico_uuid::measured_boot::{MeasurementBundleId, MeasurementSystemProfileId};
 use serde::Serialize;
 
 use super::pcr::PcrRegisterValue;

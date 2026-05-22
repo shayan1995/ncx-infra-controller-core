@@ -37,10 +37,10 @@
 
 use std::sync::Arc;
 
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
 use db::{expected_power_shelf as db_expected_power_shelf, power_shelf as db_power_shelf};
-use forge_secrets::credentials::{Credentials, TestCredentialManager};
+use nico_secrets::credentials::{Credentials, TestCredentialManager};
 use librms::protos::rack_manager as rms;
 use mac_address::MacAddress;
 use model::expected_power_shelf::ExpectedPowerShelf;

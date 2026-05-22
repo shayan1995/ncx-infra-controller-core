@@ -19,14 +19,14 @@ use ::rpc::admin_cli::OutputFormat;
 use prettytable::{Cell, Row, Table};
 
 use super::args::Args;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 pub async fn list(
     opts: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
+) -> Result<(), NicoCliError> {
     let result = api_client.0.list_rack_firmware(opts).await?;
 
     if format == OutputFormat::Json {

@@ -16,11 +16,11 @@
  */
 use std::net::IpAddr;
 
-use ::rpc::forge as rpc;
-use carbide_network::virtualization::{VpcVirtualizationType, get_svi_ip};
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
-use carbide_uuid::network::NetworkSegmentId;
+use ::rpc::nico as rpc;
+use nico_network::virtualization::{VpcVirtualizationType, get_svi_ip};
+use nico_uuid::instance::InstanceId;
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
+use nico_uuid::network::NetworkSegmentId;
 use db::vpc::{self};
 use db::vpc_peering::get_prefixes_by_vpcs;
 use db::{self, ObjectColumnFilter, network_security_group};
@@ -35,7 +35,7 @@ use model::network_segment::NetworkSegment;
 use model::resource_pool::common::CommonPools;
 use sqlx::PgConnection;
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::cfg::file::{FnnConfig, FnnRoutingProfileConfig, VpcPeeringPolicy};
 
 #[derive(Default, Clone)]
@@ -104,8 +104,8 @@ impl<'a> PrefixPair<'a> {
     fn from_segment_prefixes(
         prefixes: &'a [NetworkPrefix],
         _instance_id: InstanceId,
-        _segment_id: carbide_uuid::network::NetworkSegmentId,
-    ) -> Result<Self, CarbideError> {
+        _segment_id: nico_uuid::network::NetworkSegmentId,
+    ) -> Result<Self, NicoError> {
         let v4 = prefixes.iter().find(|p| p.prefix.is_ipv4());
         let v6 = prefixes.iter().find(|p| p.prefix.is_ipv6());
         Ok(Self { v4, v6 })
@@ -139,7 +139,7 @@ impl<'a> PrefixPair<'a> {
         &self,
         iface: &InstanceInterfaceConfig,
         address: IpAddr,
-    ) -> Result<Option<IpNetwork>, CarbideError> {
+    ) -> Result<Option<IpNetwork>, NicoError> {
         let Some(v4) = self.v4 else {
             return Ok(None);
         };
@@ -147,7 +147,7 @@ impl<'a> PrefixPair<'a> {
             Some(p) => Ok(Some(*p)),
             None => IpNetwork::new(address, 32)
                 .map(Some)
-                .map_err(|e| CarbideError::Internal {
+                .map_err(|e| NicoError::Internal {
                     message: format!(
                         "failed to build default interface_prefix for {address}/32: {e}"
                     ),
@@ -167,7 +167,7 @@ impl<'a> PrefixPair<'a> {
         &self,
         network_virtualization_type: VpcVirtualizationType,
         is_l2_segment: bool,
-    ) -> Result<(Option<String>, Option<String>), CarbideError> {
+    ) -> Result<(Option<String>, Option<String>), NicoError> {
         let svi_ip = self
             .v4
             .map(|p| {
@@ -179,7 +179,7 @@ impl<'a> PrefixPair<'a> {
                 )
             })
             .transpose()
-            .map_err(|e| CarbideError::Internal {
+            .map_err(|e| NicoError::Internal {
                 message: format!("failed to configure FlatInterfaceConfig.svi_ip: {e}"),
             })?
             .flatten()
@@ -197,7 +197,7 @@ impl<'a> PrefixPair<'a> {
                 .transpose()
             })
             .transpose()
-            .map_err(|e| CarbideError::Internal {
+            .map_err(|e| NicoError::Internal {
                 message: format!("failed to configure FlatInterfaceConfig.svi_ip_v6: {e}"),
             })?
             .map(|ip| ip.to_string());
@@ -238,7 +238,7 @@ pub async fn admin_network(
 
     let host_machine_id = snapshot.host_snapshot.id;
     let Some(interface) = interface else {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "No admin interface found attached on host: {host_machine_id} with dpu: {dpu_machine_id}"
         ))
         .into());
@@ -256,7 +256,7 @@ pub async fn admin_network(
             interface.primary_interface && admin_segment_ids.contains(&interface.segment_id)
         })
         .ok_or_else(|| {
-            CarbideError::InvalidArgument(format!(
+            NicoError::InvalidArgument(format!(
                 "No primary admin interface found on host: {host_machine_id}"
             ))
         })?;
@@ -266,7 +266,7 @@ pub async fn admin_network(
         .find(|v| v.id == active_interface.segment_id);
 
     let Some(admin_segment) = admin_segment else {
-        return Err(CarbideError::internal(format!(
+        return Err(NicoError::internal(format!(
             "Unknown primary admin segment `{}` attached on host: {host_machine_id}",
             active_interface.segment_id
         ))
@@ -276,7 +276,7 @@ pub async fn admin_network(
     let prefix = match admin_segment.prefixes.first() {
         Some(p) => p,
         None => {
-            return Err(CarbideError::Internal {
+            return Err(NicoError::Internal {
                 message: format!(
                     "Admin network segment '{}' has no network_prefix, expected 1",
                     admin_segment.id,
@@ -290,8 +290,8 @@ pub async fn admin_network(
         Some(domain_id) => {
             db::dns::domain::find_by_uuid(&mut *txn, domain_id)
                 .await
-                .map_err(CarbideError::from)?
-                .ok_or_else(|| CarbideError::NotFoundError {
+                .map_err(NicoError::from)?
+                .ok_or_else(|| NicoError::NotFoundError {
                     kind: "domain",
                     id: domain_id.to_string(),
                 })?
@@ -306,7 +306,7 @@ pub async fn admin_network(
         .copied()
         .find(|address| address.is_ipv4())
         .ok_or_else(|| {
-            CarbideError::InvalidArgument(format!(
+            NicoError::InvalidArgument(format!(
                 "No IPv4 address found on primary host admin interface {}",
                 active_interface.id
             ))
@@ -315,7 +315,7 @@ pub async fn admin_network(
     // On the admin network, the interface_prefix is always
     // just going to be a /32 derived from the machine interface
     // address.
-    let address_prefix = IpNetwork::new(address, 32).map_err(|e| CarbideError::Internal {
+    let address_prefix = IpNetwork::new(address, 32).map_err(|e| NicoError::Internal {
         message: format!("failed to build default admin address prefix for {address}/32: {e}"),
     })?;
 
@@ -328,7 +328,7 @@ pub async fn admin_network(
             true,
             prefix.prefix.prefix(),
         )
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("failed to configure FlatInterfaceConfig.svi_ip: {e}"),
         })?
         .map(|ip| ip.to_string())
@@ -343,7 +343,7 @@ pub async fn admin_network(
                     db::vpc::find_by(&mut *txn, ObjectColumnFilter::One(vpc::IdColumn, &vpc_id))
                         .await?;
                 if vpcs.is_empty() {
-                    return Err(CarbideError::FindOneReturnedNoResultsError(vpc_id.into()).into());
+                    return Err(NicoError::FindOneReturnedNoResultsError(vpc_id.into()).into());
                 }
                 let vpc = vpcs.remove(0);
                 match vpc.status.and_then(|v| v.vni) {
@@ -367,7 +367,7 @@ pub async fn admin_network(
                     }
                     None => {
                         // if FNN is enabled, VPC must be created and updated in admin_segment.
-                        return Err(CarbideError::internal(format!(
+                        return Err(NicoError::internal(format!(
                             "Admin VPC is not found with id: {vpc_id}."
                         ))
                         .into());
@@ -376,7 +376,7 @@ pub async fn admin_network(
             }
             None => {
                 // if FNN is enabled, VPC must be created and updated in admin_segment.
-                return Err(CarbideError::internal(
+                return Err(NicoError::internal(
                     "Admin VPC is not attached to admin segment.".to_string(),
                 )
                 .into());
@@ -438,7 +438,7 @@ pub async fn tenant_network(
     let is_l2_segment = segment.status.can_stretch.unwrap_or(true);
 
     let ds = PrefixPair::from_segment_prefixes(&segment.prefixes, instance_id, segment.id)?;
-    let address = ds.v4_address(iface).ok_or_else(|| CarbideError::Internal {
+    let address = ds.v4_address(iface).ok_or_else(|| NicoError::Internal {
         message: format!(
             "No IPv4 address is available for instance {instance_id} on segment {}",
             segment.id,
@@ -452,7 +452,7 @@ pub async fn tenant_network(
     // InstanceInterfaceConfigs stored contain the prefix.
     let interface_prefix =
         ds.v4_interface_prefix(iface, address)?
-            .ok_or_else(|| CarbideError::Internal {
+            .ok_or_else(|| NicoError::Internal {
                 message: format!(
                     "No IPv4 prefix is available for instance {instance_id} on segment {}",
                     segment.id,
@@ -533,7 +533,7 @@ pub async fn tenant_network(
                 db::vpc::find_by(&mut *txn, ObjectColumnFilter::One(vpc::IdColumn, &vpc_id))
                     .await?;
             if vpcs.is_empty() {
-                return Err(CarbideError::FindOneReturnedNoResultsError(vpc_id.into()).into());
+                return Err(NicoError::FindOneReturnedNoResultsError(vpc_id.into()).into());
             }
             vpcs.pop()
         }
@@ -551,11 +551,11 @@ pub async fn tenant_network(
             let profile_type =
                 vpc.routing_profile_type
                     .as_ref()
-                    .ok_or_else(|| CarbideError::Internal {
+                    .ok_or_else(|| NicoError::Internal {
                         message: "tenant routing profile type not found in VPC record".to_string(),
                     })?;
             let profile = fnn.routing_profiles.get(profile_type).ok_or_else(|| {
-                CarbideError::NotFoundError {
+                NicoError::NotFoundError {
                     kind: "routing_profile_type",
                     id: profile_type.to_string(),
                 }
@@ -587,7 +587,7 @@ pub async fn tenant_network(
                         txn,
                         &[vpc_nsg_id.to_owned()],
                         Some(&v.tenant_organization_id.parse().map_err(|_| {
-                            CarbideError::Internal {
+                            NicoError::Internal {
                                 message: "invalid tenant org in VPC data".to_string(),
                             }
                         })?),
@@ -595,7 +595,7 @@ pub async fn tenant_network(
                     )
                     .await?
                     .pop()
-                    .ok_or(CarbideError::NotFoundError {
+                    .ok_or(NicoError::NotFoundError {
                         kind: "NetworkSecurityGroup",
                         id: v.tenant_organization_id.clone(),
                     })?;
@@ -656,13 +656,13 @@ pub async fn tenant_network(
                                     .map(resolve_security_group_rule)
                                     .collect::<Result<
                                         Vec<rpc::ResolvedNetworkSecurityGroupRule>,
-                                        CarbideError,
+                                        NicoError,
                                     >>()?,
                         },
                     )
             })
             .transpose()
-            .map_err(|e: CarbideError| CarbideError::Internal {
+            .map_err(|e: NicoError| NicoError::Internal {
                 message: format!(
                     "failed to configure FlatInterfaceConfig.network_security_group: {e}"
                 ),
@@ -682,7 +682,7 @@ pub async fn tenant_network(
 
 pub fn resolve_security_group_rule(
     rule: NetworkSecurityGroupRule,
-) -> Result<rpc::ResolvedNetworkSecurityGroupRule, CarbideError> {
+) -> Result<rpc::ResolvedNetworkSecurityGroupRule, NicoError> {
     Ok(rpc::ResolvedNetworkSecurityGroupRule {
         // When we decide to allow object references,
         // they would be resolved to their actual prefix

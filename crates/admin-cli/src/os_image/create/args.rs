@@ -16,9 +16,9 @@
  */
 
 use clap::Parser;
-use rpc::forge as forgerpc;
+use rpc::nico as nicorpc;
 
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::os_image::common::str_to_rpc_uuid;
 
 #[derive(Parser, Debug, Clone)]
@@ -79,12 +79,12 @@ pub struct Args {
     pub efifs_id: Option<String>,
 }
 
-impl TryFrom<Args> for forgerpc::OsImageAttributes {
-    type Error = CarbideCliError;
+impl TryFrom<Args> for nicorpc::OsImageAttributes {
+    type Error = NicoCliError;
 
-    fn try_from(args: Args) -> CarbideCliResult<Self> {
+    fn try_from(args: Args) -> NicoCliResult<Self> {
         let id = str_to_rpc_uuid(&args.id)?;
-        Ok(forgerpc::OsImageAttributes {
+        Ok(nicorpc::OsImageAttributes {
             id: Some(id),
             source_url: args.url,
             digest: args.digest,

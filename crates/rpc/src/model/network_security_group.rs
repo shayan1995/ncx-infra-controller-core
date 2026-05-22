@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::network_security_group::NetworkSecurityGroupId;
+use nico_uuid::network_security_group::NetworkSecurityGroupId;
 use config_version::ConfigVersion;
 use model::network_security_group::{
     NetworkSecurityGroup, NetworkSecurityGroupAttachments,
@@ -27,7 +27,7 @@ use model::network_security_group::{
 use uuid::Uuid;
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 /// The maximum priority value allowed for security group rule.
 /// We could expose this in config and validate it in the API
@@ -633,7 +633,7 @@ mod tests {
     use model::metadata::Metadata;
 
     use super::*;
-    use crate::forge as rpc;
+    use crate::nico as rpc;
 
     #[test]
     fn test_model_nsg_prop_obj_status_to_rpc_conversion() {

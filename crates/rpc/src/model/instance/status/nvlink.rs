@@ -18,7 +18,7 @@
 use model::instance::status::nvlink::{InstanceNvLinkGpuStatus, InstanceNvLinkStatus};
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<InstanceNvLinkStatus> for rpc::InstanceNvLinkStatus {
     type Error = RpcDataConversionError;

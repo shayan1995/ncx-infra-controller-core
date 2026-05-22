@@ -20,9 +20,9 @@ use std::net::IpAddr;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
-pub use ::rpc::forge as rpc;
-use carbide_uuid::machine::MachineIdSource;
-use carbide_uuid::nvlink::NvLinkDomainId;
+pub use ::rpc::nico as rpc;
+use nico_uuid::machine::MachineIdSource;
+use nico_uuid::nvlink::NvLinkDomainId;
 use db::WithTransaction;
 use futures_util::FutureExt;
 use libnmxc::{Endpoint, NMX_C_GATEWAY_ID};
@@ -34,7 +34,7 @@ use tonic::{Request, Response, Status};
 
 use crate::api::{Api, log_machine_id, log_request_data};
 use crate::handlers::utils::convert_and_log_machine_id;
-use crate::{CarbideError, CarbideResult, attestation as attest};
+use crate::{NicoError, NicoResult, attestation as attest};
 
 pub(crate) async fn discover_machine(
     api: &Api,
@@ -49,7 +49,7 @@ pub(crate) async fn discover_machine(
             // we use to_canonical() to convert it to IPv4.
             request
                 .extensions()
-                .get::<Arc<carbide_authn::middleware::ConnectionAttributes>>()
+                .get::<Arc<nico_authn::middleware::ConnectionAttributes>>()
                 .map(|conn_attrs| conn_attrs.peer_address.ip().to_canonical())
         }
         Some(ip_str) => {
@@ -70,10 +70,10 @@ pub(crate) async fn discover_machine(
             rpc::machine_discovery_info::DiscoveryData::Info(info) => info,
         })
         .ok_or_else(|| {
-            CarbideError::InvalidArgument("Discovery data is not populated".to_string())
+            NicoError::InvalidArgument("Discovery data is not populated".to_string())
         })?;
     let attest_key_info_opt = discovery_data.attest_key_info.clone();
-    let hardware_info = HardwareInfo::try_from(discovery_data).map_err(CarbideError::from)?;
+    let hardware_info = HardwareInfo::try_from(discovery_data).map_err(NicoError::from)?;
 
     // this is an early check for certificate creation that happens later on in this method.
     // let's save us the hassle and return immediately if the below condition is not satisfied
@@ -82,13 +82,13 @@ pub(crate) async fn discover_machine(
         && attest_key_info_opt.is_none()
     {
         return Err(
-            CarbideError::InvalidArgument("AttestKeyInfo is not populated".to_string()).into(),
+            NicoError::InvalidArgument("AttestKeyInfo is not populated".to_string()).into(),
         );
     }
 
     // Generate a stable Machine ID based on the hardware information
     let stable_machine_id = from_hardware_info(&hardware_info).map_err(|e| {
-            CarbideError::InvalidArgument(
+            NicoError::InvalidArgument(
                 format!("Insufficient HardwareInfo to derive a Stable Machine ID for Machine on InterfaceId {interface_id:?}: {e}"),
             )
         })?;
@@ -129,7 +129,7 @@ pub(crate) async fn discover_machine(
         && hardware_info.tpm_ek_certificate.is_none()
         && api.runtime_config.tpm_required
     {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
                 "Ignoring DiscoverMachine request for non-tpm enabled host with InterfaceId {interface_id:?}"
             ))
             .into());
@@ -141,7 +141,7 @@ pub(crate) async fn discover_machine(
             hardware_info
                 .tpm_ek_certificate
                 .as_ref()
-                .ok_or(CarbideError::InvalidArgument(
+                .ok_or(NicoError::InvalidArgument(
                     "tpm_ek_cert is empty".to_string(),
                 ))?;
 
@@ -162,7 +162,7 @@ pub(crate) async fn discover_machine(
         && existing_machine_id.source() == MachineIdSource::Tpm
         && existing_machine_id.machine_type().is_host()
     {
-        return Err(CarbideError::FailedPrecondition(format!(
+        return Err(NicoError::FailedPrecondition(format!(
             "TPM EK certificate missing for host discovery on InterfaceId {interface_id:?}; refusing to derive serial-based machine id {stable_machine_id} for existing TPM-derived machine id {existing_machine_id}"
         ))
         .into());
@@ -185,7 +185,7 @@ pub(crate) async fn discover_machine(
             )
             .await?
             .ok_or_else(|| {
-                CarbideError::InvalidArgument(format!(
+                NicoError::InvalidArgument(format!(
                     "Machine id {stable_machine_id} was not discovered by site-explorer."
                 ))
             })?;
@@ -220,7 +220,7 @@ pub(crate) async fn discover_machine(
             )
             .await?
             .ok_or_else(|| {
-                CarbideError::InvalidArgument(format!("Machine id {stable_machine_id} not found."))
+                NicoError::InvalidArgument(format!("Machine id {stable_machine_id} not found."))
             })?
         };
 
@@ -309,7 +309,7 @@ pub(crate) async fn discover_machine(
             // Create host machine with temporary ID if no machine is attached.
             let predicted_machine_id =
                 host_id_from_dpu_hardware_info(&hardware_info).map_err(|e| {
-                    CarbideError::InvalidArgument(format!("hardware info missing: {e}"))
+                    NicoError::InvalidArgument(format!("hardware info missing: {e}"))
                 })?;
 
             let host_has_primary = db::machine_interface::find_by_machine_ids(
@@ -390,7 +390,7 @@ pub(crate) async fn discover_machine(
     let attest_key_challenge = if api.runtime_config.attestation_enabled && !hardware_info.is_dpu()
     {
         let Some(attest_key_info) = attest_key_info_opt else {
-            return Err(CarbideError::InvalidArgument(
+            return Err(NicoError::InvalidArgument(
                 "Internal Error: This should have been handled above! AttestKeyInfo is not populated.".into(),
             )
             .into());
@@ -432,7 +432,7 @@ pub(crate) async fn discover_machine(
                 api.certificate_provider
                     .get_certificate(&stable_machine_id.to_string(), None, None)
                     .await
-                    .map_err(|err| CarbideError::ClientCertificateError(err.to_string()))?
+                    .map_err(|err| NicoError::ClientCertificateError(err.to_string()))?
                     .into(),
             )
         }
@@ -502,13 +502,13 @@ pub(crate) async fn discovery_completed(
 async fn get_nvlink_info_from_nmx_c(
     api: &Api,
     platform_infos: &[&GpuPlatformInfo],
-) -> CarbideResult<MachineNvLinkInfo> {
+) -> NicoResult<MachineNvLinkInfo> {
     let chassis_serial = platform_infos
         .first()
         .map(|p| p.chassis_serial.clone())
         .unwrap_or_default();
     if chassis_serial.trim().is_empty() {
-        return Err(CarbideError::internal(
+        return Err(NicoError::internal(
             "Missing chassis_serial in GpuPlatformInfo for NMX-C hello".to_string(),
         ));
     }
@@ -519,7 +519,7 @@ async fn get_nvlink_info_from_nmx_c(
             .await?
             .map(|row| row.endpoint)
             .ok_or_else(|| {
-                CarbideError::internal(format!(
+                NicoError::internal(format!(
                     "No NMX-C endpoint configured for chassis serial {}",
                     chassis_serial.trim()
                 ))
@@ -528,21 +528,21 @@ async fn get_nvlink_info_from_nmx_c(
 
     let mut nmx_c_client = api
         .nmxc_client_pool
-        .create_client(Endpoint::new(&endpoint).map_err(|e| CarbideError::internal(e.to_string()))?)
+        .create_client(Endpoint::new(&endpoint).map_err(|e| NicoError::internal(e.to_string()))?)
         .await
-        .map_err(|e| CarbideError::internal(format!("Failed to create NMX-C client: {e}")))?;
+        .map_err(|e| NicoError::internal(format!("Failed to create NMX-C client: {e}")))?;
 
     let hello = nmx_c_client
         .hello(NMX_C_GATEWAY_ID)
         .await
-        .map_err(|e| CarbideError::internal(format!("Failed to call NMX-C hello: {e}")))?;
+        .map_err(|e| NicoError::internal(format!("Failed to call NMX-C hello: {e}")))?;
 
     let domain_uuid = hello
         .server_header
         .as_ref()
         .and_then(|header| uuid::Uuid::parse_str(&header.domain_uuid).ok())
         .ok_or_else(|| {
-            CarbideError::internal(format!(
+            NicoError::internal(format!(
                 "Failed to parse domain UUID from NMX-C hello response: {hello:?}"
             ))
         })?;

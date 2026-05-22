@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 use prettytable::{Table, row};
 
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 /// Produces a table for printing a non-JSON representation of a
 /// compute allocation to standard out.
 pub fn convert_compute_allocations_to_table(
-    allocations: Vec<forgerpc::ComputeAllocation>,
+    allocations: Vec<nicorpc::ComputeAllocation>,
     verbose: bool,
-) -> CarbideCliResult<Box<Table>> {
+) -> NicoCliResult<Box<Table>> {
     let mut table = Box::new(Table::new());
     let default_metadata = Default::default();
 

@@ -22,8 +22,8 @@ use axum::Router;
 use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::routing::get;
-use forge_tls::client_config::ClientCert;
-use rpc::forge_tls_client::ForgeClientConfig;
+use nico_tls::client_config::ClientCert;
+use rpc::nico_tls_client::NicoClientConfig;
 
 use crate::common::{AppState, Machine, MachineInterface};
 use crate::routes::RpcContext;
@@ -86,10 +86,10 @@ pub async fn boot(contents: MachineInterface, state: State<AppState>) -> impl In
     let (template_key, template_data) = match contents.architecture {
         Some(arch) => {
             // The wrapping `pxe` Tera template (pxe/templates/pxe) consumes:
-            //   - {{ pxe_url }}        -- carbide-pxe URL for cloud-init.
-            //   - {{ static_pxe_url }} -- carbide-pxe URL for /public/blobs.
+            //   - {{ pxe_url }}        -- nico-pxe URL for cloud-init.
+            //   - {{ static_pxe_url }} -- nico-pxe URL for /public/blobs.
             //   - {{ ipxe }}           -- the OS-specific iPXE script body
-            //                             returned by carbide-api.
+            //                             returned by nico-api.
             let mut template_data = HashMap::new();
             template_data.insert("pxe_url".to_string(), state.runtime_config.pxe_url.clone());
 
@@ -105,8 +105,8 @@ pub async fn boot(contents: MachineInterface, state: State<AppState>) -> impl In
                 contents.client_ip,
                 contents.product,
                 &state.runtime_config.internal_api_url,
-                &ForgeClientConfig::new(
-                    state.runtime_config.forge_root_ca_path.clone(),
+                &NicoClientConfig::new(
+                    state.runtime_config.nico_root_ca_path.clone(),
                     Some(ClientCert {
                         cert_path: state.runtime_config.server_cert_path.clone(),
                         key_path: state.runtime_config.server_key_path.clone(),

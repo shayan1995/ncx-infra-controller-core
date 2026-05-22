@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::nvlink::NvLinkLogicalPartitionId;
+use nico_uuid::nvlink::NvLinkLogicalPartitionId;
 use chrono::{DateTime, Utc};
 use config_version::ConfigVersion;
 use serde::{Deserialize, Serialize};

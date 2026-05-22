@@ -16,8 +16,8 @@
  */
 use std::net::IpAddr;
 
-use carbide_uuid::network::{NetworkPrefixId, NetworkSegmentId};
-use carbide_uuid::vpc::VpcPrefixId;
+use nico_uuid::network::{NetworkPrefixId, NetworkSegmentId};
+use nico_uuid::vpc::VpcPrefixId;
 use ipnetwork::IpNetwork;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgRow;

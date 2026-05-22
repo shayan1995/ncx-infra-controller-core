@@ -16,12 +16,12 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::ComputeTrayComponent;
+use ::rpc::nico::ComputeTrayComponent;
 use prettytable::{Cell, Row, Table};
 
 use super::args::Args;
 use crate::component_manager::common;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 /// Formats a raw proto `ComputeTrayComponent` value for display.
@@ -49,12 +49,12 @@ pub async fn list_versions(
     opts: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
+) -> Result<(), NicoCliError> {
     let response = api_client
         .0
         .list_component_firmware_versions(opts)
         .await
-        .map_err(CarbideCliError::from)?;
+        .map_err(NicoCliError::from)?;
 
     if format == OutputFormat::Json {
         let devices = response
@@ -123,7 +123,7 @@ pub async fn list_versions(
     );
 
     if failures > 0 {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "{failures} component firmware version result(s) failed{failure_summary}"
         )));
     }

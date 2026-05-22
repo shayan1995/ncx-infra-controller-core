@@ -18,7 +18,7 @@
 use ::rpc::admin_cli::OutputFormat;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::network_security_group::common::convert_nsgs_to_table;
 use crate::rpc::ApiClient;
 
@@ -31,7 +31,7 @@ pub async fn show(
     api_client: &ApiClient,
     page_size: usize,
     verbose: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
 
     let mut nsgs = Vec::new();
@@ -47,7 +47,7 @@ pub async fn show(
     if is_json {
         println!(
             "{}",
-            serde_json::to_string_pretty(&nsgs).map_err(CarbideCliError::JsonError)?
+            serde_json::to_string_pretty(&nsgs).map_err(NicoCliError::JsonError)?
         );
     } else if nsgs.len() == 1 {
         convert_nsgs_to_table(&nsgs, true)?.printstd();

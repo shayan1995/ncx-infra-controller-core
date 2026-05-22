@@ -16,10 +16,10 @@
  */
 pub mod tests {
 
-    use carbide_uuid::machine::MachineId;
+    use nico_uuid::machine::MachineId;
     use model::attestation::spdm::{SpdmAttestationState, SpdmObjectId};
-    use rpc::forge::SpdmMachineAttestationTriggerRequest;
-    use rpc::forge::forge_server::Forge;
+    use rpc::nico::SpdmMachineAttestationTriggerRequest;
+    use rpc::nico::nico_server::NICo;
     use sqlx::PgConnection;
     //use sqlx::PgConnection;
     use tonic::Request;
@@ -72,7 +72,7 @@ pub mod tests {
             .into_inner();
 
         assert_eq!(
-            rpc::forge::SpdmAttestationStatus::SpdmAttInProgress,
+            rpc::nico::SpdmAttestationStatus::SpdmAttInProgress,
             response.attestation_status()
         );
 
@@ -438,7 +438,7 @@ pub mod tests {
             .into_inner();
 
         assert_eq!(
-            rpc::forge::SpdmAttestationStatus::SpdmAttInProgress,
+            rpc::nico::SpdmAttestationStatus::SpdmAttInProgress,
             response.attestation_status()
         );
 

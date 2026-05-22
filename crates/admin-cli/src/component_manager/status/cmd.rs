@@ -20,19 +20,19 @@ use prettytable::{Cell, Row, Table};
 
 use super::args::Args;
 use crate::component_manager::common;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 pub async fn get_status(
     opts: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
+) -> Result<(), NicoCliError> {
     let response = api_client
         .0
         .get_component_firmware_status(opts)
         .await
-        .map_err(CarbideCliError::from)?;
+        .map_err(NicoCliError::from)?;
 
     if format == OutputFormat::Json {
         let statuses = response
@@ -85,7 +85,7 @@ pub async fn get_status(
     );
 
     if failures > 0 {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "{failures} component firmware status result(s) failed{failure_summary}"
         )));
     }

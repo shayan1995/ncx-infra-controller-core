@@ -17,7 +17,7 @@
 
 use common::api_fixtures::{create_managed_host, create_test_env};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::handlers::client_resolution::resolve_machine_interface;
 use crate::tests::common;
 use crate::tests::common::api_fixtures::instance::{
@@ -78,7 +78,7 @@ async fn test_resolve_machine_interface_via_instance_address(pool: sqlx::PgPool)
     };
     let tinstance = mh.instance_builer(&env).config(config).build().await;
 
-    // Look up the tenant IP carbide-api allocated to the instance.
+    // Look up the tenant IP nico-api allocated to the instance.
     let mut txn = env.pool.begin().await.unwrap();
     let inst_addr = db::instance_address::find_by_instance_id_and_segment_id(
         txn.as_mut(),
@@ -111,7 +111,7 @@ async fn test_resolve_machine_interface_unknown_ip_returns_not_found(pool: sqlx:
 
     let err = result.expect_err("expected NotFound for unknown client IP");
     match err {
-        CarbideError::NotFoundError { kind, .. } => {
+        NicoError::NotFoundError { kind, .. } => {
             assert_eq!(kind, "Client", "expected NotFound kind=Client, got {kind}")
         }
         other => panic!("expected NotFoundError, got {other:?}"),

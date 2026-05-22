@@ -18,11 +18,11 @@ use std::fmt::Write;
 use std::path::PathBuf;
 use std::process::Command;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 
 // FIXME: This should probably be configurable and come from the API's config
 // file.
-const SITE_OPERATOR: &str = "Forge-SRE (ngc-forge-sre@exchange.nvidia.com)";
+const SITE_OPERATOR: &str = "NICo-SRE (ngc-nico-sre@exchange.nvidia.com)";
 
 pub fn set_lldp_system_description(machine_id: &MachineId) -> eyre::Result<()> {
     let system_description = format!("{SITE_OPERATOR}, {machine_id}");
@@ -95,8 +95,8 @@ impl LldpdConfigFileWriter {
 impl Default for LldpdConfigFileWriter {
     fn default() -> Self {
         Self {
-            filename: "/etc/lldpd.d/forge.conf".into(),
-            header_comments: vec!["This file is managed by the Forge DPU agent".into()],
+            filename: "/etc/lldpd.d/nico.conf".into(),
+            header_comments: vec!["This file is managed by the NICo DPU agent".into()],
         }
     }
 }
@@ -113,7 +113,7 @@ mod tests {
         let lldpd_writer = LldpdConfigFileWriter::default();
         let contents = lldpd_writer.render_contents(&lldp_config);
 
-        let expected_contents = "# This file is managed by the Forge DPU agent\n\
+        let expected_contents = "# This file is managed by the NICo DPU agent\n\
             configure system description \"deluxe toaster\"\n";
 
         assert_eq!(contents.as_str(), expected_contents);

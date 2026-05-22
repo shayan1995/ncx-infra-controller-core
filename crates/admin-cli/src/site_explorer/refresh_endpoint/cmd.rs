@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::RefreshEndpointReportRequest;
+use ::rpc::nico::RefreshEndpointReportRequest;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn refresh_endpoint(api_client: &ApiClient, opts: Args) -> CarbideCliResult<()> {
+pub async fn refresh_endpoint(api_client: &ApiClient, opts: Args) -> NicoCliResult<()> {
     let address = opts.address;
     eprintln!("Starting report refresh for endpoint {address}...");
     let endpoint = api_client

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-use carbide_health_metrics::{HealthIterationMetrics, HealthObjectMetrics, register_health_gauges};
-use carbide_utils::metrics::SharedMetricsHolder;
+use nico_health_metrics::{HealthIterationMetrics, HealthObjectMetrics, register_health_gauges};
+use nico_utils::metrics::SharedMetricsHolder;
 use opentelemetry::metrics::Meter;
 use state_controller::metrics::MetricsEmitter;
 
@@ -43,7 +43,7 @@ impl MetricsEmitter for SwitchMetricsEmitter {
         shared_metrics: SharedMetricsHolder<Self::IterationMetrics>,
     ) -> Self {
         register_health_gauges::<_, (), _>(
-            "carbide_switches",
+            "nico_switches",
             "switch_id",
             meter,
             shared_metrics,

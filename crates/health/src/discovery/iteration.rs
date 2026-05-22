@@ -96,7 +96,7 @@ mod tests {
     use std::net::{IpAddr, Ipv4Addr};
     use std::str::FromStr;
 
-    use carbide_uuid::rack::RackId;
+    use nico_uuid::rack::RackId;
     use mac_address::MacAddress;
 
     use super::*;

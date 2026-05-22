@@ -16,11 +16,11 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::IpType;
+use ::rpc::nico::IpType;
 use serde::Serialize;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 #[derive(Serialize)]
@@ -40,7 +40,7 @@ pub async fn find(
     args: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let resp = api_client.0.find_ip_address(args).await?;
 
     let output = IpFindOutput {

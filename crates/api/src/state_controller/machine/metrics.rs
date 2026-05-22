@@ -19,8 +19,8 @@
 
 use std::collections::{HashMap, HashSet};
 
-use ::carbide_utils::metrics::SharedMetricsHolder;
-use carbide_health_metrics::{
+use ::nico_utils::metrics::SharedMetricsHolder;
+use nico_health_metrics::{
     HealthIterationMetrics, HealthMetricDimension, HealthObjectMetrics,
     register_alerts_suppressed_gauge, register_health_gauges,
 };
@@ -124,8 +124,8 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_gpus_total_count")
-                .with_description("The total number of GPUs available in the Forge site")
+                .u64_observable_gauge("nico_gpus_total_count")
+                .with_description("The total number of GPUs available in the NICo site")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
                         observer.observe(metrics.gpus_total as u64, attrs);
@@ -136,8 +136,8 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_hosts_usable_count")
-                .with_description("The remaining number of hosts in the Forge site which are available for immediate instance creation")
+                .u64_observable_gauge("nico_hosts_usable_count")
+                .with_description("The remaining number of hosts in the NICo site which are available for immediate instance creation")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
                         observer.observe(
@@ -151,8 +151,8 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_gpus_usable_count")
-                .with_description("The remaining number of GPUs in the Forge site which are available for immediate instance creation")
+                .u64_observable_gauge("nico_gpus_usable_count")
+                .with_description("The remaining number of GPUs in the NICo site which are available for immediate instance creation")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
                         observer.observe(
@@ -166,8 +166,8 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_gpus_in_use_count")
-                .with_description("The total number of GPUs that are actively used by tenants in instances in the Forge site")
+                .u64_observable_gauge("nico_gpus_in_use_count")
+                .with_description("The total number of GPUs that are actively used by tenants in instances in the NICo site")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
                         let total_in_use_gpus = metrics.gpus_in_use_by_tenant.values().copied().reduce(|a,b| a + b).unwrap_or_default();
@@ -182,8 +182,8 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_hosts_in_use_count")
-                .with_description("The total number of hosts that are actively used by tenants as instances in the Forge site")
+                .u64_observable_gauge("nico_hosts_in_use_count")
+                .with_description("The total number of hosts that are actively used by tenants as instances in the NICo site")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
                         let total_in_use_hosts = metrics.hosts_in_use_by_tenant.values().copied().reduce(|a,b| a + b).unwrap_or_default();
@@ -198,7 +198,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_gpus_in_use_by_tenant_count")
+                .u64_observable_gauge("nico_gpus_in_use_by_tenant_count")
                 .with_description(
                     "The number of GPUs that are actively used by tenants as instances - by tenant",
                 )
@@ -218,7 +218,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_hosts_in_use_by_tenant_count")
+                .u64_observable_gauge("nico_hosts_in_use_by_tenant_count")
                 .with_description(
                     "The number of hosts that are actively used by tenants as instances - by tenant",
                 )
@@ -237,7 +237,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_dpus_up_count")
+                .u64_observable_gauge("nico_dpus_up_count")
                 .with_description("The total number of DPUs in the system that are up. Up means we have received a health report less than 5 minutes ago.")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
@@ -252,7 +252,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_dpus_healthy_count")
+                .u64_observable_gauge("nico_dpus_healthy_count")
                 .with_description("The total number of DPUs in the system that have reported healthy in the last report. Healthy does not imply up - the report from the DPU might be outdated.")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
@@ -265,7 +265,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
                 .build()
         };
         register_health_gauges::<_, IsInUseByTenant, _>(
-            "carbide_hosts",
+            "nico_hosts",
             "machine_id",
             meter,
             shared_metrics.clone(),
@@ -273,11 +273,11 @@ impl MetricsEmitter for MachineMetricsEmitter {
         );
 
         // Deprecation warning:
-        // `carbide_alerts_suppressed_count` before the metric was renamed to
-        // `carbide_hosts_alerts_suppressed_count`.
+        // `nico_alerts_suppressed_count` before the metric was renamed to
+        // `nico_hosts_alerts_suppressed_count`.
         // Will be remvoed in future
         register_alerts_suppressed_gauge(
-            "carbide_alerts_suppressed_count",
+            "nico_alerts_suppressed_count",
             "machine_id",
             meter,
             shared_metrics.clone(),
@@ -287,7 +287,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_dpu_health_check_failed_count")
+                .u64_observable_gauge("nico_dpu_health_check_failed_count")
                 .with_description(
                     "The total number of DPUs in the system that have failed a health-check.",
                 )
@@ -322,7 +322,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_hosts_by_sku_count")
+                .u64_observable_gauge("nico_hosts_by_sku_count")
                 .with_description(
                     "The amount of hosts by SKU and device type ('unknown' for hosts without SKU)",
                 )
@@ -347,9 +347,9 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_dpu_agent_version_count")
+                .u64_observable_gauge("nico_dpu_agent_version_count")
                 .with_description(
-                    "The amount of Forge DPU agents which have reported a certain version.",
+                    "The amount of NICo DPU agents which have reported a certain version.",
                 )
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
@@ -370,7 +370,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_dpu_firmware_version_count")
+                .u64_observable_gauge("nico_dpu_firmware_version_count")
                 .with_description(
                     "The amount of DPUs which have reported a certain firmware version.",
                 )
@@ -391,7 +391,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_machine_inventory_component_version_count")
+                .u64_observable_gauge("nico_machine_inventory_component_version_count")
                 .with_description(
                     "The amount of machines report software components with a certain version.",
                 )
@@ -419,7 +419,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .i64_observable_gauge("carbide_dpu_client_certificate_expiration_time")
+                .i64_observable_gauge("nico_dpu_client_certificate_expiration_time")
                 .with_description("The expiration time (epoch seconds) for the client certificate associated with a given DPU.")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
@@ -438,19 +438,19 @@ impl MetricsEmitter for MachineMetricsEmitter {
         };
 
         let machine_reboot_attempts_in_booting_with_discovery_image = meter
-            .u64_histogram("carbide_reboot_attempts_in_booting_with_discovery_image")
+            .u64_histogram("nico_reboot_attempts_in_booting_with_discovery_image")
             .with_description("The amount of machines rebooted again in BootingWithDiscoveryImage since there is no response after a certain time from host.")
             .build();
 
         let machine_reboot_attempts_in_failed_during_discovery = meter
-            .u64_histogram("carbide_reboot_attempts_in_failed_during_discovery")
+            .u64_histogram("nico_reboot_attempts_in_failed_during_discovery")
             .with_description("The amount of machines rebooted again in Failed state due to discovery failure since there is no response after a certain time from host.")
             .build();
 
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_hosts_with_bios_password_set")
+                .u64_observable_gauge("nico_hosts_with_bios_password_set")
                 .with_description(
                     "The total number of Hosts in the system that have their BIOS password set.",
                 )
@@ -464,7 +464,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics.clone();
             meter
-                .u64_observable_gauge("carbide_hosts_with_scout_heartbeat_timeout")
+                .u64_observable_gauge("nico_hosts_with_scout_heartbeat_timeout")
                 .with_description("Scout heartbeat timeout status for hosts")
                 .with_callback(move |observer| {
                     metrics.if_available(|metrics, attrs| {
@@ -485,7 +485,7 @@ impl MetricsEmitter for MachineMetricsEmitter {
         {
             let metrics = shared_metrics;
             meter
-                .u64_observable_gauge("carbide_machine_validation_tests_on_machines")
+                .u64_observable_gauge("nico_machine_validation_tests_on_machines")
                 .with_description(
                     "For a given context the count of machine validation tests failed.",
                 )
@@ -820,7 +820,7 @@ mod tests {
                     (
                         (
                             "HeartbeatTimeout".parse().unwrap(),
-                            Some("forge-dpu-agent".to_string()),
+                            Some("nico-dpu-agent".to_string()),
                         ),
                         1,
                     ),
@@ -855,7 +855,7 @@ mod tests {
                         ("BgpStats".parse().unwrap(), None),
                         (
                             "HeartbeatTimeout".parse().unwrap(),
-                            Some("forge-dpu-agent".to_string()),
+                            Some("nico-dpu-agent".to_string()),
                         ),
                     ]
                     .into_iter()
@@ -991,7 +991,7 @@ mod tests {
                 (
                     (
                         "HeartbeatTimeout".parse().unwrap(),
-                        Some("forge-dpu-agent".to_string()),
+                        Some("nico-dpu-agent".to_string()),
                     ),
                     1,
                 ),
@@ -1044,7 +1044,7 @@ mod tests {
                 (
                     (
                         "HeartbeatTimeout".parse().unwrap(),
-                        Some("forge-dpu-agent".to_string()),
+                        Some("nico-dpu-agent".to_string()),
                         IsInUseByTenant(false)
                     ),
                     1,

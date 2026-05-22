@@ -20,10 +20,10 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use carbide_site_explorer::config::{SiteExplorerConfig, SiteExplorerExploreMode};
-use carbide_site_explorer::{SiteExplorer, endpoint_exploration_work_key};
-use carbide_utils::test_support::test_meter::TestMeter;
-use carbide_uuid::network::NetworkSegmentId;
+use nico_site_explorer::config::{SiteExplorerConfig, SiteExplorerExploreMode};
+use nico_site_explorer::{SiteExplorer, endpoint_exploration_work_key};
+use nico_utils::test_support::test_meter::TestMeter;
+use nico_uuid::network::NetworkSegmentId;
 use common::api_fixtures::TestEnv;
 use common::api_fixtures::endpoint_explorer::MockEndpointExplorer;
 use config_version::ConfigVersion;
@@ -43,8 +43,8 @@ use model::site_explorer::{
     ExploredDpu, ExploredEndpoint, ExploredManagedHost, PreingestionState, UefiDevicePath,
 };
 use model::switch::SwitchSearchFilter;
-use rpc::forge::GetSiteExplorationRequest;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::GetSiteExplorationRequest;
+use rpc::nico::nico_server::NICo;
 use rpc::site_explorer::{
     ExploredDpu as RpcExploredDpu, ExploredManagedHost as RpcExploredManagedHost,
 };
@@ -245,13 +245,13 @@ async fn test_site_explorer_default_pause_ingestion_and_poweron(
     // check the ingestion state of the machine
     let response = env
         .api
-        .determine_machine_ingestion_state(tonic::Request::new(rpc::forge::BmcEndpointRequest {
+        .determine_machine_ingestion_state(tonic::Request::new(rpc::nico::BmcEndpointRequest {
             mac_address: Some("6a:6b:6c:6d:6e:6f".to_string()),
             ip_address: "".to_string(),
         }))
         .await?;
     assert_eq!(
-        rpc::forge::MachineIngestionState::NotDiscovered,
+        rpc::nico::MachineIngestionState::NotDiscovered,
         response.into_inner().machine_ingestion_state()
     );
 
@@ -268,13 +268,13 @@ async fn test_site_explorer_default_pause_ingestion_and_poweron(
     // make sure the machine has not been ingested
     let response = env
         .api
-        .determine_machine_ingestion_state(tonic::Request::new(rpc::forge::BmcEndpointRequest {
+        .determine_machine_ingestion_state(tonic::Request::new(rpc::nico::BmcEndpointRequest {
             mac_address: Some("6a:6b:6c:6d:6e:6f".to_string()),
             ip_address: "".to_string(),
         }))
         .await?;
     assert_eq!(
-        rpc::forge::MachineIngestionState::WaitingForIngestion,
+        rpc::nico::MachineIngestionState::WaitingForIngestion,
         response.into_inner().machine_ingestion_state()
     );
 
@@ -290,13 +290,13 @@ async fn test_site_explorer_default_pause_ingestion_and_poweron(
     // make sure the machie still has not been ingested
     let response = env
         .api
-        .determine_machine_ingestion_state(tonic::Request::new(rpc::forge::BmcEndpointRequest {
+        .determine_machine_ingestion_state(tonic::Request::new(rpc::nico::BmcEndpointRequest {
             mac_address: Some("6a:6b:6c:6d:6e:6f".to_string()),
             ip_address: "".to_string(),
         }))
         .await?;
     assert_eq!(
-        rpc::forge::MachineIngestionState::WaitingForIngestion,
+        rpc::nico::MachineIngestionState::WaitingForIngestion,
         response.into_inner().machine_ingestion_state()
     );
 
@@ -309,7 +309,7 @@ async fn test_site_explorer_default_pause_ingestion_and_poweron(
     // now flip the flag and run another interation
     let _ = env
         .api
-        .allow_ingestion_and_power_on(tonic::Request::new(rpc::forge::BmcEndpointRequest {
+        .allow_ingestion_and_power_on(tonic::Request::new(rpc::nico::BmcEndpointRequest {
             mac_address: Some("6a:6b:6c:6d:6e:6f".to_string()),
             ip_address: "".to_string(),
         }))
@@ -325,13 +325,13 @@ async fn test_site_explorer_default_pause_ingestion_and_poweron(
     // iteration
     let response = env
         .api
-        .determine_machine_ingestion_state(tonic::Request::new(rpc::forge::BmcEndpointRequest {
+        .determine_machine_ingestion_state(tonic::Request::new(rpc::nico::BmcEndpointRequest {
             mac_address: Some("6a:6b:6c:6d:6e:6f".to_string()),
             ip_address: "".to_string(),
         }))
         .await?;
     assert_eq!(
-        rpc::forge::MachineIngestionState::IngestionMachineCreated,
+        rpc::nico::MachineIngestionState::IngestionMachineCreated,
         response.into_inner().machine_ingestion_state()
     );
 
@@ -589,31 +589,31 @@ async fn test_site_explorer_main(pool: sqlx::PgPool) -> Result<(), Box<dyn std::
     // We should also have metric entries
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_explorations_count")
+            .formatted_metric("nico_endpoint_explorations_count")
             .unwrap(),
         "2"
     );
     assert!(
         test_meter
-            .formatted_metric("carbide_endpoint_exploration_success_count")
+            .formatted_metric("nico_endpoint_exploration_success_count")
             .is_some()
     );
     // The failure metric is not emitted if no failure happened
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_exploration_duration_milliseconds_count")
+            .formatted_metric("nico_endpoint_exploration_duration_milliseconds_count")
             .unwrap_or("2".to_string()),
         "2"
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_exploration_identified_managed_hosts_count")
+            .formatted_metric("nico_site_exploration_identified_managed_hosts_count")
             .unwrap(),
         "0"
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_explorer_created_machines_count")
+            .formatted_metric("nico_site_explorer_created_machines_count")
             .unwrap(),
         "0"
     );
@@ -655,30 +655,30 @@ async fn test_site_explorer_main(pool: sqlx::PgPool) -> Result<(), Box<dyn std::
 
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_explorations_count")
+            .formatted_metric("nico_endpoint_explorations_count")
             .unwrap(),
         "2"
     );
     assert!(
         test_meter
-            .formatted_metric("carbide_endpoint_exploration_success_count")
+            .formatted_metric("nico_endpoint_exploration_success_count")
             .is_some()
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_exploration_duration_milliseconds_count")
+            .formatted_metric("nico_endpoint_exploration_duration_milliseconds_count")
             .unwrap_or("4".to_string()),
         "4"
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_exploration_identified_managed_hosts_count")
+            .formatted_metric("nico_site_exploration_identified_managed_hosts_count")
             .unwrap(),
         "0"
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_explorer_created_machines_count")
+            .formatted_metric("nico_site_explorer_created_machines_count")
             .unwrap(),
         "0"
     );
@@ -807,7 +807,7 @@ async fn test_site_explorer_main(pool: sqlx::PgPool) -> Result<(), Box<dyn std::
 
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_exploration_identified_managed_hosts_count")
+            .formatted_metric("nico_site_exploration_identified_managed_hosts_count")
             .unwrap(),
         "2"
     );
@@ -1052,9 +1052,9 @@ async fn test_site_explorer_audit_exploration_results(
     );
 
     explorer.run_single_iteration().await.unwrap();
-    // carbide_endpoint_exploration_preingestions_incomplete_overall_count
+    // nico_endpoint_exploration_preingestions_incomplete_overall_count
     let m: HashMap<String, String> = test_meter
-        .parsed_metrics("carbide_endpoint_exploration_preingestions_incomplete_overall_count")
+        .parsed_metrics("nico_endpoint_exploration_preingestions_incomplete_overall_count")
         .into_iter()
         .collect();
 
@@ -1120,9 +1120,9 @@ async fn test_site_explorer_audit_exploration_results(
 
     // Check for the expected metrics
 
-    // carbide_endpoint_exploration_failures_overall_count
+    // nico_endpoint_exploration_failures_overall_count
     let m: HashMap<String, String> = test_meter
-        .parsed_metrics("carbide_endpoint_exploration_failures_overall_count")
+        .parsed_metrics("nico_endpoint_exploration_failures_overall_count")
         .into_iter()
         .collect();
 
@@ -1130,18 +1130,18 @@ async fn test_site_explorer_audit_exploration_results(
     assert!(m.get("{failure=\"unauthorized\"}").unwrap() == "1");
     assert!(m.get("{failure=\"missing_credentials\"}").unwrap() == "1");
 
-    // carbide_endpoint_exploration_preingestions_incomplete_overall_count
+    // nico_endpoint_exploration_preingestions_incomplete_overall_count
     let m: HashMap<String, String> = test_meter
-        .parsed_metrics("carbide_endpoint_exploration_preingestions_incomplete_overall_count")
+        .parsed_metrics("nico_endpoint_exploration_preingestions_incomplete_overall_count")
         .into_iter()
         .collect();
     // Everything should be done with preingestion now.
     assert!(m.is_empty());
 
-    // carbide_endpoint_exploration_expected_serial_number_mismatches_overall_count
+    // nico_endpoint_exploration_expected_serial_number_mismatches_overall_count
     let m: HashMap<String, String> = test_meter
         .parsed_metrics(
-            "carbide_endpoint_exploration_expected_serial_number_mismatches_overall_count",
+            "nico_endpoint_exploration_expected_serial_number_mismatches_overall_count",
         )
         .into_iter()
         .collect();
@@ -1149,9 +1149,9 @@ async fn test_site_explorer_audit_exploration_results(
     assert!(!m.is_empty());
     assert_eq!(m.get("{machine_type=\"host\"}").unwrap(), "3");
 
-    // carbide_endpoint_exploration_machines_explored_overall_count
+    // nico_endpoint_exploration_machines_explored_overall_count
     let m: HashMap<String, String> = test_meter
-        .parsed_metrics("carbide_endpoint_exploration_machines_explored_overall_count")
+        .parsed_metrics("nico_endpoint_exploration_machines_explored_overall_count")
         .into_iter()
         .collect();
 
@@ -1171,19 +1171,19 @@ async fn test_site_explorer_audit_exploration_results(
         "1"
     );
 
-    // carbide_endpoint_exploration_expected_machines_missing_overall_count
+    // nico_endpoint_exploration_expected_machines_missing_overall_count
     assert_eq!(
         test_meter
             .formatted_metric(
-                "carbide_endpoint_exploration_expected_machines_missing_overall_count"
+                "nico_endpoint_exploration_expected_machines_missing_overall_count"
             )
             .unwrap(),
         "1"
     );
 
-    // carbide_endpoint_exploration_identified_managed_hosts_overall_count
+    // nico_endpoint_exploration_identified_managed_hosts_overall_count
     let m: HashMap<String, String> = test_meter
-        .parsed_metrics("carbide_endpoint_exploration_identified_managed_hosts_overall_count")
+        .parsed_metrics("nico_endpoint_exploration_identified_managed_hosts_overall_count")
         .into_iter()
         .collect();
 
@@ -1284,7 +1284,7 @@ async fn test_site_explorer_reexplore(
     // Re-exploring the first endpoint should prioritize it while preserving
     // routine capacity for another endpoint.
     env.api
-        .re_explore_endpoint(tonic::Request::new(rpc::forge::ReExploreEndpointRequest {
+        .re_explore_endpoint(tonic::Request::new(rpc::nico::ReExploreEndpointRequest {
             ip_address: explored_ip.to_string(),
             if_version_match: None,
         }))
@@ -1323,7 +1323,7 @@ async fn test_site_explorer_reexplore(
     let unexpected_version = current_version.increment();
     let e = env
         .api
-        .re_explore_endpoint(tonic::Request::new(rpc::forge::ReExploreEndpointRequest {
+        .re_explore_endpoint(tonic::Request::new(rpc::nico::ReExploreEndpointRequest {
             ip_address: explored_ip.to_string(),
             if_version_match: Some(unexpected_version.version_string()),
         }))
@@ -1349,7 +1349,7 @@ async fn test_site_explorer_reexplore(
 
     // Using if_version_match with correct version string does flag the endpoint again
     env.api
-        .re_explore_endpoint(tonic::Request::new(rpc::forge::ReExploreEndpointRequest {
+        .re_explore_endpoint(tonic::Request::new(rpc::nico::ReExploreEndpointRequest {
             ip_address: explored_ip.to_string(),
             if_version_match: Some(current_version.version_string()),
         }))
@@ -1409,7 +1409,7 @@ async fn test_site_explorer_clear_last_known_error(
     assert_eq!(node.unwrap().report.last_exploration_error, last_error);
 
     env.api
-        .clear_site_exploration_error(Request::new(rpc::forge::ClearSiteExplorationErrorRequest {
+        .clear_site_exploration_error(Request::new(rpc::nico::ClearSiteExplorationErrorRequest {
             ip_address: ip_address.to_string(),
         }))
         .await
@@ -2395,7 +2395,7 @@ async fn test_delete_explored_endpoint(
     let non_existent_ip = "192.168.1.100";
     let response = env
         .api
-        .delete_explored_endpoint(Request::new(rpc::forge::DeleteExploredEndpointRequest {
+        .delete_explored_endpoint(Request::new(rpc::nico::DeleteExploredEndpointRequest {
             ip_address: non_existent_ip.to_string(),
         }))
         .await?
@@ -2433,7 +2433,7 @@ async fn test_delete_explored_endpoint(
     // Delete the standalone endpoint - should succeed
     let response = env
         .api
-        .delete_explored_endpoint(Request::new(rpc::forge::DeleteExploredEndpointRequest {
+        .delete_explored_endpoint(Request::new(rpc::nico::DeleteExploredEndpointRequest {
             ip_address: standalone_endpoint_ip.to_string(),
         }))
         .await?
@@ -2470,7 +2470,7 @@ async fn test_delete_explored_endpoint(
     // Now try to delete the host endpoint - should fail because it's part of a machine
     let error = env
         .api
-        .delete_explored_endpoint(Request::new(rpc::forge::DeleteExploredEndpointRequest {
+        .delete_explored_endpoint(Request::new(rpc::nico::DeleteExploredEndpointRequest {
             ip_address: host_ip.to_string(),
         }))
         .await
@@ -2487,7 +2487,7 @@ async fn test_delete_explored_endpoint(
     // Try to delete the DPU endpoint - should also fail
     let error = env
         .api
-        .delete_explored_endpoint(Request::new(rpc::forge::DeleteExploredEndpointRequest {
+        .delete_explored_endpoint(Request::new(rpc::nico::DeleteExploredEndpointRequest {
             ip_address: dpu_ip.to_string(),
         }))
         .await
@@ -2666,7 +2666,7 @@ async fn test_machine_creation_with_sku(
 
     // Verify expected machine SKU metrics
     let expected_metrics: HashMap<String, String> = test_meter
-        .parsed_metrics("carbide_site_exploration_expected_machines_sku_count")
+        .parsed_metrics("nico_site_exploration_expected_machines_sku_count")
         .into_iter()
         .collect();
 
@@ -2951,7 +2951,7 @@ async fn test_expected_machine_device_type_metrics(
 
     // Verify expected machines SKU count metrics
     let device_type_metrics: HashMap<String, String> = test_meter
-        .parsed_metrics("carbide_site_exploration_expected_machines_sku_count")
+        .parsed_metrics("nico_site_exploration_expected_machines_sku_count")
         .into_iter()
         .collect();
 
@@ -3123,13 +3123,13 @@ async fn test_site_explorer_power_shelf_discovery(
     // Check metrics
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_explorations_count")
+            .formatted_metric("nico_endpoint_explorations_count")
             .unwrap(),
         "1"
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_explorer_created_power_shelves_count")
+            .formatted_metric("nico_site_explorer_created_power_shelves_count")
             .unwrap(),
         "1"
     );
@@ -3278,7 +3278,7 @@ async fn test_site_explorer_switch_discovery(
 
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_explorations_count")
+            .formatted_metric("nico_endpoint_explorations_count")
             .unwrap(),
         "1"
     );
@@ -3568,7 +3568,7 @@ async fn test_site_explorer_power_shelf_creation_limit(
     // Check that only 2 power shelves were created due to limit
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_explorer_created_power_shelves_count")
+            .formatted_metric("nico_site_explorer_created_power_shelves_count")
             .unwrap(),
         "2"
     );
@@ -3579,7 +3579,7 @@ async fn test_site_explorer_power_shelf_creation_limit(
     // Check that all 3 power shelves were created
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_explorer_created_power_shelves_count")
+            .formatted_metric("nico_site_explorer_created_power_shelves_count")
             .unwrap(),
         "1"
     );
@@ -3695,7 +3695,7 @@ async fn test_site_explorer_power_shelf_disabled(
     // Check that no power shelves were created
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_explorer_created_power_shelves_count")
+            .formatted_metric("nico_site_explorer_created_power_shelves_count")
             .unwrap(),
         "0"
     );
@@ -3815,7 +3815,7 @@ async fn test_site_explorer_power_shelf_error_handling(
     // Check metrics for error
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_exploration_failures_count")
+            .formatted_metric("nico_endpoint_exploration_failures_count")
             .unwrap(),
         "{failure=\"unauthorized\"} 1"
     );
@@ -4741,10 +4741,10 @@ async fn test_power_shelf_state_history_error_handling(
 
     // Test finding history for non-existent power shelf
     let mut txn = env.pool.begin().await?;
-    let non_existent_id = carbide_uuid::power_shelf::PowerShelfId::new(
-        carbide_uuid::power_shelf::PowerShelfIdSource::ProductBoardChassisSerial,
+    let non_existent_id = nico_uuid::power_shelf::PowerShelfId::new(
+        nico_uuid::power_shelf::PowerShelfIdSource::ProductBoardChassisSerial,
         [0; 32],
-        carbide_uuid::power_shelf::PowerShelfType::Host,
+        nico_uuid::power_shelf::PowerShelfType::Host,
     );
     let empty_history = db::state_history::for_object(
         &mut txn,
@@ -4761,7 +4761,7 @@ async fn test_power_shelf_state_history_error_handling(
     let empty_history_map = db::state_history::find_by_object_ids(
         &mut txn,
         db::state_history::StateHistoryTableId::PowerShelf,
-        &[] as &[carbide_uuid::power_shelf::PowerShelfId],
+        &[] as &[nico_uuid::power_shelf::PowerShelfId],
     )
     .await?;
     txn.commit().await?;
@@ -4888,13 +4888,13 @@ async fn test_site_explorer_power_shelf_discovery_with_static_ip(
     // Check metrics
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_endpoint_explorations_count")
+            .formatted_metric("nico_endpoint_explorations_count")
             .unwrap(),
         "1"
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_explorer_created_power_shelves_count")
+            .formatted_metric("nico_site_explorer_created_power_shelves_count")
             .unwrap(),
         "1"
     );
@@ -4907,7 +4907,7 @@ async fn test_site_explorer_power_shelf_discovery_with_static_ip(
 async fn test_get_machine_position_info(
     pool: sqlx::PgPool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use rpc::forge::forge_server::Forge;
+    use rpc::nico::nico_server::NICo;
 
     let env = common::api_fixtures::create_test_env(pool.clone()).await;
     let (_host_machine_id, dpu_machine_id) =
@@ -4942,7 +4942,7 @@ async fn test_get_machine_position_info(
     // Call the API
     let response = env
         .api
-        .get_machine_position_info(tonic::Request::new(rpc::forge::MachinePositionQuery {
+        .get_machine_position_info(tonic::Request::new(rpc::nico::MachinePositionQuery {
             machine_ids: vec![dpu_machine_id],
         }))
         .await?
@@ -4965,7 +4965,7 @@ async fn test_get_machine_position_info(
 async fn test_get_machine_position_info_no_endpoint(
     pool: sqlx::PgPool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use rpc::forge::forge_server::Forge;
+    use rpc::nico::nico_server::NICo;
 
     let env = common::api_fixtures::create_test_env(pool.clone()).await;
     let (_host_machine_id, dpu_machine_id) =
@@ -4976,7 +4976,7 @@ async fn test_get_machine_position_info_no_endpoint(
     // Call the API
     let response = env
         .api
-        .get_machine_position_info(tonic::Request::new(rpc::forge::MachinePositionQuery {
+        .get_machine_position_info(tonic::Request::new(rpc::nico::MachinePositionQuery {
             machine_ids: vec![dpu_machine_id],
         }))
         .await?
@@ -5183,7 +5183,7 @@ async fn test_refresh_endpoint_report_bumps_report_version(
     let initial_version = explored_endpoint(&env, bmc_ip).await?.report_version;
 
     env.api
-        .refresh_endpoint_report(Request::new(rpc::forge::RefreshEndpointReportRequest {
+        .refresh_endpoint_report(Request::new(rpc::nico::RefreshEndpointReportRequest {
             ip_address: bmc_ip.to_string(),
         }))
         .await?;
@@ -5207,7 +5207,7 @@ async fn test_refresh_endpoint_report_rejects_nonexistent_endpoint(
 
     let err = env
         .api
-        .refresh_endpoint_report(Request::new(rpc::forge::RefreshEndpointReportRequest {
+        .refresh_endpoint_report(Request::new(rpc::nico::RefreshEndpointReportRequest {
             ip_address: "99.99.99.99".to_string(),
         }))
         .await
@@ -5233,7 +5233,7 @@ async fn test_refresh_endpoint_report_rejects_duplicate_refresh(
 
     let err = env
         .api
-        .refresh_endpoint_report(Request::new(rpc::forge::RefreshEndpointReportRequest {
+        .refresh_endpoint_report(Request::new(rpc::nico::RefreshEndpointReportRequest {
             ip_address: bmc_ip.to_string(),
         }))
         .await
@@ -5253,7 +5253,7 @@ async fn test_refresh_endpoint_report_lock_blocks_periodic_probe(
     let bmc_ip = host_bmc_ip(&env, &mh).await?;
 
     env.api
-        .re_explore_endpoint(Request::new(rpc::forge::ReExploreEndpointRequest {
+        .re_explore_endpoint(Request::new(rpc::nico::ReExploreEndpointRequest {
             ip_address: bmc_ip.to_string(),
             if_version_match: None,
         }))
@@ -5292,7 +5292,7 @@ async fn test_refresh_endpoint_report_failure_persists_error_and_bumps_version(
         }),
     );
     env.api
-        .refresh_endpoint_report(Request::new(rpc::forge::RefreshEndpointReportRequest {
+        .refresh_endpoint_report(Request::new(rpc::nico::RefreshEndpointReportRequest {
             ip_address: bmc_ip.to_string(),
         }))
         .await?;
@@ -5319,7 +5319,7 @@ async fn test_refresh_endpoint_report_clears_pending_requested_exploration(
     let bmc_ip = host_bmc_ip(&env, &mh).await?;
 
     env.api
-        .re_explore_endpoint(Request::new(rpc::forge::ReExploreEndpointRequest {
+        .re_explore_endpoint(Request::new(rpc::nico::ReExploreEndpointRequest {
             ip_address: bmc_ip.to_string(),
             if_version_match: None,
         }))
@@ -5327,7 +5327,7 @@ async fn test_refresh_endpoint_report_clears_pending_requested_exploration(
     assert!(explored_endpoint(&env, bmc_ip).await?.exploration_requested);
 
     env.api
-        .refresh_endpoint_report(Request::new(rpc::forge::RefreshEndpointReportRequest {
+        .refresh_endpoint_report(Request::new(rpc::nico::RefreshEndpointReportRequest {
             ip_address: bmc_ip.to_string(),
         }))
         .await?;
@@ -5357,7 +5357,7 @@ async fn test_refresh_endpoint_report_lock_is_per_endpoint(
         .await?;
 
     env.api
-        .refresh_endpoint_report(Request::new(rpc::forge::RefreshEndpointReportRequest {
+        .refresh_endpoint_report(Request::new(rpc::nico::RefreshEndpointReportRequest {
             ip_address: bmc_ip_b.to_string(),
         }))
         .await?;
@@ -5438,7 +5438,7 @@ async fn switch_skips_creation_when_bmc_mac_already_used(
     txn.commit().await?;
 
     let switch_creator =
-        carbide_site_explorer::SwitchCreator::new(env.pool.clone(), SiteExplorerConfig::default());
+        nico_site_explorer::SwitchCreator::new(env.pool.clone(), SiteExplorerConfig::default());
 
     // First discovery, we get a real serial, which succeeds,
     // and inserts a switches row.
@@ -5513,7 +5513,7 @@ async fn switch_treats_na_chassis_serial_as_missing(
     txn.commit().await?;
 
     let switch_creator =
-        carbide_site_explorer::SwitchCreator::new(env.pool.clone(), SiteExplorerConfig::default());
+        nico_site_explorer::SwitchCreator::new(env.pool.clone(), SiteExplorerConfig::default());
 
     let result = switch_creator
         .create_managed_switch(

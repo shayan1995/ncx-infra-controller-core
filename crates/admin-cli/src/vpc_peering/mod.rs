@@ -24,10 +24,10 @@ mod tests;
 
 use clap::Parser;
 use prettytable::{Table, row};
-use rpc::forge::VpcPeering;
+use rpc::nico::VpcPeering;
 
 use crate::cfg::dispatch::Dispatch;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 #[derive(Parser, Debug, Dispatch)]
 pub enum Cmd {
@@ -39,7 +39,7 @@ pub enum Cmd {
     Delete(delete::Args),
 }
 
-fn convert_vpc_peerings_to_table(vpc_peerings: &[VpcPeering]) -> CarbideCliResult<Box<Table>> {
+fn convert_vpc_peerings_to_table(vpc_peerings: &[VpcPeering]) -> NicoCliResult<Box<Table>> {
     let mut table = Box::new(Table::new());
 
     table.set_titles(row!["Id", "VPC1 ID", "VPC2 ID"]);

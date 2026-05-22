@@ -18,7 +18,7 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use carbide_uuid::infiniband::IBPartitionId;
+use nico_uuid::infiniband::IBPartitionId;
 use chrono::{DateTime, Utc};
 use config_version::{ConfigVersion, Versioned};
 use serde::{Deserialize, Serialize};
@@ -284,7 +284,7 @@ impl<'r> FromRow<'r, PgRow> for IBPartition {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "lowercase")]
 pub enum IBPartitionControllerState {
-    /// The IB subnet is created in Carbide, waiting for provisioning in IB Fabric.
+    /// The IB subnet is created in NICo, waiting for provisioning in IB Fabric.
     Provisioning,
     /// The IB subnet is ready for IB ports.
     Ready,

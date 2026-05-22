@@ -16,11 +16,11 @@
  */
 
 use crate::attestation::spdm::get::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn get(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
-    // construct a message to carbide api and print the result
+pub async fn get(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
+    // construct a message to nico api and print the result
     let attestation_status = api_client
         .0
         .get_machine_attestation_status(args.machine_id)

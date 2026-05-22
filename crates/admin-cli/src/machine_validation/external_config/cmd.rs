@@ -18,10 +18,10 @@
 use std::fmt::Write;
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 use prettytable::{Table, row};
 
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 pub async fn external_config_show(
@@ -29,7 +29,7 @@ pub async fn external_config_show(
     config_names: Vec<String>,
     extended: bool,
     output_format: OutputFormat,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
     let ret = api_client
         .0
@@ -45,9 +45,9 @@ pub async fn external_config_show(
 }
 
 pub fn show_external_config_show_details(
-    configs: Vec<forgerpc::MachineValidationExternalConfig>,
+    configs: Vec<nicorpc::MachineValidationExternalConfig>,
     json: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(&configs)?);
     } else {
@@ -57,9 +57,9 @@ pub fn show_external_config_show_details(
 }
 
 pub fn show_external_config_show(
-    configs: Vec<forgerpc::MachineValidationExternalConfig>,
+    configs: Vec<nicorpc::MachineValidationExternalConfig>,
     json: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(&configs)?);
     } else {
@@ -69,8 +69,8 @@ pub fn show_external_config_show(
 }
 
 fn convert_external_config_to_nice_format(
-    configs: Vec<forgerpc::MachineValidationExternalConfig>,
-) -> CarbideCliResult<String> {
+    configs: Vec<nicorpc::MachineValidationExternalConfig>,
+) -> NicoCliResult<String> {
     let width = 14;
     let mut lines = String::new();
     if configs.is_empty() {
@@ -87,7 +87,7 @@ fn convert_external_config_to_nice_format(
             config.timestamp.unwrap_or_default().to_string()
         };
         let config_string = String::from_utf8(config.config)
-            .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+            .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
 
         let details = vec![
             ("Name", config.name),
@@ -109,7 +109,7 @@ fn convert_external_config_to_nice_format(
 }
 
 fn convert_external_config_to_nice_table(
-    configs: Vec<forgerpc::MachineValidationExternalConfig>,
+    configs: Vec<nicorpc::MachineValidationExternalConfig>,
 ) -> Box<Table> {
     let mut table = Table::new();
 
@@ -132,7 +132,7 @@ pub async fn external_config_add_update(
     config_name: String,
     file_name: String,
     description: String,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     // Read the file data from disk
     let file_data = std::fs::read(&file_name)?;
     api_client
@@ -141,7 +141,7 @@ pub async fn external_config_add_update(
     Ok(())
 }
 
-pub async fn remove_external_config(api_client: &ApiClient, name: String) -> CarbideCliResult<()> {
+pub async fn remove_external_config(api_client: &ApiClient, name: String) -> NicoCliResult<()> {
     api_client
         .0
         .remove_machine_validation_external_config(name)

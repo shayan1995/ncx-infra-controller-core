@@ -18,7 +18,7 @@
 use std::collections::VecDeque;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::instance::common::GlobalOptions;
 use crate::machine;
 use crate::rpc::ApiClient;
@@ -27,9 +27,9 @@ pub async fn allocate(
     api_client: &ApiClient,
     allocate_request: Args,
     opts: GlobalOptions<'_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     if opts.cloud_unsafe_op.is_none() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "Operation not allowed due to potential inconsistencies with cloud database."
                 .to_owned(),
         ));
@@ -39,7 +39,7 @@ pub async fn allocate(
 
     // Validate: --transactional requires --number > 1
     if allocate_request.transactional && number <= 1 {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "--transactional requires --number > 1".to_owned(),
         ));
     }
@@ -49,7 +49,7 @@ pub async fn allocate(
     } else {
         api_client
             .0
-            .find_machine_ids(::rpc::forge::MachineSearchConfig {
+            .find_machine_ids(::rpc::nico::MachineSearchConfig {
                 include_predicted_host: true,
                 ..Default::default()
             })
@@ -72,7 +72,7 @@ pub async fn allocate(
                 machine::get_next_free_machine(api_client, &mut machine_ids, min_interface_count)
                     .await
             else {
-                return Err(CarbideCliError::GenericError(format!(
+                return Err(NicoCliError::GenericError(format!(
                     "Need {} machines but only {} available.",
                     number, i
                 )));

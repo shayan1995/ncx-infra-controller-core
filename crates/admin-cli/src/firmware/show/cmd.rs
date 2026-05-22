@@ -20,7 +20,7 @@ use prettytable::{Table, row};
 
 use super::args::Args;
 use crate::async_write;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 pub async fn show(
@@ -28,7 +28,7 @@ pub async fn show(
     format: OutputFormat,
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let resp = api_client.0.list_host_firmware().await?;
     match format {
         OutputFormat::AsciiTable => {
@@ -54,7 +54,7 @@ pub async fn show(
             async_write!(output_file, "{}", table)?;
         }
         _ => {
-            return Err(CarbideCliError::NotImplemented(
+            return Err(NicoCliError::NotImplemented(
                 "Format option not implemented".to_string(),
             ));
         }

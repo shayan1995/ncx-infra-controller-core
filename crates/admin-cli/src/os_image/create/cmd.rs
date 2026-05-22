@@ -16,11 +16,11 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn create(args: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
-    let image_attrs: ::rpc::forge::OsImageAttributes = args.try_into()?;
+pub async fn create(args: Args, api_client: &ApiClient) -> NicoCliResult<()> {
+    let image_attrs: ::rpc::nico::OsImageAttributes = args.try_into()?;
     let image = api_client.0.create_os_image(image_attrs).await?;
     if let Some(x) = image.attributes {
         if let Some(y) = x.id {

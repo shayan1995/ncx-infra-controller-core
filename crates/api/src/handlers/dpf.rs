@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-use ::rpc::forge as rpc;
-use carbide_dpf::dpu_node_cr_name;
+use ::rpc::nico as rpc;
+use nico_dpf::dpu_node_cr_name;
 use db::ObjectFilter;
 use db::machine::find_one;
 use db::managed_host::load_snapshot;
@@ -24,7 +24,7 @@ use model::machine::LoadSnapshotOptions;
 use model::machine::machine_search_config::MachineSearchConfig;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_machine_id, log_request_data};
 use crate::handlers::utils::convert_and_log_machine_id;
 
@@ -38,13 +38,13 @@ pub(crate) async fn modify_dpf_state(
     log_machine_id(&machine_id);
 
     if machine_id.machine_type().is_dpu() {
-        return Err(CarbideError::InvalidArgument("Only host id is expected!!".to_string()).into());
+        return Err(NicoError::InvalidArgument("Only host id is expected!!".to_string()).into());
     }
 
     let mut txn = api.txn_begin().await?;
     let machine_snapshot = load_snapshot(&mut txn, &machine_id, LoadSnapshotOptions::default())
         .await?
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "snapshot",
             id: machine_id.to_string(),
         })?;
@@ -71,7 +71,7 @@ pub(crate) async fn get_dpf_state(
     for machine_id in &request.machine_ids {
         if machine_id.machine_type().is_dpu() {
             return Err(
-                CarbideError::InvalidArgument("Only host id is expected!!".to_string()).into(),
+                NicoError::InvalidArgument("Only host id is expected!!".to_string()).into(),
             );
         }
     }
@@ -104,12 +104,12 @@ pub(crate) async fn get_dpf_host_snapshot(
     log_machine_id(&machine_id);
 
     if machine_id.machine_type().is_dpu() {
-        return Err(CarbideError::InvalidArgument("Only host id is expected".to_string()).into());
+        return Err(NicoError::InvalidArgument("Only host id is expected".to_string()).into());
     }
 
     let Some(ops) = api.dpf_sdk.as_ref() else {
-        return Err(CarbideError::InvalidArgument(
-            "DPF is not enabled on this carbide instance".to_string(),
+        return Err(NicoError::InvalidArgument(
+            "DPF is not enabled on this nico instance".to_string(),
         )
         .into());
     };
@@ -117,14 +117,14 @@ pub(crate) async fn get_dpf_host_snapshot(
     let mut txn = api.txn_begin().await?;
     let machine = find_one(&mut txn, &machine_id, MachineSearchConfig::default())
         .await?
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "machine",
             id: machine_id.to_string(),
         })?;
     txn.commit().await?;
 
     let host_dpf_id = machine.dpf_id().ok_or_else(|| {
-        CarbideError::InvalidArgument(format!(
+        NicoError::InvalidArgument(format!(
             "Host {machine_id} has no BMC MAC; cannot derive DPF node name"
         ))
     })?;
@@ -133,10 +133,10 @@ pub(crate) async fn get_dpf_host_snapshot(
     let snapshot = ops
         .snapshot_host(&node_name)
         .await
-        .map_err(CarbideError::DpfError)?;
+        .map_err(NicoError::DpfError)?;
 
     let json_payload = serde_json::to_string_pretty(&snapshot).map_err(|e| {
-        CarbideError::internal(format!("Failed to serialize DPF host snapshot: {e}"))
+        NicoError::internal(format!("Failed to serialize DPF host snapshot: {e}"))
     })?;
 
     Ok(Response::new(rpc::DpfHostSnapshotResponse { json_payload }))
@@ -161,7 +161,7 @@ pub(crate) async fn get_dpf_service_versions(
     let live = if let Some(ops) = api.dpf_sdk.as_ref() {
         ops.list_service_template_versions()
             .await
-            .map_err(CarbideError::DpfError)?
+            .map_err(NicoError::DpfError)?
     } else {
         Vec::new()
     };

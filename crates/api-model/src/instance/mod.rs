@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::instance_type::InstanceTypeId;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::instance_type::InstanceTypeId;
+use nico_uuid::machine::MachineId;
 use config_version::ConfigVersion;
 
 use crate::instance::config::InstanceConfig;

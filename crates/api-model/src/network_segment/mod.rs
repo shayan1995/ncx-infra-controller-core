@@ -17,9 +17,9 @@
 use std::fmt;
 use std::str::FromStr;
 
-use carbide_uuid::domain::DomainId;
-use carbide_uuid::network::NetworkSegmentId;
-use carbide_uuid::vpc::VpcId;
+use nico_uuid::domain::DomainId;
+use nico_uuid::network::NetworkSegmentId;
+use nico_uuid::vpc::VpcId;
 use chrono::{DateTime, Utc};
 use config_version::{ConfigVersion, Versioned};
 use serde::{Deserialize, Serialize};
@@ -88,7 +88,7 @@ pub struct NetworkDefinition {
     /// reservations), or ONLY serves pre-configured static reservations.
     ///
     /// Defaults to dynamic if not specified, which is the traditional
-    /// behavior of Carbide + carbide-dhcp.
+    /// behavior of NICo + nico-dhcp.
     #[serde(default)]
     pub allocation_strategy: AllocationStrategy,
 }

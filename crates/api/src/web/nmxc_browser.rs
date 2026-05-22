@@ -21,7 +21,7 @@ use askama::Template;
 use axum::extract::{Query as AxumQuery, State as AxumState};
 use axum::response::{Html, IntoResponse, Response};
 use hyper::http::StatusCode;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 use serde::Deserialize;
 
 use super::Base;
@@ -54,10 +54,10 @@ pub struct QueryParams {
 
 fn browse_operation_from_query(s: &str) -> i32 {
     match s.trim() {
-        "compute_node_info_list" => rpc::forge::NmxcBrowseOperation::ComputeNodeInfoList as i32,
-        "gpu_info" => rpc::forge::NmxcBrowseOperation::GpuInfo as i32,
-        "gpu_info_list" => rpc::forge::NmxcBrowseOperation::GpuInfoList as i32,
-        _ => rpc::forge::NmxcBrowseOperation::Unspecified as i32,
+        "compute_node_info_list" => rpc::nico::NmxcBrowseOperation::ComputeNodeInfoList as i32,
+        "gpu_info" => rpc::nico::NmxcBrowseOperation::GpuInfo as i32,
+        "gpu_info_list" => rpc::nico::NmxcBrowseOperation::GpuInfoList as i32,
+        _ => rpc::nico::NmxcBrowseOperation::Unspecified as i32,
     }
 }
 
@@ -79,9 +79,9 @@ pub async fn query(
 
     let op = browse_operation_from_query(&browser.operation);
     let gpu_uid = browser.gpu_uid.trim().parse::<u64>().unwrap_or(0);
-    let needs_gpu_uid = op == rpc::forge::NmxcBrowseOperation::GpuInfo as i32;
+    let needs_gpu_uid = op == rpc::nico::NmxcBrowseOperation::GpuInfo as i32;
     let can_query = !browser.chassis_serial.is_empty()
-        && op != rpc::forge::NmxcBrowseOperation::Unspecified as i32
+        && op != rpc::nico::NmxcBrowseOperation::Unspecified as i32
         && (!needs_gpu_uid || gpu_uid != 0);
 
     if !can_query {
@@ -89,7 +89,7 @@ pub async fn query(
     }
 
     let response = match state
-        .nmxc_browse(tonic::Request::new(rpc::forge::NmxcBrowseRequest {
+        .nmxc_browse(tonic::Request::new(rpc::nico::NmxcBrowseRequest {
             chassis_serial: browser.chassis_serial.clone(),
             operation: op,
             gpu_uid,

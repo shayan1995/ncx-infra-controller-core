@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use uuid::Uuid;
 
 use super::{Report, ValidationJob};
@@ -145,8 +145,8 @@ pub async fn submit_report(report: Report) -> Result<(), RvsError> {
 
 #[cfg(test)]
 mod tests {
-    use carbide_uuid::machine::{MachineIdSource, MachineType};
-    use carbide_uuid::rack::RackId;
+    use nico_uuid::machine::{MachineIdSource, MachineType};
+    use nico_uuid::rack::RackId;
 
     use super::*;
     use crate::partitions::{IbNode, NvlNode};

@@ -19,9 +19,9 @@ use model::machine_boot_override::MachineBootOverride;
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
 
-impl TryFrom<rpc::forge::MachineBootOverride> for MachineBootOverride {
+impl TryFrom<rpc::nico::MachineBootOverride> for MachineBootOverride {
     type Error = RpcDataConversionError;
-    fn try_from(value: rpc::forge::MachineBootOverride) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineBootOverride) -> Result<Self, Self::Error> {
         let machine_interface_id =
             value
                 .machine_interface_id
@@ -36,9 +36,9 @@ impl TryFrom<rpc::forge::MachineBootOverride> for MachineBootOverride {
     }
 }
 
-impl From<MachineBootOverride> for rpc::forge::MachineBootOverride {
+impl From<MachineBootOverride> for rpc::nico::MachineBootOverride {
     fn from(value: MachineBootOverride) -> Self {
-        rpc::forge::MachineBootOverride {
+        rpc::nico::MachineBootOverride {
             machine_interface_id: Some(value.machine_interface_id),
             custom_pxe: value.custom_pxe,
             custom_user_data: value.custom_user_data,

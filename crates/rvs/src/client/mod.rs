@@ -1,11 +1,11 @@
 mod io;
 use std::collections::HashMap;
 
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::nvlink::NvLinkDomainId;
-use carbide_uuid::rack::RackId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::nvlink::NvLinkDomainId;
+use nico_uuid::rack::RackId;
 pub use io::NiccClient;
-use rpc::forge::{Machine, Rack};
+use rpc::nico::{Machine, Rack};
 
 use crate::error::RvsError;
 

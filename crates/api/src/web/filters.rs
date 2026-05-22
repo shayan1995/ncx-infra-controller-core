@@ -25,7 +25,7 @@ use std::fmt::{Display, Write};
 use std::str::FromStr;
 
 use askama_escape::Escaper;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 
 /// Generates HTML links for Machine IDs
 #[askama::filter_fn]
@@ -105,7 +105,7 @@ pub fn switch_id_link(id: impl Display, _env: &dyn askama::Values) -> ::askama::
 /// Formats labels into HTML
 #[askama::filter_fn]
 pub fn label_list_fmt(
-    labels: &[rpc::forge::Label],
+    labels: &[rpc::nico::Label],
     _env: &dyn askama::Values,
     truncate: bool,
 ) -> ::askama::Result<String> {
@@ -359,7 +359,7 @@ pub fn colorize_output(ansi_text: &str, _env: &dyn askama::Values) -> ::askama::
 /// Formats a state handler outcome
 #[askama::filter_fn]
 pub fn controller_state_reason_fmt(
-    reason: &Option<::rpc::forge::ControllerStateReason>,
+    reason: &Option<::rpc::nico::ControllerStateReason>,
     _env: &dyn askama::Values,
 ) -> ::askama::Result<String> {
     let Some(reason) = reason else {
@@ -368,8 +368,8 @@ pub fn controller_state_reason_fmt(
 
     let mut result = String::new();
     let classes = match reason.outcome() {
-        rpc::forge::ControllerStateOutcome::Wait => "bubble warning".to_string(),
-        rpc::forge::ControllerStateOutcome::Error => "bubble error".to_string(),
+        rpc::nico::ControllerStateOutcome::Wait => "bubble warning".to_string(),
+        rpc::nico::ControllerStateOutcome::Error => "bubble error".to_string(),
         _ => "bubble".to_string(),
     };
 
@@ -387,9 +387,9 @@ pub fn controller_state_reason_fmt(
     if let Some(source_ref) = reason.source_ref.as_ref() {
         const GITHUB_REPO: &str = "https://github.com/NVIDIA/ncx-infra-controller-core";
 
-        // TODO: carbide_version::v!(git_sha) should work here - however it returns an
+        // TODO: nico_version::v!(git_sha) should work here - however it returns an
         // outdated commit ID.
-        let build_version = carbide_version::v!(build_version);
+        let build_version = nico_version::v!(build_version);
         let commit_hash = match build_version.rfind('g') {
             Some(idx) if idx != build_version.len() - 1 => &build_version[idx + 1..],
             _ => "trunk",

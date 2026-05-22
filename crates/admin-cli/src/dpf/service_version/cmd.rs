@@ -17,10 +17,10 @@
 
 use prettytable::row;
 
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn service_version(api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn service_version(api_client: &ApiClient) -> NicoCliResult<()> {
     let services = api_client.get_dpf_service_versions().await?;
 
     if services.is_empty() {

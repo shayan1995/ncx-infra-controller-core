@@ -22,7 +22,7 @@ use axum::Json;
 use axum::extract::{Query, State as AxumState};
 use axum::response::{Html, IntoResponse};
 use hyper::http::StatusCode;
-use rpc::forge as forgerpc;
+use rpc::nico as nicorpc;
 
 use super::pagination::{self, PageContext, PaginationParams};
 use super::{Base, filters};
@@ -49,8 +49,8 @@ struct Row {
     hbn_version: String,
 }
 
-impl From<forgerpc::Machine> for Row {
-    fn from(machine: forgerpc::Machine) -> Self {
+impl From<nicorpc::Machine> for Row {
+    fn from(machine: nicorpc::Machine) -> Self {
         let state = match machine.state.split_once(' ') {
             Some((state, _)) => state.to_owned(),
             None => machine.state,
@@ -76,7 +76,7 @@ impl From<forgerpc::Machine> for Row {
                     inventory
                         .components
                         .iter()
-                        .find(|c| c.name == "forge-dpu-agent")
+                        .find(|c| c.name == "nico-dpu-agent")
                         .map(|c| c.version.clone())
                 })
                 .unwrap_or_default(),
@@ -114,7 +114,7 @@ async fn fetch_dpus(api: &Arc<Api>) -> Result<Vec<Row>, tonic::Status> {
     let mut machines = machine::fetch_machines(api.clone(), true, false).await?;
     machines
         .machines
-        .retain(|m| m.machine_type == forgerpc::MachineType::Dpu as i32);
+        .retain(|m| m.machine_type == nicorpc::MachineType::Dpu as i32);
 
     let machines = machines.machines.into_iter().map(Row::from).collect();
 

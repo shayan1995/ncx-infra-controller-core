@@ -16,21 +16,21 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::SkuList;
+use ::rpc::nico::SkuList;
 use prettytable::{Row, Table};
 use tokio::io::AsyncWriteExt;
 
 use super::super::common::ShowSkuOptions;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 async fn show_machine_table(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     output_format: &OutputFormat,
-    skus: Vec<::rpc::forge::Sku>,
-) -> CarbideCliResult<()> {
+    skus: Vec<::rpc::nico::Sku>,
+) -> NicoCliResult<()> {
     if *output_format != OutputFormat::AsciiTable {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "Only ascii table format supported".to_string(),
         ));
     }
@@ -58,7 +58,7 @@ pub async fn show_machines(
     api_client: &ApiClient,
     output: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     output_format: &OutputFormat,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     if let Some(sku_id) = args.sku_id {
         let skus = api_client.0.find_skus_by_ids(vec![sku_id]).await?;
         show_machine_table(output, output_format, skus.skus).await?;

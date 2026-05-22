@@ -23,7 +23,7 @@ use clap::Parser;
 
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 #[derive(Parser, Debug, Clone)]
 pub enum Cmd {
@@ -32,7 +32,7 @@ pub enum Cmd {
 }
 
 impl Run for Cmd {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         match self {
             Cmd::Apply(args) => args.run(ctx).await,
         }

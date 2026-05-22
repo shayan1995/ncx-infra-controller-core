@@ -17,7 +17,7 @@
 
 //! MQTT state change hook for publishing ManagedHostState transitions.
 //!
-//! This module implements the AsyncAPI specification defined in `carbide.yaml`,
+//! This module implements the AsyncAPI specification defined in `nico.yaml`,
 //! publishing state changes to `{topic_prefix}/{machineId}/state` over MQTT
 //! 3.1.1. The prefix is supplied via `DsxExchangeEventBusConfig::topic_prefix`
 //! and defaults to `NICO/v1/machine`.

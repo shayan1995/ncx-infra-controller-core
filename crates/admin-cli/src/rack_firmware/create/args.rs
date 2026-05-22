@@ -19,7 +19,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -31,12 +31,12 @@ pub struct Args {
     pub artifactory_token: String,
 }
 
-impl TryFrom<Args> for rpc::forge::RackFirmwareCreateRequest {
-    type Error = CarbideCliError;
+impl TryFrom<Args> for rpc::nico::RackFirmwareCreateRequest {
+    type Error = NicoCliError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
         let config_json = std::fs::read_to_string(&args.json_file).map_err(|e| {
-            CarbideCliError::GenericError(format!(
+            NicoCliError::GenericError(format!(
                 "Failed to read file {}: {}",
                 args.json_file.display(),
                 e
@@ -45,7 +45,7 @@ impl TryFrom<Args> for rpc::forge::RackFirmwareCreateRequest {
 
         // Check that the JSON is valid.
         serde_json::from_str::<serde_json::Value>(&config_json)
-            .map_err(|e| CarbideCliError::GenericError(format!("Invalid JSON in file: {}", e)))?;
+            .map_err(|e| NicoCliError::GenericError(format!("Invalid JSON in file: {}", e)))?;
 
         Ok(Self {
             rack_hardware_type: Some(rpc::common::RackHardwareType {

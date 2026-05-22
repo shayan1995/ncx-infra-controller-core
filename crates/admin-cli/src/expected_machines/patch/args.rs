@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-use carbide_utils::has_duplicates;
-use carbide_uuid::rack::RackId;
+use nico_utils::has_duplicates;
+use nico_uuid::rack::RackId;
 use clap::{ArgGroup, Parser};
 use mac_address::MacAddress;
-use rpc::forge::DpuMode;
+use rpc::nico::DpuMode;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 /// Patch expected machine (partial update, preserves unprovided fields).
 ///
@@ -33,10 +33,10 @@ use crate::errors::CarbideCliError;
 ///
 /// Examples:
 ///   # Update only SKU, preserve all other fields including metadata
-///   forge-admin-cli expected-machine patch --bmc-mac-address 1a:1b:1c:1d:1e:1f --sku-id new_sku
+///   nico-admin-cli expected-machine patch --bmc-mac-address 1a:1b:1c:1d:1e:1f --sku-id new_sku
 ///
 ///   # Update only labels, preserve name and description
-///   forge-admin-cli expected-machine patch --bmc-mac-address 1a:1b:1c:1d:1e:1f \
+///   nico-admin-cli expected-machine patch --bmc-mac-address 1a:1b:1c:1d:1e:1f \
 ///     --sku-id sku123 --label env:prod --label team:platform
 #[derive(Parser, Debug, Serialize, Deserialize)]
 #[clap(verbatim_doc_comment)]
@@ -175,13 +175,13 @@ pub struct Args {
 }
 
 impl Args {
-    pub fn validate(&self) -> Result<(), CarbideCliError> {
+    pub fn validate(&self) -> Result<(), NicoCliError> {
         match (&self.bmc_mac_address, &self.id) {
             (Some(_), Some(_)) => {
-                return Err(CarbideCliError::ChooseOneError("--bmc-mac-address", "--id"));
+                return Err(NicoCliError::ChooseOneError("--bmc-mac-address", "--id"));
             }
             (None, None) => {
-                return Err(CarbideCliError::RequireOneError(
+                return Err(NicoCliError::RequireOneError(
                     "--bmc-mac-address",
                     "--id",
                 ));
@@ -198,14 +198,14 @@ impl Args {
             && self.bmc_ip_address.is_none()
             && self.dpu_mode.is_none()
         {
-            return Err(CarbideCliError::GenericError("One of the following options must be specified: bmc-user-name and bmc-password or chassis-serial-number or fallback-dpu-serial-number or bmc-ip-address or dpu-mode".to_string()));
+            return Err(NicoCliError::GenericError("One of the following options must be specified: bmc-user-name and bmc-password or chassis-serial-number or fallback-dpu-serial-number or bmc-ip-address or dpu-mode".to_string()));
         }
         if self
             .fallback_dpu_serial_numbers
             .as_ref()
             .is_some_and(has_duplicates)
         {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "Duplicate dpu serial numbers found".to_string(),
             ));
         }

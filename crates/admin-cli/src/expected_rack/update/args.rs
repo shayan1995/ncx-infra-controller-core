@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use carbide_uuid::rack::RackId;
+use nico_uuid::rack::RackId;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 pub struct Args {
@@ -51,18 +51,18 @@ pub struct Args {
     pub labels: Option<Vec<String>>,
 }
 
-impl TryFrom<Args> for rpc::forge::ExpectedRack {
-    type Error = CarbideCliError;
+impl TryFrom<Args> for rpc::nico::ExpectedRack {
+    type Error = NicoCliError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
         // rack_profile_id is required for update.
         let rack_profile_id = args.rack_profile_id.ok_or_else(|| {
-            CarbideCliError::GenericError("rack_profile_id is required".to_string())
+            NicoCliError::GenericError("rack_profile_id is required".to_string())
         })?;
-        Ok(rpc::forge::ExpectedRack {
+        Ok(rpc::nico::ExpectedRack {
             rack_id: Some(args.rack_id),
             rack_profile_id: Some(rack_profile_id.into()),
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: args.meta_name.unwrap_or_default(),
                 description: args.meta_description.unwrap_or_default(),
                 labels: crate::metadata::parse_rpc_labels(args.labels.unwrap_or_default()),

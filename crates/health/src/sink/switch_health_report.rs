@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 
 use super::dedup_queue::DedupQueue;
 use super::{
