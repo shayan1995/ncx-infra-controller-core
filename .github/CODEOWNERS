@@ -5,10 +5,10 @@
 # Rules are evaluated from top to bottom, with later rules taking precedence.
 
 # Default owners for everything in the repo
-* @NVIDIA/carbide-sw-contributors
+* @NVIDIA/nico-sw-contributors
 
 # CODEOWNERS file itself - requires admin approval
-/.github/CODEOWNERS @NVIDIA/carbide-sw-admins
+/.github/CODEOWNERS @NVIDIA/nico-sw-admins
 
 # CI/CD related files
 /.github/ @NVIDIA/dsx-sw-cicd @lauragra-y

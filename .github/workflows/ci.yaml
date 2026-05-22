@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-name: Carbide CI
+name: NICo CI
 
 on:
   push:
@@ -135,10 +135,10 @@ jobs:
           username: ${{ secrets.NVCR_USERNAME }}
           token: ${{ secrets.NVCR_TOKEN }}
 
-      - name: Resolve pinned carbide-extras image digest
+      - name: Resolve pinned nico-extras image digest
         id: resolve-extras
         env:
-          EXTRAS_IMAGE: nvcr.io/0837451325059433/carbide-dev/nvmetal-carbide-extras:latest
+          EXTRAS_IMAGE: nvcr.io/0837451325059433/nico-dev/nvmetal-nico-extras:latest
         run: |
           set -euo pipefail
           docker pull "${EXTRAS_IMAGE}"
@@ -152,7 +152,7 @@ jobs:
           echo "extras_container_ref=${EXTRAS_REF}" >> "$GITHUB_OUTPUT"
           echo "Resolved extras image to pinned digest: ${EXTRAS_REF}"
 
-          echo "## 📌 Carbide Extras Image" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 📌 NICo Extras Image" >> "$GITHUB_STEP_SUMMARY"
           echo "| Requested | Pinned |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| \`${EXTRAS_IMAGE}\` | \`${EXTRAS_REF}\` |" >> "$GITHUB_STEP_SUMMARY"
@@ -311,8 +311,8 @@ jobs:
           set -euo pipefail
 
           # x86_64 build args
-          BUILD_REF="nvcr.io/0837451325059433/carbide-dev/build-container-x86_64:${BUILD_VERSION}"
-          RUNTIME_REF="nvcr.io/0837451325059433/carbide-dev/runtime-container-x86_64:${RUNTIME_VERSION}"
+          BUILD_REF="nvcr.io/0837451325059433/nico-dev/build-container-x86_64:${BUILD_VERSION}"
+          RUNTIME_REF="nvcr.io/0837451325059433/nico-dev/runtime-container-x86_64:${RUNTIME_VERSION}"
 
           BUILD_ARGS=$(jq -n -c \
             --arg VERSION "$VERSION" \
@@ -324,8 +324,8 @@ jobs:
           echo "build_args=${BUILD_ARGS}" >> "$GITHUB_OUTPUT"
 
           # aarch64 build args
-          BUILD_REF_AARCH64="nvcr.io/0837451325059433/carbide-dev/build-container-aarch64:${BUILD_VERSION_AARCH64}"
-          RUNTIME_REF_AARCH64="nvcr.io/0837451325059433/carbide-dev/runtime-container-aarch64:${RUNTIME_VERSION_AARCH64}"
+          BUILD_REF_AARCH64="nvcr.io/0837451325059433/nico-dev/build-container-aarch64:${BUILD_VERSION_AARCH64}"
+          RUNTIME_REF_AARCH64="nvcr.io/0837451325059433/nico-dev/runtime-container-aarch64:${RUNTIME_VERSION_AARCH64}"
 
           BUILD_ARGS_AARCH64=$(jq -n -c \
             --arg VERSION "$VERSION" \
@@ -347,7 +347,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.build-container-x86_64
-      image_name: nvcr.io/0837451325059433/carbide-dev/build-container-x86_64
+      image_name: nvcr.io/0837451325059433/nico-dev/build-container-x86_64
       image_tag: ${{ needs.prepare.outputs.build_container_x86_64_version }}
       platforms: linux/amd64
       runner: linux-amd64-cpu4
@@ -363,7 +363,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.build-container-aarch64
-      image_name: nvcr.io/0837451325059433/carbide-dev/build-container-aarch64
+      image_name: nvcr.io/0837451325059433/nico-dev/build-container-aarch64
       image_tag: ${{ needs.prepare.outputs.build_container_aarch64_version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -379,7 +379,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.runtime-container-x86_64
-      image_name: nvcr.io/0837451325059433/carbide-dev/runtime-container-x86_64
+      image_name: nvcr.io/0837451325059433/nico-dev/runtime-container-x86_64
       image_tag: ${{ needs.prepare.outputs.runtime_container_x86_64_version }}
       platforms: linux/amd64
       runner: linux-amd64-cpu4
@@ -395,7 +395,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.runtime-container-aarch64
-      image_name: nvcr.io/0837451325059433/carbide-dev/runtime-container-aarch64
+      image_name: nvcr.io/0837451325059433/nico-dev/runtime-container-aarch64
       image_tag: ${{ needs.prepare.outputs.runtime_container_aarch64_version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -411,7 +411,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.build-artifacts-container-x86_64
-      image_name: nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-x86_64
+      image_name: nvcr.io/0837451325059433/nico-dev/build-artifacts-container-x86_64
       image_tag: ${{ needs.prepare.outputs.build_artifacts_container_x86_64_version }}
       platforms: linux/amd64
       runner: linux-amd64-cpu4
@@ -427,7 +427,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.build-artifacts-container-aarch64
-      image_name: nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-aarch64
+      image_name: nvcr.io/0837451325059433/nico-dev/build-artifacts-container-aarch64
       image_tag: ${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -450,7 +450,7 @@ jobs:
       dockerfile_path: dev/docker/Dockerfile.release-container-x86_64
       context_path: .
       build_args: ${{ needs.prepare.outputs.release_build_args }}
-      image_name: nvcr.io/0837451325059433/carbide-dev/nvmetal-carbide
+      image_name: nvcr.io/0837451325059433/nico-dev/nvmetal-nico
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/amd64
       runner: linux-amd64-cpu16
@@ -471,7 +471,7 @@ jobs:
       dockerfile_path: dev/docker/Dockerfile.release-container-aarch64
       context_path: .
       build_args: ${{ needs.prepare.outputs.release_build_args_aarch64 }}
-      image_name: nvcr.io/0837451325059433/carbide-dev/nvmetal-carbide-aarch64
+      image_name: nvcr.io/0837451325059433/nico-dev/nvmetal-nico-aarch64
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu16
@@ -482,48 +482,48 @@ jobs:
 
 
   # ============================================================================
-  # BUILD STAGE - Forge CLI (Multi-arch)
+  # BUILD STAGE - NICo CLI (Multi-arch)
   # ============================================================================
-  build-forge-cli-x86_64:
+  build-nico-cli-x86_64:
     needs:
       - prepare
       - build-artifacts-container-x86_64
     if: ${{ always() && github.event_name != 'schedule' }}
     uses: ./.github/workflows/docker-build.yml
     with:
-      dockerfile_path: dev/docker/Dockerfile.release-forge-cli
-      image_name: nvcr.io/0837451325059433/carbide-dev/forge-admin-cli-x86_64
+      dockerfile_path: dev/docker/Dockerfile.release-nico-cli
+      image_name: nvcr.io/0837451325059433/nico-dev/nico-admin-cli-x86_64
       image_tag: ${{ needs.prepare.outputs.version }}
-      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_BUILD":"nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-x86_64:${{ needs.prepare.outputs.build_artifacts_container_x86_64_version }}"}'
+      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_BUILD":"nvcr.io/0837451325059433/nico-dev/build-artifacts-container-x86_64:${{ needs.prepare.outputs.build_artifacts_container_x86_64_version }}"}'
       platforms: linux/amd64
       runner: linux-amd64-cpu4
       push: ${{ !contains(github.ref, 'pull-request/') }}
       load: true
     secrets: inherit
 
-  build-forge-cli-aarch64:
+  build-nico-cli-aarch64:
     needs:
       - prepare
       - build-artifacts-container-aarch64
     if: ${{ always() && github.event_name != 'schedule' }}
     uses: ./.github/workflows/docker-build.yml
     with:
-      dockerfile_path: dev/docker/Dockerfile.release-forge-cli
-      image_name: nvcr.io/0837451325059433/carbide-dev/forge-admin-cli-aarch64
+      dockerfile_path: dev/docker/Dockerfile.release-nico-cli
+      image_name: nvcr.io/0837451325059433/nico-dev/nico-admin-cli-aarch64
       image_tag: ${{ needs.prepare.outputs.version }}
-      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_BUILD":"nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }}"}'
+      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_BUILD":"nvcr.io/0837451325059433/nico-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }}"}'
       platforms: linux/arm64
       runner: linux-arm64-cpu4
       push: ${{ !contains(github.ref, 'pull-request/') }}
       load: true
     secrets: inherit
 
-  merge-manifests-forge-cli:
+  merge-manifests-nico-cli:
     needs:
       - prepare
-      - build-forge-cli-x86_64
-      - build-forge-cli-aarch64
-    if: ${{ !cancelled() && github.event_name != 'schedule' && !contains(github.ref, 'pull-request/') && needs.build-forge-cli-x86_64.result == 'success' && needs.build-forge-cli-aarch64.result == 'success' }}
+      - build-nico-cli-x86_64
+      - build-nico-cli-aarch64
+    if: ${{ !cancelled() && github.event_name != 'schedule' && !contains(github.ref, 'pull-request/') && needs.build-nico-cli-x86_64.result == 'success' && needs.build-nico-cli-aarch64.result == 'success' }}
     runs-on: linux-amd64-cpu4
     steps:
       - name: Checkout code
@@ -546,14 +546,14 @@ jobs:
           retry_wait_seconds: 20
           command: |
             docker buildx imagetools create -t \
-              nvcr.io/0837451325059433/carbide-dev/forge-admin-cli:${{ needs.prepare.outputs.version }} \
-              nvcr.io/0837451325059433/carbide-dev/forge-admin-cli-x86_64:${{ needs.prepare.outputs.version }} \
-              nvcr.io/0837451325059433/carbide-dev/forge-admin-cli-aarch64:${{ needs.prepare.outputs.version }}
+              nvcr.io/0837451325059433/nico-dev/nico-admin-cli:${{ needs.prepare.outputs.version }} \
+              nvcr.io/0837451325059433/nico-dev/nico-admin-cli-x86_64:${{ needs.prepare.outputs.version }} \
+              nvcr.io/0837451325059433/nico-dev/nico-admin-cli-aarch64:${{ needs.prepare.outputs.version }}
 
             docker buildx imagetools create -t \
-              nvcr.io/0837451325059433/carbide-dev/forge-admin-cli:latest \
-              nvcr.io/0837451325059433/carbide-dev/forge-admin-cli-x86_64:${{ needs.prepare.outputs.version }} \
-              nvcr.io/0837451325059433/carbide-dev/forge-admin-cli-aarch64:${{ needs.prepare.outputs.version }}
+              nvcr.io/0837451325059433/nico-dev/nico-admin-cli:latest \
+              nvcr.io/0837451325059433/nico-dev/nico-admin-cli-x86_64:${{ needs.prepare.outputs.version }} \
+              nvcr.io/0837451325059433/nico-dev/nico-admin-cli-aarch64:${{ needs.prepare.outputs.version }}
 
   # ============================================================================
   # BUILD STAGE - Boot Artifacts
@@ -569,7 +569,7 @@ jobs:
       arch: x86_64
       build_type: boot
       cargo_make_task: build-boot-artifacts-x86-host-ci
-      build_container: nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-x86_64:${{ needs.prepare.outputs.build_artifacts_container_x86_64_version }}
+      build_container: nvcr.io/0837451325059433/nico-dev/build-artifacts-container-x86_64:${{ needs.prepare.outputs.build_artifacts_container_x86_64_version }}
       runner: linux-amd64-cpu4
       version: ${{ needs.prepare.outputs.version }}
       use_container: true
@@ -587,7 +587,7 @@ jobs:
       arch: aarch64
       build_type: boot
       cargo_make_task: build-boot-artifacts-bfb-ci
-      build_container: nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }}
+      build_container: nvcr.io/0837451325059433/nico-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }}
       runner: linux-arm64-cpu16
       version: ${{ needs.prepare.outputs.version }}
       use_container: true
@@ -652,7 +652,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.release-artifacts-x86_64
-      image_name: nvcr.io/0837451325059433/carbide-dev/boot-artifacts-x86_64
+      image_name: nvcr.io/0837451325059433/nico-dev/boot-artifacts-x86_64
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/amd64
       runner: linux-amd64-cpu4
@@ -677,7 +677,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.release-artifacts-aarch64
-      image_name: nvcr.io/0837451325059433/carbide-dev/boot-artifacts-aarch64
+      image_name: nvcr.io/0837451325059433/nico-dev/boot-artifacts-aarch64
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/amd64  # Note: aarch64 artifacts packaged in x86_64 image
       runner: linux-amd64-cpu4
@@ -758,9 +758,9 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.machine-validation-runner
-      image_name: nvcr.io/0837451325059433/carbide-dev/machine-validation-runner
+      image_name: nvcr.io/0837451325059433/nico-dev/machine-validation-runner
       image_tag: ${{ needs.prepare.outputs.version }}
-      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_RUNTIME_X86_64":"nvcr.io/0837451325059433/carbide-dev/runtime-container-x86_64:${{ needs.prepare.outputs.runtime_container_x86_64_version }}"}'
+      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_RUNTIME_X86_64":"nvcr.io/0837451325059433/nico-dev/runtime-container-x86_64:${{ needs.prepare.outputs.runtime_container_x86_64_version }}"}'
       platforms: linux/amd64
       runner: linux-amd64-cpu4
       push: ${{ !contains(github.ref, 'pull-request/') }}
@@ -775,9 +775,9 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile.machine-validation-config
-      image_name: nvcr.io/0837451325059433/carbide-dev/machine_validation
+      image_name: nvcr.io/0837451325059433/nico-dev/machine_validation
       image_tag: ${{ needs.prepare.outputs.version }}
-      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_RUNTIME_X86_64":"nvcr.io/0837451325059433/carbide-dev/runtime-container-x86_64:${{ needs.prepare.outputs.runtime_container_x86_64_version }}"}'
+      build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}","CONTAINER_RUNTIME_X86_64":"nvcr.io/0837451325059433/nico-dev/runtime-container-x86_64:${{ needs.prepare.outputs.runtime_container_x86_64_version }}"}'
       platforms: linux/amd64
       runner: linux-amd64-cpu4
       push: ${{ !contains(github.ref, 'pull-request/') }}
@@ -795,7 +795,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/Dockerfile-powerdns
-      image_name: nvcr.io/0837451325059433/carbide-dev/powerdns
+      image_name: nvcr.io/0837451325059433/nico-dev/powerdns
       image_tag: "4.9.3"
       build_args: '{"CI_COMMIT_SHORT_SHA":"${{ needs.prepare.outputs.short_sha }}"}'
       platforms: linux/amd64
@@ -825,7 +825,7 @@ jobs:
     if: ${{ !failure() && !cancelled() && needs.prepare.outputs.source_files_changed == 'true' && contains(github.ref, 'pull-request/') }}
     runs-on: linux-amd64-cpu16
     container:
-      image: nvcr.io/0837451325059433/carbide-dev/build-container-x86_64:${{ needs.prepare.outputs.build_container_x86_64_version }}
+      image: nvcr.io/0837451325059433/nico-dev/build-container-x86_64:${{ needs.prepare.outputs.build_container_x86_64_version }}
       credentials:
         username: ${{ secrets.NVCR_USERNAME }}
         password: ${{ secrets.NVCR_TOKEN }}
@@ -848,8 +848,8 @@ jobs:
           DATABASE_URL: "postgresql://%2Fvar%2Frun%2Fpostgresql"
         run: cargo make --no-workspace clippy-flow
 
-      - name: Run carbide lints
-        run: cargo make carbide-lints
+      - name: Run nico lints
+        run: cargo make nico-lints
 
       - name: Check TOML formatting
         run: taplo fmt --check || echo "Please format toml files"
@@ -904,7 +904,7 @@ jobs:
           app-version: ${{ needs.prepare.outputs.version }}
           lint: 'false'
           ngc-key: ${{ secrets.NVCR_TOKEN }}
-          ngc-path: 0837451325059433/carbide-dev
+          ngc-path: 0837451325059433/nico-dev
           ngc-duplicate: fail
 
   build-validate-helm-prereqs-chart:
@@ -941,7 +941,7 @@ jobs:
           app-version: ${{ needs.prepare.outputs.version }}
           lint: 'false'
           ngc-key: ${{ secrets.NVCR_TOKEN }}
-          ngc-path: 0837451325059433/carbide-dev
+          ngc-path: 0837451325059433/nico-dev
           ngc-duplicate: fail
 
   # ============================================================================
@@ -965,7 +965,7 @@ jobs:
           token: ${{ secrets.NVCR_TOKEN }}
 
       - name: Pull build container
-        run: docker pull nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }}
+        run: docker pull nvcr.io/0837451325059433/nico-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }}
 
       - name: Compile bluefield Rust binaries
         run: |
@@ -975,7 +975,7 @@ jobs:
             -e CARGO_HOME=/workspace/cargo \
             -e CARGO_INCREMENTAL=0 \
             -e CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu \
-            nvcr.io/0837451325059433/carbide-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }} \
+            nvcr.io/0837451325059433/nico-dev/build-artifacts-container-aarch64:${{ needs.prepare.outputs.build_artifacts_container_aarch64_version }} \
             bash -c "git config --global --add safe.directory /workspace && \
               cargo make --cwd bluefield build-dpu-agent-and-dhcp-server-ci && \
               cargo make --cwd bluefield build-fmds-ci && \
@@ -984,7 +984,7 @@ jobs:
       - name: Stage bluefield binaries for upload
         run: |
           mkdir -p bluefield-binaries-dir/target/aarch64-unknown-linux-gnu/release
-          cp target/aarch64-unknown-linux-gnu/release/{forge-dpu-agent,forge-dhcp-server,forge-dpu-otel-agent,carbide-fmds} \
+          cp target/aarch64-unknown-linux-gnu/release/{nico-dpu-agent,nico-dhcp-server,nico-dpu-otel-agent,nico-fmds} \
             bluefield-binaries-dir/target/aarch64-unknown-linux-gnu/release/
 
       - name: Upload bluefield binaries
@@ -1001,7 +1001,7 @@ jobs:
     with:
       dockerfile_path: bluefield/containers/otelcol-contrib/Dockerfile
       context_path: .
-      image_name: nvcr.io/0837451325059433/carbide-dev/otelcol-contrib
+      image_name: nvcr.io/0837451325059433/nico-dev/otelcol-contrib
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -1026,7 +1026,7 @@ jobs:
           name: mft-aarch64-deb-${{ github.run_id }}
           path: .
 
-  build-bluefield-forge-dpu-agent:
+  build-bluefield-nico-dpu-agent:
     needs:
       - prepare
       - build-bluefield-binaries
@@ -1034,8 +1034,8 @@ jobs:
     if: ${{ !cancelled() && github.event_name != 'schedule' && needs.prepare.result == 'success' && needs.build-bluefield-binaries.result == 'success' && needs.download-mft-aarch64.result == 'success' }}
     uses: ./.github/workflows/docker-build.yml
     with:
-      dockerfile_path: bluefield/containers/forge-dpu-agent/Dockerfile
-      image_name: nvcr.io/0837451325059433/carbide-dev/forge-dpu-agent
+      dockerfile_path: bluefield/containers/nico-dpu-agent/Dockerfile
+      image_name: nvcr.io/0837451325059433/nico-dev/nico-dpu-agent
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -1044,15 +1044,15 @@ jobs:
       download_artifacts: true
     secrets: inherit
 
-  build-bluefield-forge-dhcp-server:
+  build-bluefield-nico-dhcp-server:
     needs:
       - prepare
       - build-bluefield-binaries
     if: ${{ !cancelled() && github.event_name != 'schedule' && needs.prepare.result == 'success' && needs.build-bluefield-binaries.result == 'success' }}
     uses: ./.github/workflows/docker-build.yml
     with:
-      dockerfile_path: bluefield/containers/forge-dhcp-server/Dockerfile
-      image_name: nvcr.io/0837451325059433/carbide-dev/forge-dhcp-server
+      dockerfile_path: bluefield/containers/nico-dhcp-server/Dockerfile
+      image_name: nvcr.io/0837451325059433/nico-dev/nico-dhcp-server
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -1061,15 +1061,15 @@ jobs:
       download_artifacts: true
     secrets: inherit
 
-  build-bluefield-forge-dpu-otel-agent:
+  build-bluefield-nico-dpu-otel-agent:
     needs:
       - prepare
       - build-bluefield-binaries
     if: ${{ !cancelled() && github.event_name != 'schedule' && needs.prepare.result == 'success' && needs.build-bluefield-binaries.result == 'success' }}
     uses: ./.github/workflows/docker-build.yml
     with:
-      dockerfile_path: bluefield/containers/forge-dpu-otel-agent/Dockerfile
-      image_name: nvcr.io/0837451325059433/carbide-dev/forge-dpu-otel-agent
+      dockerfile_path: bluefield/containers/nico-dpu-otel-agent/Dockerfile
+      image_name: nvcr.io/0837451325059433/nico-dev/nico-dpu-otel-agent
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -1078,15 +1078,15 @@ jobs:
       download_artifacts: true
     secrets: inherit
 
-  build-bluefield-carbide-fmds:
+  build-bluefield-nico-fmds:
     needs:
       - prepare
       - build-bluefield-binaries
     if: ${{ !cancelled() && github.event_name != 'schedule' && needs.prepare.result == 'success' && needs.build-bluefield-binaries.result == 'success' }}
     uses: ./.github/workflows/docker-build.yml
     with:
-      dockerfile_path: bluefield/containers/carbide-fmds/Dockerfile
-      image_name: nvcr.io/0837451325059433/carbide-dev/carbide-fmds
+      dockerfile_path: bluefield/containers/nico-fmds/Dockerfile
+      image_name: nvcr.io/0837451325059433/nico-dev/nico-fmds
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/arm64
       runner: linux-arm64-cpu4
@@ -1161,7 +1161,7 @@ jobs:
           app-version: ${{ needs.prepare.outputs.version }}
           lint: 'false'
           ngc-key: ${{ secrets.NVCR_TOKEN }}
-          ngc-path: 0837451325059433/carbide-dev
+          ngc-path: 0837451325059433/nico-dev
           ngc-duplicate: fail
 
       - name: Package and push nico-dpu-agent chart
@@ -1172,7 +1172,7 @@ jobs:
           app-version: ${{ needs.prepare.outputs.version }}
           lint: 'false'
           ngc-key: ${{ secrets.NVCR_TOKEN }}
-          ngc-path: 0837451325059433/carbide-dev
+          ngc-path: 0837451325059433/nico-dev
           ngc-duplicate: fail
 
       - name: Package and push nico-dhcp-server chart
@@ -1183,7 +1183,7 @@ jobs:
           app-version: ${{ needs.prepare.outputs.version }}
           lint: 'false'
           ngc-key: ${{ secrets.NVCR_TOKEN }}
-          ngc-path: 0837451325059433/carbide-dev
+          ngc-path: 0837451325059433/nico-dev
           ngc-duplicate: fail
 
       - name: Package and push nico-dpu-otel-agent chart
@@ -1194,7 +1194,7 @@ jobs:
           app-version: ${{ needs.prepare.outputs.version }}
           lint: 'false'
           ngc-key: ${{ secrets.NVCR_TOKEN }}
-          ngc-path: 0837451325059433/carbide-dev
+          ngc-path: 0837451325059433/nico-dev
           ngc-duplicate: fail
 
       - name: Package and push nico-fmds chart
@@ -1205,7 +1205,7 @@ jobs:
           app-version: ${{ needs.prepare.outputs.version }}
           lint: 'false'
           ngc-key: ${{ secrets.NVCR_TOKEN }}
-          ngc-path: 0837451325059433/carbide-dev
+          ngc-path: 0837451325059433/nico-dev
           ngc-duplicate: fail
 
 
@@ -1220,7 +1220,7 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       dockerfile_path: dev/docker/sbom-tools/Dockerfile
-      image_name: nvcr.io/0837451325059433/carbide-dev/sbom-tools
+      image_name: nvcr.io/0837451325059433/nico-dev/sbom-tools
       image_tag: ${{ needs.prepare.outputs.version }}
       platforms: linux/amd64
       runner: linux-amd64-cpu4
@@ -1244,9 +1244,9 @@ jobs:
       - build-boot-artifacts-bfb
       - build-boot-artifacts-ephemeral-image-x86-host
       - build-boot-artifacts-ephemeral-image-arm-host
-      - build-forge-cli-x86_64
-      - build-forge-cli-aarch64
-      - merge-manifests-forge-cli
+      - build-nico-cli-x86_64
+      - build-nico-cli-aarch64
+      - merge-manifests-nico-cli
       - build-release-machine-validation-runner
       - build-release-machine-validation-artifacts-x86-host
       - build-powerdns-container
@@ -1258,10 +1258,10 @@ jobs:
       - build-release-artifacts-arm-host
       - build-bluefield-binaries
       - build-bluefield-otelcol-contrib
-      - build-bluefield-forge-dpu-agent
-      - build-bluefield-forge-dhcp-server
-      - build-bluefield-forge-dpu-otel-agent
-      - build-bluefield-carbide-fmds
+      - build-bluefield-nico-dpu-agent
+      - build-bluefield-nico-dhcp-server
+      - build-bluefield-nico-dpu-otel-agent
+      - build-bluefield-nico-fmds
       - build-validate-bluefield-helm-charts
       - build-push-bluefield-helm-charts
       - lint-police
@@ -1295,8 +1295,8 @@ jobs:
           IMAGES["build-artifacts-container-aarch64"]="${{ needs.build-artifacts-container-aarch64.outputs.image_ref }}"
           IMAGES["build-release-container-x86_64"]="${{ needs.build-release-container-x86_64.outputs.image_ref }}"
           IMAGES["build-release-container-aarch64"]="${{ needs.build-release-container-aarch64.outputs.image_ref }}"
-          IMAGES["build-forge-cli-x86_64"]="${{ needs.build-forge-cli-x86_64.outputs.image_ref }}"
-          IMAGES["build-forge-cli-aarch64"]="${{ needs.build-forge-cli-aarch64.outputs.image_ref }}"
+          IMAGES["build-nico-cli-x86_64"]="${{ needs.build-nico-cli-x86_64.outputs.image_ref }}"
+          IMAGES["build-nico-cli-aarch64"]="${{ needs.build-nico-cli-aarch64.outputs.image_ref }}"
           IMAGES["build-release-machine-validation-runner"]="${{ needs.build-release-machine-validation-runner.outputs.image_ref }}"
           IMAGES["build-release-machine-validation-artifacts-x86-host"]="${{ needs.build-release-machine-validation-artifacts-x86-host.outputs.image_ref }}"
           IMAGES["build-powerdns-container"]="${{ needs.build-powerdns-container.outputs.image_ref }}"
@@ -1318,9 +1318,9 @@ jobs:
       - build-release-container-x86_64
     uses: NVIDIA/dsx-github-actions/.github/workflows/promote-image.yml@760d2d7964b479fde431cd3e0b980bc6b6a26ccd
     with:
-      source: nvcr.io/0837451325059433/carbide-dev/nvmetal-carbide
+      source: nvcr.io/0837451325059433/nico-dev/nvmetal-nico
       source_tag: ${{ needs.prepare.outputs.version }}
-      destination: nvcr.io/0837451325059433/carbide/nvmetal-carbide
+      destination: nvcr.io/0837451325059433/nico/nvmetal-nico
       destination_tag: "to-be-scanned"
     secrets:
       SOURCE_USERNAME: ${{ secrets.NVCR_USERNAME }}
@@ -1348,9 +1348,9 @@ jobs:
       - build-boot-artifacts-bfb
       - build-boot-artifacts-ephemeral-image-x86-host
       - build-boot-artifacts-ephemeral-image-arm-host
-      - build-forge-cli-x86_64
-      - build-forge-cli-aarch64
-      - merge-manifests-forge-cli
+      - build-nico-cli-x86_64
+      - build-nico-cli-aarch64
+      - merge-manifests-nico-cli
       - build-release-machine-validation-runner
       - build-release-machine-validation-artifacts-x86-host
       - build-powerdns-container
@@ -1362,10 +1362,10 @@ jobs:
       - build-release-artifacts-arm-host
       - build-bluefield-binaries
       - build-bluefield-otelcol-contrib
-      - build-bluefield-forge-dpu-agent
-      - build-bluefield-forge-dhcp-server
-      - build-bluefield-forge-dpu-otel-agent
-      - build-bluefield-carbide-fmds
+      - build-bluefield-nico-dpu-agent
+      - build-bluefield-nico-dhcp-server
+      - build-bluefield-nico-dpu-otel-agent
+      - build-bluefield-nico-fmds
       - build-validate-bluefield-helm-charts
       - build-push-bluefield-helm-charts
       - build-sbom-container
@@ -1375,8 +1375,8 @@ jobs:
     uses: ./.github/workflows/notify-build-status.yml
     with:
       version: ${{ needs.prepare.outputs.version }}
-      workflow-name: "Carbide Core CI"
-      channel-id: C0A0TSKJKSB # #dsx-carbide-feed
+      workflow-name: "NICo Core CI"
+      channel-id: C0A0TSKJKSB # #dsx-nico-feed
       needs-context: ${{ toJson(needs) }}
       notify-on-success: true
       notify-on-partial: true

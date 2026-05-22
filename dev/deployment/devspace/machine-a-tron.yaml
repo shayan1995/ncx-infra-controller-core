@@ -9,7 +9,7 @@ metadata:
   name: machine-a-tron-config
 data:
   mat.toml: |
-    carbide_api_url = "https://nico-api.nico-system.svc.cluster.local:1079"
+    nico_api_url = "https://nico-api.nico-system.svc.cluster.local:1079"
     interface = "NOTUSED"
     tui_enabled = false
     use_pxe_api = true
@@ -102,7 +102,7 @@ spec:
           command:
             - /opt/machine-a-tron/bin/machine-a-tron
           env:
-            - name: FORGE_ROOT_CA_PATH
+            - name: NICO_ROOT_CA_PATH
               value: /var/run/secrets/spiffe.io/ca.crt
             - name: CLIENT_CERT_PATH
               value: /var/run/secrets/spiffe.io/tls.crt

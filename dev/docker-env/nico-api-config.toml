@@ -21,7 +21,7 @@ dhcp_servers = ["172.20.0.12"]
 route_servers = ["127.0.0.1"]
 enable_route_servers = true
 dpu_ipmi_tool_impl = "test"
-initial_domain_name = "forge.local"
+initial_domain_name = "nico.local"
 initial_dpu_agent_upgrade_policy = "off"
 nvue_enabled = true
 attestation_enabled = false
@@ -38,7 +38,7 @@ override_target_port = 2000
 [tls]
 identity_pemfile_path = "/app/code/dev/certs/server_identity.pem"
 identity_keyfile_path = "/app/code/dev/certs/server_identity.key"
-root_cafile_path = "/app/code/dev/certs/forge_developer_local_only_root_cert_pem"
+root_cafile_path = "/app/code/dev/certs/nico_developer_local_only_root_cert_pem"
 
 [auth]
 permissive_mode = true

@@ -24,7 +24,7 @@ bypass_rbac = true
 
 attestation_enabled = false
 
-initial_domain_name = "local.forge"
+initial_domain_name = "local.nico"
 initial_dpu_agent_upgrade_policy = "off"
 
 [pools.lo-ip]

@@ -63,8 +63,8 @@ struct DefaultCallbacks;
 impl Callbacks for DefaultCallbacks {}
 
 /// Callbacks for our lints: Passing this to run_compiler will add our lints to the compilation
-struct CarbideLints;
-impl Callbacks for CarbideLints {
+struct NicoLints;
+impl Callbacks for NicoLints {
     fn config(&mut self, config: &mut interface::Config) {
         // Register the lints themselves, so that `#[allow(txn_held_across_await)]` works properly
         config.register_lints = Some(Box::new(|_session, lints| {
@@ -94,7 +94,7 @@ impl Callbacks for CarbideLints {
 
 fn main() {
     let early_dcx = EarlyDiagCtxt::new(ErrorOutputType::default());
-    rustc_driver::install_ice_hook("https://github.com/NVIDIA/carbide/issues/new", |_| ());
+    rustc_driver::install_ice_hook("https://github.com/NVIDIA/nico/issues/new", |_| ());
     let handler = EarlyDiagCtxt::new(ErrorOutputType::HumanReadable {
         kind: HumanReadableErrorType::Default { short: false },
         color_config: ColorConfig::Auto,
@@ -150,7 +150,7 @@ fn main() {
         // We only run our lints for our packages, not dependencies. If CARGO_PRIMARY_PACKAGE is
         // set, we're checking a package in this repo, otherwise just run rustc as-is.
         if std::env::var("CARGO_PRIMARY_PACKAGE").is_ok() {
-            let mut driver = CarbideLints;
+            let mut driver = NicoLints;
             rustc_driver::run_compiler(&args, &mut driver);
         } else {
             let mut driver = DefaultCallbacks;

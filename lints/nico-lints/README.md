@@ -1,7 +1,7 @@
-# carbide-lints
+# nico-lints
 
 This is a custom rustc driver that emits customized lints for things we want to
-enforce in the carbide repo, which are carbide-specific and thus shouldn't be
+enforce in the nico repo, which are nico-specific and thus shouldn't be
 upstreamed into something like clippy.
 
 The (currently) only lint here is `txn_held_across_await`, which enforces that
@@ -9,7 +9,7 @@ if any code is holding a sqlx::Transaction (or one of our wrappers around it),
 that it can't `await` on anything exept for function calls where the same
 Transaction is being passed as a reference.
 
-Run the lints with `cargo make carbide-lints` from the repo root. The relevant
+Run the lints with `cargo make nico-lints` from the repo root. The relevant
 nightly rust will be installed automatically.
 
 ## Why the lint?
@@ -24,7 +24,7 @@ against the overall connection limit, and if any writes have happened inside
 the transaction, the corresponding row can be locked, preventing other
 transactions from making progress.
 
-Perf testing against a version of carbide with all long-running transactions
+Perf testing against a version of nico with all long-running transactions
 removed allows postgres connection limits to be set to something reasonable
 (equal to the number of cores), even when ingesting thousands of hosts. Whereas
 when using long-running transactions, the postgres connection limits need to
@@ -46,7 +46,7 @@ unrelated work is the one that gets the lint.
 ## How does it work?
 
 From the point of view of cargo, it's a simple binary installed as
-`cargo-carbide-lints`, which you can then call as `cargo carbide-lints`.
+`cargo-nico-lints`, which you can then call as `cargo nico-lints`.
 
 From there, it acts as a shim around `rustc`, by calling
 `rustc_driver::run_compiler` inside main.rs.

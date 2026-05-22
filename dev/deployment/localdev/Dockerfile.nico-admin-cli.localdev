@@ -17,10 +17,10 @@
 # limitations under the License.
 #
 
-FROM runtime-container-localdev:latest as carbide
+FROM runtime-container-localdev:latest as nico
 
-WORKDIR /opt/carbide
-COPY .skaffold/target/carbide-admin-cli/debug/carbide-admin-cli /opt/carbide/
-RUN ln -s /opt/carbide/carbide-admin-cli /opt/carbide/forge-admin-cli
+WORKDIR /opt/nico
+COPY .skaffold/target/nico-admin-cli/debug/nico-admin-cli /opt/nico/
+RUN ln -s /opt/nico/nico-admin-cli /opt/nico/nico-admin-cli
 
-ENV PATH="/opt/carbide:${PATH}"
+ENV PATH="/opt/nico:${PATH}"

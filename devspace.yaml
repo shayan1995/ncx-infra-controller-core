@@ -67,7 +67,7 @@ images:
         - dev/deployment/devspace/Dockerfile.machine-a-tron
 
 deployments:
-  carbide-local:
+  nico-local:
     namespace: ${LOCAL_DEV_NAMESPACE}
     updateImageTags: false
     helm:
