@@ -21,11 +21,11 @@ use model::machine::infiniband::{
 
 use crate as rpc;
 
-impl From<MachineInfinibandStatusObservation> for rpc::forge::InfinibandStatusObservation {
+impl From<MachineInfinibandStatusObservation> for rpc::nico::InfinibandStatusObservation {
     fn from(
         ib_status: MachineInfinibandStatusObservation,
-    ) -> rpc::forge::InfinibandStatusObservation {
-        rpc::forge::InfinibandStatusObservation {
+    ) -> rpc::nico::InfinibandStatusObservation {
+        rpc::nico::InfinibandStatusObservation {
             ib_interfaces: ib_status
                 .ib_interfaces
                 .into_iter()
@@ -36,11 +36,11 @@ impl From<MachineInfinibandStatusObservation> for rpc::forge::InfinibandStatusOb
     }
 }
 
-impl From<MachineIbInterfaceStatusObservation> for rpc::forge::MachineIbInterface {
+impl From<MachineIbInterfaceStatusObservation> for rpc::nico::MachineIbInterface {
     fn from(
         machine_ib_interface: MachineIbInterfaceStatusObservation,
-    ) -> rpc::forge::MachineIbInterface {
-        rpc::forge::MachineIbInterface {
+    ) -> rpc::nico::MachineIbInterface {
+        rpc::nico::MachineIbInterface {
             pf_guid: None,
             guid: Some(machine_ib_interface.guid),
             lid: Some(machine_ib_interface.lid as u32),

@@ -21,10 +21,10 @@ use sqlx::FromRow;
 
 // RouteServerSourceType exists because route server addresses are
 // stored with a source type annotating where the address was sourced
-// from, currently either the Carbide config file (ConfigFile), or via
+// from, currently either the NICo config file (ConfigFile), or via
 // the API (AdminApi). This allows route servers to be independently
 // managed by either the config file (update config and restart),
-// the API (make forge-admin-cli calls to dynamically update), or
+// the API (make nico-admin-cli calls to dynamically update), or
 // both. The nice thing is it's entirely up to the site operator
 // as to how they want to manage them.
 #[derive(Copy, Debug, Eq, Hash, PartialEq, Clone, Serialize, Deserialize, sqlx::Type)]

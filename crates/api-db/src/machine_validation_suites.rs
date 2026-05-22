@@ -89,7 +89,7 @@ pub async fn find(
 }
 
 pub fn generate_test_id(name: &str) -> String {
-    format!("forge_{}", name.to_ascii_lowercase())
+    format!("nico_{}", name.to_ascii_lowercase())
 }
 
 pub async fn save(
@@ -359,10 +359,10 @@ mod tests {
 
     #[test]
     fn test_generate_test_id_lowercases_name() {
-        assert_eq!(generate_test_id("MyTest"), "forge_mytest");
-        assert_eq!(generate_test_id("ALLCAPS"), "forge_allcaps");
-        assert_eq!(generate_test_id("already_lower"), "forge_already_lower");
-        assert_eq!(generate_test_id("MiXeD_CaSe_123"), "forge_mixed_case_123");
+        assert_eq!(generate_test_id("MyTest"), "nico_mytest");
+        assert_eq!(generate_test_id("ALLCAPS"), "nico_allcaps");
+        assert_eq!(generate_test_id("already_lower"), "nico_already_lower");
+        assert_eq!(generate_test_id("MiXeD_CaSe_123"), "nico_mixed_case_123");
     }
 
     #[test]

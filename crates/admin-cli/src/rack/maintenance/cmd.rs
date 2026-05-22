@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 
 use super::args::MaintenanceOptions;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 fn resolve_firmware_upgrade_source(
     args: &MaintenanceOptions,
-) -> CarbideCliResult<(String, Option<String>)> {
+) -> NicoCliResult<(String, Option<String>)> {
     let explicit_firmware_upgrade = args.activities.as_ref().is_some_and(|activities| {
         activities
             .iter()
@@ -36,7 +36,7 @@ fn resolve_firmware_upgrade_source(
     let requires_firmware_object_json = explicit_firmware_upgrade || explicit_nvos_update;
 
     if args.firmware_version.is_some() && args.sot_json_file.is_some() {
-        return Err(CarbideCliError::ChooseOneError(
+        return Err(NicoCliError::ChooseOneError(
             "--firmware-version",
             "--sot-json-file",
         ));
@@ -59,33 +59,33 @@ fn resolve_firmware_upgrade_source(
     });
 
     if args.sot_json_file.is_some() && access_token.is_none() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "--access-token is required with --sot-json-file".to_string(),
         ));
     }
     if requires_firmware_object_json && firmware_version.trim().is_empty() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "--activities firmware-upgrade/nvos-update requires SOT JSON from --sot-json-file or --firmware-version"
                 .to_string(),
         ));
     }
     if requires_firmware_object_json && access_token.is_none() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "--activities firmware-upgrade/nvos-update requires --access-token".to_string(),
         ));
     }
     if !requires_firmware_object_json && args.sot_json_file.is_some() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "--sot-json-file requires --activities firmware-upgrade or nvos-update".to_string(),
         ));
     }
     if !requires_firmware_object_json && args.firmware_version.is_some() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "--firmware-version requires --activities firmware-upgrade or nvos-update".to_string(),
         ));
     }
     if !requires_firmware_object_json && args.access_token.is_some() {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "--access-token requires --activities firmware-upgrade or nvos-update".to_string(),
         ));
     }
@@ -99,7 +99,7 @@ fn resolve_firmware_upgrade_source(
 pub async fn on_demand_rack_maintenance(
     api_client: &ApiClient,
     args: MaintenanceOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     use rpc::maintenance_activity_config::Activity as ProtoActivity;
 
     let (firmware_version, access_token) = resolve_firmware_upgrade_source(&args)?;
@@ -156,7 +156,7 @@ pub async fn on_demand_rack_maintenance(
 
 #[cfg(test)]
 mod tests {
-    use carbide_uuid::rack::RackId;
+    use nico_uuid::rack::RackId;
 
     use super::*;
 

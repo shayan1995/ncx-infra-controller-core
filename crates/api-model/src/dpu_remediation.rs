@@ -17,8 +17,8 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
-use carbide_uuid::dpu_remediations::RemediationId;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::dpu_remediations::RemediationId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use sqlx::postgres::PgRow;
 use sqlx::{FromRow, Row};

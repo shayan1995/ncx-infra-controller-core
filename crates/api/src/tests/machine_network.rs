@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::ops::DerefMut;
 use std::time::SystemTime;
 
-use ::rpc::forge::{
+use ::rpc::nico::{
     CreateDpuExtensionServiceRequest, DpuExtensionServiceType, DpuNetworkStatus,
     InstanceDpuExtensionServiceConfig, InstanceDpuExtensionServicesConfig,
     ManagedHostNetworkConfigRequest, ManagedHostNetworkStatusRequest,
@@ -27,7 +27,7 @@ use common::api_fixtures::network_segment::{
     FIXTURE_TENANT_NETWORK_SEGMENT_GATEWAYS, create_network_segment, create_tenant_network_segment,
 };
 use common::api_fixtures::{self, create_managed_host, dpu, network_configured_with_health};
-use forge_secrets::credentials::{BgpCredentialType, CredentialKey, Credentials};
+use nico_secrets::credentials::{BgpCredentialType, CredentialKey, Credentials};
 use mac_address::MacAddress;
 use model::address_selection_strategy::AddressSelectionStrategy;
 use model::allocation_type::AllocationType;
@@ -35,7 +35,7 @@ use model::machine::network::ManagedHostQuarantineMode;
 use model::machine_interface_address::MachineInterfaceAssociation;
 use model::network_segment::NetworkSegmentType;
 use rpc::Metadata;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 
 use crate::cfg::file::{
     AdminFnnConfig, FnnConfig, FnnRoutingProfileConfig, PrefixFilterPolicyEntry, RouteTargetConfig,
@@ -152,10 +152,10 @@ async fn test_managed_host_network_config_includes_routing_profile_prefix_lists(
     // Create a tenant and FNN VPC using that routing profile.
     let tenant = env
         .api
-        .create_tenant(tonic::Request::new(rpc::forge::CreateTenantRequest {
+        .create_tenant(tonic::Request::new(rpc::nico::CreateTenantRequest {
             organization_id: "route-leak-test".to_string(),
             routing_profile_type: Some(profile_type.to_string()),
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "route-leak-test".to_string(),
                 description: "".to_string(),
                 labels: vec![],
@@ -174,7 +174,7 @@ async fn test_managed_host_network_config_includes_routing_profile_prefix_lists(
                     name: "route leak vpc".to_string(),
                     ..Default::default()
                 })
-                .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                 .routing_profile_type(profile_type.to_string())
                 .rpc(),
         )
@@ -273,10 +273,10 @@ async fn test_managed_host_network_config_includes_per_vpc_routing_profiles(pool
     // Create a tenant that can use both routing profiles.
     let tenant = env
         .api
-        .create_tenant(tonic::Request::new(rpc::forge::CreateTenantRequest {
+        .create_tenant(tonic::Request::new(rpc::nico::CreateTenantRequest {
             organization_id: "per-vpc-routing-profile".to_string(),
             routing_profile_type: Some("INTERNAL".to_string()),
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "per-vpc-routing-profile".to_string(),
                 description: "".to_string(),
                 labels: vec![],
@@ -297,7 +297,7 @@ async fn test_managed_host_network_config_includes_per_vpc_routing_profiles(pool
                     name: "internal profile vpc".to_string(),
                     ..Default::default()
                 })
-                .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                 .routing_profile_type("INTERNAL".to_string())
                 .rpc(),
         ))
@@ -323,7 +323,7 @@ async fn test_managed_host_network_config_includes_per_vpc_routing_profiles(pool
                     name: "external profile vpc".to_string(),
                     ..Default::default()
                 })
-                .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                 .routing_profile_type("EXTERNAL".to_string())
                 .rpc(),
         ))
@@ -419,10 +419,10 @@ async fn test_managed_host_network_config_omits_fnn_vrf_loopback_by_default(pool
     // Create a tenant and FNN segment with the default disabled loopback setting.
     let tenant = env
         .api
-        .create_tenant(tonic::Request::new(rpc::forge::CreateTenantRequest {
+        .create_tenant(tonic::Request::new(rpc::nico::CreateTenantRequest {
             organization_id: "fnn-loopback-default".to_string(),
             routing_profile_type: Some("INTERNAL".to_string()),
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "fnn-loopback-default".to_string(),
                 ..Default::default()
             }),
@@ -440,7 +440,7 @@ async fn test_managed_host_network_config_omits_fnn_vrf_loopback_by_default(pool
                     name: "fnn loopback default vpc".to_string(),
                     ..Default::default()
                 })
-                .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                 .routing_profile_type("INTERNAL".to_string())
                 .rpc(),
         )
@@ -496,10 +496,10 @@ async fn test_managed_host_network_config_includes_fnn_vrf_loopback_when_enabled
     // Create a tenant and FNN segment with loopback allocation enabled.
     let tenant = env
         .api
-        .create_tenant(tonic::Request::new(rpc::forge::CreateTenantRequest {
+        .create_tenant(tonic::Request::new(rpc::nico::CreateTenantRequest {
             organization_id: "fnn-loopback-enabled".to_string(),
             routing_profile_type: Some("INTERNAL".to_string()),
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "fnn-loopback-enabled".to_string(),
                 ..Default::default()
             }),
@@ -517,7 +517,7 @@ async fn test_managed_host_network_config_includes_fnn_vrf_loopback_when_enabled
                     name: "fnn loopback enabled vpc".to_string(),
                     ..Default::default()
                 })
-                .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                 .routing_profile_type("INTERNAL".to_string())
                 .rpc(),
         )
@@ -703,7 +703,7 @@ async fn test_managed_host_network_config_multi_dpu(pool: sqlx::PgPool) {
         "ADMIN_2",
         "192.0.12.0/24",
         "192.0.12.1",
-        rpc::forge::NetworkSegmentType::Admin,
+        rpc::nico::NetworkSegmentType::Admin,
         None,
         true,
     )
@@ -995,7 +995,7 @@ async fn test_managed_host_network_status(pool: sqlx::PgPool) {
     // Query the aggregate health.
     let reported_health = env
         .api
-        .find_machines_by_ids(tonic::Request::new(rpc::forge::MachinesByIdsRequest {
+        .find_machines_by_ids(tonic::Request::new(rpc::nico::MachinesByIdsRequest {
             machine_ids: vec![mh.dpu().id],
             include_history: false,
         }))
@@ -1062,10 +1062,10 @@ async fn test_managed_host_network_config_with_extension_services(pool: sqlx::Pg
     let default_tenant_org = "best_org";
     let _ = env
         .api
-        .create_tenant(tonic::Request::new(rpc::forge::CreateTenantRequest {
+        .create_tenant(tonic::Request::new(rpc::nico::CreateTenantRequest {
             organization_id: default_tenant_org.to_string(),
             routing_profile_type: None,
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: default_tenant_org.to_string(),
                 description: "".to_string(),
                 labels: vec![],
@@ -1253,7 +1253,7 @@ async fn test_retain_in_alert_since(pool: sqlx::PgPool) {
     // Query the new HealthReport format
     let reported_health = env
         .api
-        .find_machines_by_ids(tonic::Request::new(rpc::forge::MachinesByIdsRequest {
+        .find_machines_by_ids(tonic::Request::new(rpc::nico::MachinesByIdsRequest {
             machine_ids: vec![dpu_machine_id],
             include_history: false,
         }))
@@ -1280,7 +1280,7 @@ async fn test_retain_in_alert_since(pool: sqlx::PgPool) {
     network_configured_with_health(&env, &dpu_machine_id, Some(dpu_health.clone())).await;
     let reported_health = env
         .api
-        .find_machines_by_ids(tonic::Request::new(rpc::forge::MachinesByIdsRequest {
+        .find_machines_by_ids(tonic::Request::new(rpc::nico::MachinesByIdsRequest {
             machine_ids: vec![dpu_machine_id],
             include_history: false,
         }))
@@ -1315,7 +1315,7 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
         let quarantine_state = env
             .api
             .get_managed_host_quarantine_state(tonic::Request::new(
-                rpc::forge::GetManagedHostQuarantineStateRequest {
+                rpc::nico::GetManagedHostQuarantineStateRequest {
                     machine_id: Some(host_machine_id),
                 },
             ))
@@ -1333,7 +1333,7 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
     {
         let ids = env
             .api
-            .find_machine_ids(tonic::Request::new(rpc::forge::MachineSearchConfig {
+            .find_machine_ids(tonic::Request::new(rpc::nico::MachineSearchConfig {
                 only_quarantine: true,
                 ..Default::default()
             }))
@@ -1351,10 +1351,10 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
         let set_result = env
             .api
             .set_managed_host_quarantine_state(tonic::Request::new(
-                rpc::forge::SetManagedHostQuarantineStateRequest {
+                rpc::nico::SetManagedHostQuarantineStateRequest {
                     machine_id: Some(host_machine_id),
-                    quarantine_state: Some(rpc::forge::ManagedHostQuarantineState {
-                        mode: rpc::forge::ManagedHostQuarantineMode::BlockAllTraffic as i32,
+                    quarantine_state: Some(rpc::nico::ManagedHostQuarantineState {
+                        mode: rpc::nico::ManagedHostQuarantineMode::BlockAllTraffic as i32,
                         reason: Some("test reason 1".to_string()),
                     }),
                 },
@@ -1372,7 +1372,7 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
     {
         let ids = env
             .api
-            .find_machine_ids(tonic::Request::new(rpc::forge::MachineSearchConfig {
+            .find_machine_ids(tonic::Request::new(rpc::nico::MachineSearchConfig {
                 only_quarantine: true,
                 ..Default::default()
             }))
@@ -1408,7 +1408,7 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
         let quarantine_state = env
             .api
             .get_managed_host_quarantine_state(tonic::Request::new(
-                rpc::forge::GetManagedHostQuarantineStateRequest {
+                rpc::nico::GetManagedHostQuarantineStateRequest {
                     machine_id: Some(host_machine_id),
                 },
             ))
@@ -1432,10 +1432,10 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
         let set_result = env
             .api
             .set_managed_host_quarantine_state(tonic::Request::new(
-                rpc::forge::SetManagedHostQuarantineStateRequest {
+                rpc::nico::SetManagedHostQuarantineStateRequest {
                     machine_id: Some(host_machine_id),
-                    quarantine_state: Some(rpc::forge::ManagedHostQuarantineState {
-                        mode: rpc::forge::ManagedHostQuarantineMode::BlockAllTraffic as i32,
+                    quarantine_state: Some(rpc::nico::ManagedHostQuarantineState {
+                        mode: rpc::nico::ManagedHostQuarantineMode::BlockAllTraffic as i32,
                         reason: Some("test reason 2".to_string()),
                     }),
                 },
@@ -1475,7 +1475,7 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
         let quarantine_state = env
             .api
             .get_managed_host_quarantine_state(tonic::Request::new(
-                rpc::forge::GetManagedHostQuarantineStateRequest {
+                rpc::nico::GetManagedHostQuarantineStateRequest {
                     machine_id: Some(host_machine_id),
                 },
             ))
@@ -1499,7 +1499,7 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
         let clear_result = env
             .api
             .clear_managed_host_quarantine_state(tonic::Request::new(
-                rpc::forge::ClearManagedHostQuarantineStateRequest {
+                rpc::nico::ClearManagedHostQuarantineStateRequest {
                     machine_id: Some(host_machine_id),
                 },
             ))
@@ -1533,7 +1533,7 @@ async fn test_quarantine_state_crud(pool: sqlx::PgPool) -> Result<(), Box<dyn st
     {
         let ids = env
             .api
-            .find_machine_ids(tonic::Request::new(rpc::forge::MachineSearchConfig {
+            .find_machine_ids(tonic::Request::new(rpc::nico::MachineSearchConfig {
                 only_quarantine: true,
                 ..Default::default()
             }))

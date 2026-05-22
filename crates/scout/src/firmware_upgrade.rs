@@ -38,7 +38,7 @@ pub struct FirmwareUpgradeResult {
     pub error: String,
 }
 
-// handle_firmware_upgrade downloads file artifacts and a script from carbide-api,
+// handle_firmware_upgrade downloads file artifacts and a script from nico-api,
 // then executes the script on the host.
 pub async fn handle_firmware_upgrade(
     client: &reqwest::Client,

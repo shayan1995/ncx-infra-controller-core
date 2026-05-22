@@ -19,7 +19,7 @@ use core::fmt;
 use std::fmt::Display;
 use std::net::IpAddr;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use sqlx::postgres::PgRow;
 use sqlx::{FromRow, Row};
 

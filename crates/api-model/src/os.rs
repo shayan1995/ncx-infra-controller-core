@@ -72,7 +72,7 @@ pub struct OperatingSystem {
     /// instructions for installing on a local disk, the installation would be repeated
     /// on the reboot.
     ///
-    /// If the flag is set to `false` or not specified, Forge will only provide
+    /// If the flag is set to `false` or not specified, NICo will only provide
     /// iPXE instructions that are defined by the OS definition on the first boot attempt.
     /// For every subsequent boot, the instance will use the default boot action - which
     /// is usually to boot from the hard drive.

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use db::resource_pool::ResourcePoolDatabaseError;
 use db::{AnnotatedSqlxError, DatabaseError, ObjectColumnFilter, network_segment};
 use model::network_segment::{
@@ -25,7 +25,7 @@ use model::vpc::VpcVirtualizationTypeCapabilities;
 use sqlx::{PgConnection, PgTransaction};
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 
 pub(crate) async fn find_ids(
@@ -58,13 +58,13 @@ pub(crate) async fn find_by_ids(
 
     let max_find_by_ids = api.runtime_config.max_find_by_ids as usize;
     if network_segments_ids.len() > max_find_by_ids {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "no more than {max_find_by_ids} IDs can be accepted"
         ))
         .into());
     } else if network_segments_ids.is_empty() {
         return Err(
-            CarbideError::InvalidArgument("at least one ID must be provided".to_string()).into(),
+            NicoError::InvalidArgument("at least one ID must be provided".to_string()).into(),
         );
     }
 
@@ -121,7 +121,7 @@ pub(crate) async fn create(
                 "One or more requested network segment prefixes were not contained \
                         within the configured site fabric prefixes: {uncontained_prefixes}"
             );
-            return Err(CarbideError::InvalidArgument(msg).into());
+            return Err(NicoError::InvalidArgument(msg).into());
         }
     }
 
@@ -136,7 +136,7 @@ pub(crate) async fn create(
 
         let vpc = vpcs
             .first()
-            .ok_or_else(|| CarbideError::internal(format!("VPC ID: {vpc_id} not found.")))?;
+            .ok_or_else(|| NicoError::internal(format!("VPC ID: {vpc_id} not found.")))?;
 
         let virtualization_type = vpc.network_virtualization_type;
 
@@ -145,7 +145,7 @@ pub(crate) async fn create(
         // on the VPC's virtualization type; see `model::vpc::capability`.
         virtualization_type
             .ensure_supports_segment(&new_network_segment)
-            .map_err(CarbideError::from)?;
+            .map_err(NicoError::from)?;
         virtualization_type.allocates_svi_for(&new_network_segment)
     } else {
         false
@@ -168,7 +168,7 @@ pub(crate) async fn delete(
 
     let rpc::NetworkSegmentDeletionRequest { id, .. } = request.into_inner();
 
-    let segment_id = id.ok_or_else(|| CarbideError::MissingArgument("id"))?;
+    let segment_id = id.ok_or_else(|| NicoError::MissingArgument("id"))?;
 
     let mut segments = db::network_segment::find_by(
         &mut txn,
@@ -180,7 +180,7 @@ pub(crate) async fn delete(
     let segment = match segments.len() {
         1 => segments.remove(0),
         _ => {
-            return Err(CarbideError::NotFoundError {
+            return Err(NicoError::NotFoundError {
                 kind: "network segment",
                 id: segment_id.to_string(),
             }
@@ -206,7 +206,7 @@ pub(crate) async fn for_vpc(
 
     let rpc::VpcSearchQuery { id, .. } = request.into_inner();
 
-    let uuid = id.ok_or_else(|| CarbideError::InvalidArgument("id".to_string()))?;
+    let uuid = id.ok_or_else(|| NicoError::InvalidArgument("id".to_string()))?;
 
     let results = db::network_segment::for_vpc(&api.database_connection, uuid).await?;
 
@@ -228,13 +228,13 @@ pub(crate) async fn find_state_histories(
 
     let max_find_by_ids = api.runtime_config.max_find_by_ids as usize;
     if segment_ids.len() > max_find_by_ids {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "no more than {max_find_by_ids} IDs can be accepted"
         ))
         .into());
     } else if segment_ids.is_empty() {
         return Err(
-            CarbideError::InvalidArgument("at least one ID must be provided".to_string()).into(),
+            NicoError::InvalidArgument("at least one ID must be provided".to_string()).into(),
         );
     }
 
@@ -269,7 +269,7 @@ pub(crate) async fn save(
     mut ns: NewNetworkSegment,
     set_to_ready: bool,
     allocate_svi_ip: bool,
-) -> Result<NetworkSegment, CarbideError> {
+) -> Result<NetworkSegment, NicoError> {
     if ns.segment_type != NetworkSegmentType::Underlay {
         ns.vlan_id = Some(allocate_vlan_id(api, txn, &ns.name).await?);
         ns.vni = Some(allocate_vni(api, txn, &ns.name).await?);
@@ -285,7 +285,7 @@ pub(crate) async fn save(
             source: sqlx::Error::Database(e),
             ..
         })) if e.constraint() == Some("network_prefixes_prefix_excl") => {
-            return Err(CarbideError::InvalidArgument(
+            return Err(NicoError::InvalidArgument(
                 "Prefix overlaps with an existing one".to_string(),
             ));
         }
@@ -305,7 +305,7 @@ pub(crate) async fn save(
 
         network_segment = network_segments
             .first()
-            .ok_or_else(|| CarbideError::NotFoundError {
+            .ok_or_else(|| NicoError::NotFoundError {
                 kind: "NetworkSegment",
                 id: network_segment.id.to_string(),
             })?
@@ -322,7 +322,7 @@ pub async fn allocate_vni(
     api: &Api,
     txn: &mut PgConnection,
     owner_id: &str,
-) -> Result<i32, CarbideError> {
+) -> Result<i32, NicoError> {
     match db::resource_pool::allocate(
         &api.common_pools.ethernet.pool_vni,
         txn,
@@ -337,7 +337,7 @@ pub async fn allocate_vni(
             model::resource_pool::ResourcePoolError::Empty,
         )) => {
             tracing::error!(owner_id, pool = "vni", "Pool exhausted, cannot allocate");
-            Err(CarbideError::ResourceExhausted("pool vni".to_string()))
+            Err(NicoError::ResourceExhausted("pool vni".to_string()))
         }
         Err(err) => {
             tracing::error!(owner_id, error = %err, pool = "vni", "Error allocating from resource pool");
@@ -353,7 +353,7 @@ pub async fn allocate_vlan_id(
     api: &Api,
     txn: &mut PgConnection,
     owner_id: &str,
-) -> Result<i16, CarbideError> {
+) -> Result<i16, NicoError> {
     match db::resource_pool::allocate(
         &api.common_pools.ethernet.pool_vlan_id,
         txn,
@@ -372,7 +372,7 @@ pub async fn allocate_vlan_id(
                 pool = "vlan_id",
                 "Pool exhausted, cannot allocate"
             );
-            Err(CarbideError::ResourceExhausted("pool vlan_id".to_string()))
+            Err(NicoError::ResourceExhausted("pool vlan_id".to_string()))
         }
         Err(err) => {
             tracing::error!(owner_id, error = %err, pool = "vlan_id", "Error allocating from resource pool");

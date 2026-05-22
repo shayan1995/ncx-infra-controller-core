@@ -16,16 +16,16 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 
 use super::args::{NvlinkInfoArgs, NvlinkInfoPopulateArgs};
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 pub async fn handle_nvlink_info_show(
     args: NvlinkInfoArgs,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let machine = api_client.get_machine(args.machine_id).await?;
 
     // Check if this is an MNNVL machine (GB200)
@@ -37,7 +37,7 @@ pub async fn handle_nvlink_info_show(
         .unwrap_or(false);
 
     if !is_mnnvl {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "Machine {} is not an MNNVL machine",
             args.machine_id
         )));
@@ -48,7 +48,7 @@ pub async fn handle_nvlink_info_show(
             println!("{}", serde_json::to_string_pretty(&nvlink_info)?);
         }
         None => {
-            return Err(CarbideCliError::GenericError(format!(
+            return Err(NicoCliError::GenericError(format!(
                 "Machine {} has no nvlink_info in database",
                 args.machine_id
             )));
@@ -62,7 +62,7 @@ pub async fn handle_nvlink_info_populate(
     args: NvlinkInfoPopulateArgs,
     _output_format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let machine = api_client.get_machine(args.machine_id).await?;
     let update_db = args.update_db;
 
@@ -75,7 +75,7 @@ pub async fn handle_nvlink_info_populate(
         .unwrap_or(false);
 
     if !is_mnnvl {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "Machine {} is not an MNNVL machine",
             args.machine_id
         )));
@@ -85,7 +85,7 @@ pub async fn handle_nvlink_info_populate(
         .bmc_info
         .as_ref()
         .and_then(|b| b.ip.clone())
-        .ok_or_else(|| CarbideCliError::GenericError("No BMC IP available".to_string()))?;
+        .ok_or_else(|| NicoCliError::GenericError("No BMC IP available".to_string()))?;
 
     // Fetch Redfish data first (serial + tray are required to resolve the NMX-C endpoint mapping).
     let uri = format!("https://{}/redfish/v1/Chassis/CBC_0", bmc_ip);
@@ -94,10 +94,10 @@ pub async fn handle_nvlink_info_populate(
         .0
         .redfish_browse(uri.clone())
         .await
-        .map_err(|e| CarbideCliError::GenericError(format!("Redfish call failed: {}", e)))?;
+        .map_err(|e| NicoCliError::GenericError(format!("Redfish call failed: {}", e)))?;
 
     let json: serde_json::Value = serde_json::from_str(&redfish_response.text).map_err(|e| {
-        CarbideCliError::GenericError(format!("Failed to parse Redfish response: {}", e))
+        NicoCliError::GenericError(format!("Failed to parse Redfish response: {}", e))
     })?;
 
     // Extract Oem.Nvidia.ComputeTrayIndex
@@ -108,7 +108,7 @@ pub async fn handle_nvlink_info_populate(
         .and_then(|v| v.as_i64())
         .map(|v| v as i32)
         .ok_or_else(|| {
-            CarbideCliError::GenericError("No tray_index found in Redfish response".to_string())
+            NicoCliError::GenericError("No tray_index found in Redfish response".to_string())
         })?;
 
     // Extract SerialNumber
@@ -117,24 +117,24 @@ pub async fn handle_nvlink_info_populate(
         .and_then(|s| s.as_str())
         .map(|s| s.to_string())
         .ok_or_else(|| {
-            CarbideCliError::GenericError("No SerialNumber found in Redfish response".to_string())
+            NicoCliError::GenericError("No SerialNumber found in Redfish response".to_string())
         })?;
 
     // Get domain UUID and GPUs by tray index
     let gpu_list_response = api_client
         .0
-        .nmxc_browse(forgerpc::NmxcBrowseRequest {
+        .nmxc_browse(nicorpc::NmxcBrowseRequest {
             chassis_serial: serial_number.clone(),
-            operation: forgerpc::NmxcBrowseOperation::GpuInfoList as i32,
+            operation: nicorpc::NmxcBrowseOperation::GpuInfoList as i32,
             gpu_uid: 0,
         })
         .await
         .map_err(|e| {
-            CarbideCliError::GenericError(format!("Failed to fetch NMX-C GPU list: {}", e))
+            NicoCliError::GenericError(format!("Failed to fetch NMX-C GPU list: {}", e))
         })?;
 
     if gpu_list_response.code < 200 || gpu_list_response.code >= 300 {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "NMX-C GPU list request failed with HTTP {}: {}",
             gpu_list_response.code, gpu_list_response.body
         )));
@@ -142,7 +142,7 @@ pub async fn handle_nvlink_info_populate(
 
     let list_json: serde_json::Value =
         serde_json::from_str(&gpu_list_response.body).map_err(|e| {
-            CarbideCliError::GenericError(format!("Failed to parse NMX-C GPU list response: {}", e))
+            NicoCliError::GenericError(format!("Failed to parse NMX-C GPU list response: {}", e))
         })?;
 
     let domain_uuid = list_json
@@ -151,21 +151,21 @@ pub async fn handle_nvlink_info_populate(
         .and_then(|v| v.as_str())
         .filter(|s| !s.is_empty())
         .ok_or_else(|| {
-            CarbideCliError::GenericError("No domain_uuid in NMX-C server_header".to_string())
+            NicoCliError::GenericError("No domain_uuid in NMX-C server_header".to_string())
         })?
         .parse::<uuid::Uuid>()
         .map_err(|e| {
-            CarbideCliError::GenericError(format!("Failed to parse domain_uuid: {}", e))
+            NicoCliError::GenericError(format!("Failed to parse domain_uuid: {}", e))
         })?;
 
     let gpus_json = list_json
         .get("gpu_info_list")
         .and_then(|v| v.as_array())
         .ok_or_else(|| {
-            CarbideCliError::GenericError("No Gpus array in NMX-C GPU list response".to_string())
+            NicoCliError::GenericError("No Gpus array in NMX-C GPU list response".to_string())
         })?;
 
-    let mut gpus: Vec<forgerpc::NvLinkGpu> = Vec::new();
+    let mut gpus: Vec<nicorpc::NvLinkGpu> = Vec::new();
     for gpu_json in gpus_json {
         let gpu_tray_index = gpu_json
             .get("loc")
@@ -173,7 +173,7 @@ pub async fn handle_nvlink_info_populate(
             .and_then(|v| v.as_i64())
             .map(|v| v as i32)
             .ok_or_else(|| {
-                CarbideCliError::GenericError(
+                NicoCliError::GenericError(
                     "GPU entry missing loc.tray_index in NMX-C GPU list response".to_string(),
                 )
             })?;
@@ -186,7 +186,7 @@ pub async fn handle_nvlink_info_populate(
             .and_then(|v| v.as_i64())
             .map(|v| v as i32)
             .ok_or_else(|| {
-                CarbideCliError::GenericError(
+                NicoCliError::GenericError(
                     "GPU entry missing gpu_id in NMX-C GPU list response".to_string(),
                 )
             })?;
@@ -194,7 +194,7 @@ pub async fn handle_nvlink_info_populate(
             .get("gpu_uid")
             .and_then(|v| v.as_u64())
             .ok_or_else(|| {
-                CarbideCliError::GenericError(
+                NicoCliError::GenericError(
                     "GPU entry missing gpu_uid in NMX-C GPU list response".to_string(),
                 )
             })?;
@@ -204,12 +204,12 @@ pub async fn handle_nvlink_info_populate(
             .and_then(|v| v.as_i64())
             .map(|v| v as i32)
             .ok_or_else(|| {
-                CarbideCliError::GenericError(
+                NicoCliError::GenericError(
                     "GPU entry missing loc.slot_id in NMX-C GPU list response".to_string(),
                 )
             })?;
 
-        gpus.push(forgerpc::NvLinkGpu {
+        gpus.push(nicorpc::NvLinkGpu {
             device_id: gpu_device_id,
             guid: gpu_device_uid,
             tray_index: gpu_tray_index,
@@ -218,15 +218,15 @@ pub async fn handle_nvlink_info_populate(
     }
 
     if gpus.is_empty() {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "No GPUs in NMX-C GPU list with tray_index={} (chassis serial {})",
             tray_index, serial_number
         )));
     }
 
     // Build the nvlink_info structure for RPC
-    let nvlink_info_rpc = forgerpc::MachineNvLinkInfo {
-        domain_uuid: Some(carbide_uuid::nvlink::NvLinkDomainId::from(domain_uuid)),
+    let nvlink_info_rpc = nicorpc::MachineNvLinkInfo {
+        domain_uuid: Some(nico_uuid::nvlink::NvLinkDomainId::from(domain_uuid)),
         gpus: gpus.clone(),
         chassis_serial: serial_number.clone(),
     };

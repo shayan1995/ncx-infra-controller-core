@@ -189,7 +189,7 @@ fn proto_match_mode_to_rust(mode: i32) -> Result<MatchMode, String> {
 
 #[cfg(test)]
 mod tests {
-    use carbide_libmlx_model::device::info::MlxDeviceInfo;
+    use nico_libmlx_model::device::info::MlxDeviceInfo;
     use chrono::Utc;
 
     use super::*;

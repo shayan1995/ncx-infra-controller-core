@@ -17,16 +17,16 @@
 
 //! Handler for RackState::Error.
 
-use carbide_rack_controller::context::RackStateHandlerContextObjects;
-use carbide_rack_controller::maintenance::first_maintenance_state;
-use carbide_rack_controller::ready::all_components_ready;
-use carbide_uuid::rack::RackId;
+use nico_rack_controller::context::RackStateHandlerContextObjects;
+use nico_rack_controller::maintenance::first_maintenance_state;
+use nico_rack_controller::ready::all_components_ready;
+use nico_uuid::rack::RackId;
 use model::rack::{Rack, RackConfig, RackState};
 use state_controller::state_handler::{
     StateHandlerContext, StateHandlerError, StateHandlerOutcome,
 };
 
-use crate as carbide_rack_controller;
+use crate as nico_rack_controller;
 
 pub async fn handle_error(
     id: &RackId,

@@ -21,7 +21,7 @@ use crate::DatabaseError;
 
 pub type IsFirstObservation = bool;
 
-/// Mark the given version as the latest forge/carbide version.
+/// Mark the given version as the latest nico/nico version.
 ///
 /// Any other version (which is not already superseded) will be marked as superseded at the current
 /// date/time. This should lead to exactly one non-superseded version at any time.
@@ -31,7 +31,7 @@ pub async fn observe_as_latest_version(
 ) -> Result<IsFirstObservation, DatabaseError> {
     // Is this version already present?
     let id: Option<uuid::Uuid> = {
-        let query = "SELECT id FROM forge_versions WHERE version = $1 LIMIT 1";
+        let query = "SELECT id FROM nico_versions WHERE version = $1 LIMIT 1";
         sqlx::query_scalar(query)
             .bind(version)
             .fetch_optional(&mut *txn)
@@ -45,7 +45,7 @@ pub async fn observe_as_latest_version(
 
     // No? Ok, then first mark all other versions as superseded, before inserting a new one.
     let superseded_count = {
-        let query = "UPDATE forge_versions SET superseded = now() WHERE superseded IS NULL";
+        let query = "UPDATE nico_versions SET superseded = now() WHERE superseded IS NULL";
         sqlx::query(query)
             .execute(&mut *txn)
             .await
@@ -56,17 +56,17 @@ pub async fn observe_as_latest_version(
     if superseded_count == 0 {
         tracing::warn!(
             version,
-            "observed a new forge version, but it didn't supersede anything. might be first deployment."
+            "observed a new nico version, but it didn't supersede anything. might be first deployment."
         );
     } else if superseded_count > 1 {
         tracing::warn!(
             version,
-            "observed a new forge version, superseded {superseded_count} versions"
+            "observed a new nico version, superseded {superseded_count} versions"
         );
     }
 
     {
-        let query = "INSERT INTO forge_versions (version) VALUES ($1)";
+        let query = "INSERT INTO nico_versions (version) VALUES ($1)";
         sqlx::query(query)
             .bind(version)
             .execute(txn)
@@ -82,7 +82,7 @@ pub async fn date_superseded(
     txn: &mut PgConnection,
     version: &str,
 ) -> Result<Option<DateTime<Utc>>, DatabaseError> {
-    let query = "SELECT superseded FROM forge_versions WHERE version = $1";
+    let query = "SELECT superseded FROM nico_versions WHERE version = $1";
 
     // double-option here because it's a nullable value *and* the query may not return a row.
     let result: Option<Option<DateTime<Utc>>> = sqlx::query_scalar(query)
@@ -100,7 +100,7 @@ pub async fn make_mock_observation(
     version: &str,
     superseded: Option<DateTime<Utc>>,
 ) -> Result<(), DatabaseError> {
-    let query = "INSERT INTO forge_versions (version, superseded, first_seen) VALUES ($1, $2, $3)";
+    let query = "INSERT INTO nico_versions (version, superseded, first_seen) VALUES ($1, $2, $3)";
     sqlx::query(query)
         .bind(version)
         .bind(superseded)

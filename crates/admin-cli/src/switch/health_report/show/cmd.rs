@@ -18,7 +18,7 @@
 use ::rpc::admin_cli::OutputFormat;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::health_utils;
 use crate::rpc::ApiClient;
 
@@ -26,7 +26,7 @@ pub async fn show(
     api_client: &ApiClient,
     args: Args,
     format: OutputFormat,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let response = api_client
         .0
         .list_switch_health_reports(args.switch_id)

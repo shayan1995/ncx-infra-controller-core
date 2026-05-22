@@ -16,7 +16,7 @@
  */
 
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 // Run is a trait implemented by leaf argument structs,
 // allowing them to execute themselves given a RuntimeContext.
@@ -27,5 +27,5 @@ pub(crate) trait Run {
     fn run(
         self,
         ctx: &mut RuntimeContext,
-    ) -> impl std::future::Future<Output = CarbideCliResult<()>>;
+    ) -> impl std::future::Future<Output = NicoCliResult<()>>;
 }

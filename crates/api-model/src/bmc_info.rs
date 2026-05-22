@@ -18,7 +18,7 @@ use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use carbide_uuid::machine::MachineInterfaceId;
+use nico_uuid::machine::MachineInterfaceId;
 use eyre::{Report, eyre};
 use mac_address::MacAddress;
 use serde::{Deserialize, Serialize};

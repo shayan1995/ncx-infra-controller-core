@@ -16,9 +16,9 @@
  */
 use std::net::IpAddr;
 
-use carbide_network::ip::{IdentifyAddressFamily, IpAddressFamily};
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
-use carbide_uuid::network::NetworkSegmentId;
+use nico_network::ip::{IdentifyAddressFamily, IpAddressFamily};
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
+use nico_uuid::network::NetworkSegmentId;
 use mac_address::MacAddress;
 use model::allocation_type::{AllocationType, AssignStaticResult};
 use model::network_segment::NetworkSegmentType;

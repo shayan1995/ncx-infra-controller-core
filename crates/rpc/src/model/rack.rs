@@ -19,15 +19,15 @@ use model::rack::{Rack, RackSearchFilter, derive_rack_aggregate_health};
 
 use crate as rpc;
 use crate::Timestamp;
-use crate::forge::LifecycleStatus;
+use crate::nico::LifecycleStatus;
 
-impl From<Rack> for rpc::forge::Rack {
+impl From<Rack> for rpc::nico::Rack {
     fn from(value: Rack) -> Self {
         let health = derive_rack_aggregate_health(&value.health_reports);
         let health_sources = value
             .health_reports
             .iter()
-            .map(|(hr, m)| rpc::forge::HealthSourceOrigin {
+            .map(|(hr, m)| rpc::nico::HealthSourceOrigin {
                 mode: m as i32,
                 source: hr.source.clone(),
             })
@@ -37,13 +37,13 @@ impl From<Rack> for rpc::forge::Rack {
             state: serde_json::to_string(&value.controller_state.value).unwrap_or_default(),
             version: value.controller_state.version.version_string(),
             state_reason: value.controller_state_outcome.map(Into::into),
-            sla: Some(rpc::forge::StateSla {
+            sla: Some(rpc::nico::StateSla {
                 sla: None, // TODO: Calculate SLA properly
                 time_in_state_above_sla: false,
             }),
         };
 
-        rpc::forge::Rack {
+        rpc::nico::Rack {
             id: Some(value.id),
             rack_state: value.controller_state.value.to_string(),
             created: Some(Timestamp::from(value.created)),
@@ -51,8 +51,8 @@ impl From<Rack> for rpc::forge::Rack {
             deleted: value.deleted.map(Timestamp::from),
             metadata: Some(value.metadata.into()),
             version: value.version.version_string(),
-            config: Some(rpc::forge::RackConfig {}),
-            status: Some(rpc::forge::RackStatus {
+            config: Some(rpc::nico::RackConfig {}),
+            status: Some(rpc::nico::RackStatus {
                 health: Some(health.into()),
                 health_sources,
                 lifecycle: Some(lifecycle),
@@ -61,8 +61,8 @@ impl From<Rack> for rpc::forge::Rack {
     }
 }
 
-impl From<rpc::forge::RackSearchFilter> for RackSearchFilter {
-    fn from(filter: rpc::forge::RackSearchFilter) -> Self {
+impl From<rpc::nico::RackSearchFilter> for RackSearchFilter {
+    fn from(filter: rpc::nico::RackSearchFilter) -> Self {
         RackSearchFilter {
             label: filter.label.map(model::metadata::LabelFilter::from),
         }
@@ -77,8 +77,8 @@ mod tests {
 
     #[test]
     fn rack_search_filter_from_rpc_with_label_key_and_value() {
-        let rpc_filter = rpc::forge::RackSearchFilter {
-            label: Some(rpc::forge::Label {
+        let rpc_filter = rpc::nico::RackSearchFilter {
+            label: Some(rpc::nico::Label {
                 key: LABEL_LOCATION_DATACENTER.to_string(),
                 value: Some("az01".to_string()),
             }),
@@ -91,8 +91,8 @@ mod tests {
 
     #[test]
     fn rack_search_filter_from_rpc_with_label_key_only() {
-        let rpc_filter = rpc::forge::RackSearchFilter {
-            label: Some(rpc::forge::Label {
+        let rpc_filter = rpc::nico::RackSearchFilter {
+            label: Some(rpc::nico::Label {
                 key: LABEL_CHASSIS_MANUFACTURER.to_string(),
                 value: None,
             }),
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn rack_search_filter_from_rpc_no_label() {
-        let rpc_filter = rpc::forge::RackSearchFilter { label: None };
+        let rpc_filter = rpc::nico::RackSearchFilter { label: None };
         let filter = RackSearchFilter::from(rpc_filter);
         assert!(filter.label.is_none());
     }

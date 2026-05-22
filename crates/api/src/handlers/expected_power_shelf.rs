@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use db::{DatabaseError, expected_power_shelf as db_expected_power_shelf};
 use mac_address::MacAddress;
 use model::expected_power_shelf::{ExpectedPowerShelf, ExpectedPowerShelfRequest};
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::Api;
 use crate::handlers::machine_interface_address::update_preallocated_machine_interface;
 
@@ -34,22 +34,22 @@ pub async fn add_expected_power_shelf(
         rpc_power_shelf
             .try_into()
             .map_err(|e: ::rpc::errors::RpcDataConversionError| {
-                CarbideError::InvalidArgument(e.to_string())
+                NicoError::InvalidArgument(e.to_string())
             })?;
 
     let mut txn = api
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
     db_expected_power_shelf::create(&mut txn, power_shelf)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -65,22 +65,22 @@ pub async fn delete_expected_power_shelf(
             .into_inner()
             .try_into()
             .map_err(|e: ::rpc::errors::RpcDataConversionError| {
-                CarbideError::InvalidArgument(e.to_string())
+                NicoError::InvalidArgument(e.to_string())
             })?;
 
     let mut txn = api
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
     db_expected_power_shelf::delete(&mut txn, &req)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -96,14 +96,14 @@ pub async fn update_expected_power_shelf(
             .into_inner()
             .try_into()
             .map_err(|e: ::rpc::errors::RpcDataConversionError| {
-                CarbideError::InvalidArgument(e.to_string())
+                NicoError::InvalidArgument(e.to_string())
             })?;
 
     let mut txn = api
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
@@ -114,9 +114,9 @@ pub async fn update_expected_power_shelf(
 
     db_expected_power_shelf::update(&mut txn, &power_shelf)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -132,21 +132,21 @@ pub async fn get_expected_power_shelf(
             .into_inner()
             .try_into()
             .map_err(|e: ::rpc::errors::RpcDataConversionError| {
-                CarbideError::InvalidArgument(e.to_string())
+                NicoError::InvalidArgument(e.to_string())
             })?;
 
     let mut txn = api
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
     let expected_power_shelf = db_expected_power_shelf::find(&mut txn, &req)
         .await
-        .map_err(CarbideError::from)?
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .map_err(NicoError::from)?
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "expected_power_shelf",
             id: req
                 .expected_power_shelf_id
@@ -155,7 +155,7 @@ pub async fn get_expected_power_shelf(
                 .unwrap_or_default(),
         })?;
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -171,15 +171,15 @@ pub async fn get_all_expected_power_shelves(
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
     let expected_power_shelves = db_expected_power_shelf::find_all(&mut txn)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -203,14 +203,14 @@ pub async fn replace_all_expected_power_shelves(
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
     // Clear all existing expected power shelves
     db_expected_power_shelf::clear(&mut txn)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
     // Add all new expected power shelves
     for rpc_power_shelf in req.expected_power_shelves {
@@ -218,16 +218,16 @@ pub async fn replace_all_expected_power_shelves(
             rpc_power_shelf
                 .try_into()
                 .map_err(|e: ::rpc::errors::RpcDataConversionError| {
-                    CarbideError::InvalidArgument(e.to_string())
+                    NicoError::InvalidArgument(e.to_string())
                 })?;
         db_expected_power_shelf::create(&mut txn, power_shelf)
             .await
-            .map_err(|e| CarbideError::Internal {
+            .map_err(|e| NicoError::Internal {
                 message: format!("Failed to create expected power shelf: {}", e),
             })?;
     }
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -242,15 +242,15 @@ pub async fn delete_all_expected_power_shelves(
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
     db_expected_power_shelf::clear(&mut txn)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -265,15 +265,15 @@ pub async fn get_all_expected_power_shelves_linked(
         .database_connection
         .begin()
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!("Database error: {}", e),
         })?;
 
     let linked_expected_power_shelves = db_expected_power_shelf::find_all_linked(&mut txn)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
-    txn.commit().await.map_err(|e| CarbideError::Internal {
+    txn.commit().await.map_err(|e| NicoError::Internal {
         message: format!("Failed to commit transaction: {}", e),
     })?;
 
@@ -293,16 +293,16 @@ pub async fn get_all_expected_power_shelves_linked(
 pub(crate) async fn query(
     api: &Api,
     mac: MacAddress,
-) -> Result<Option<model::expected_power_shelf::ExpectedPowerShelf>, CarbideError> {
+) -> Result<Option<model::expected_power_shelf::ExpectedPowerShelf>, NicoError> {
     let mut txn = api.database_connection.begin().await.map_err(|e| {
-        CarbideError::from(DatabaseError::new("begin find_many_by_bmc_mac_address", e))
+        NicoError::from(DatabaseError::new("begin find_many_by_bmc_mac_address", e))
     })?;
 
     let mut expected =
         db_expected_power_shelf::find_many_by_bmc_mac_address(&mut txn, &[mac]).await?;
 
     txn.commit().await.map_err(|e| {
-        CarbideError::from(DatabaseError::new("commit find_many_by_bmc_mac_address", e))
+        NicoError::from(DatabaseError::new("commit find_many_by_bmc_mac_address", e))
     })?;
 
     Ok(expected.remove(&mac))

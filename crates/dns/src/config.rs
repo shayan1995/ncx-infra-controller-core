@@ -17,8 +17,8 @@
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 
-use forge_tls::client_config::ClientCert;
-use rpc::forge_tls_client::ForgeClientConfig;
+use nico_tls::client_config::ClientCert;
+use rpc::nico_tls_client::NicoClientConfig;
 use serde::{Deserialize, Serialize};
 use tonic::codegen::http;
 
@@ -99,9 +99,9 @@ impl Defaults {
     }
 
     pub fn api_uri() -> http::Uri {
-        "https://carbide-api.forge-system.svc.cluster.local:1079"
+        "https://nico-api.nico-system.svc.cluster.local:1079"
             .try_into()
-            .expect("BUG: default carbide URI is invalid")
+            .expect("BUG: default nico URI is invalid")
     }
 
     pub fn otlp_endpoint() -> http::Uri {
@@ -166,11 +166,11 @@ where
 }
 
 impl Config {
-    pub fn forge_client_config(&self) -> ForgeClientConfig {
-        let forge_root_ca = self
+    pub fn nico_client_config(&self) -> NicoClientConfig {
+        let nico_root_ca = self
             .root_ca_path
             .to_str()
-            .expect("forge root CA path is not valid UTF-8")
+            .expect("nico root CA path is not valid UTF-8")
             .to_string();
         let client_cert = ClientCert {
             cert_path: self
@@ -184,7 +184,7 @@ impl Config {
                 .expect("client key path is not valid UTF-8")
                 .to_string(),
         };
-        ForgeClientConfig::new(forge_root_ca, Some(client_cert))
+        NicoClientConfig::new(nico_root_ca, Some(client_cert))
     }
 
     pub fn load(path: &Path) -> Result<Self, ConfigError> {
@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn example_config_parses_to_defaults() {
-        let toml = include_str!("test/carbide-dns.toml");
+        let toml = include_str!("test/nico-dns.toml");
         let config: Config = toml::from_str(toml).expect("example config should parse");
         assert_eq!(config, Config::default());
     }

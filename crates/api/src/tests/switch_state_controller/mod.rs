@@ -18,13 +18,13 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use carbide_switch_controller::context::SwitchStateHandlerServices;
-use carbide_switch_controller::handler::SwitchStateHandler;
-use carbide_switch_controller::io::SwitchStateControllerIO;
+use nico_switch_controller::context::SwitchStateHandlerServices;
+use nico_switch_controller::handler::SwitchStateHandler;
+use nico_switch_controller::io::SwitchStateControllerIO;
 use db::switch as db_switch;
-use forge_secrets::credentials::TestCredentialManager;
+use nico_secrets::credentials::TestCredentialManager;
 use model::switch::{ConfiguringState, SwitchControllerState};
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 use state_controller::config::IterationConfig;
 use state_controller::controller::StateController;
 use tokio_util::sync::CancellationToken;
@@ -132,7 +132,7 @@ async fn test_switch_deletion_with_state_controller(
 
     let switch = env
         .api
-        .find_switches_by_ids(tonic::Request::new(rpc::forge::SwitchesByIdsRequest {
+        .find_switches_by_ids(tonic::Request::new(rpc::nico::SwitchesByIdsRequest {
             switch_ids: vec![switch_id],
         }))
         .await?
@@ -152,7 +152,7 @@ async fn test_switch_deletion_with_state_controller(
     // Verify that the DB object is gone
     let switches = env
         .api
-        .find_switches_by_ids(tonic::Request::new(rpc::forge::SwitchesByIdsRequest {
+        .find_switches_by_ids(tonic::Request::new(rpc::nico::SwitchesByIdsRequest {
             switch_ids: vec![switch_id],
         }))
         .await?

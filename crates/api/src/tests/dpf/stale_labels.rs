@@ -27,9 +27,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use carbide_dpf::DpuPhase;
-use carbide_machine_controller::dpf::{DpfOperations, MockDpfOperations};
-use carbide_uuid::machine::MachineId;
+use nico_dpf::DpuPhase;
+use nico_machine_controller::dpf::{DpfOperations, MockDpfOperations};
+use nico_uuid::machine::MachineId;
 use model::machine::{DpfState, DpuInitState, FailureCause, FailureDetails, ManagedHostState};
 use tokio::time::timeout;
 

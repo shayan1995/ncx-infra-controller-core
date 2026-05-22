@@ -20,14 +20,14 @@ use std::fmt::Write;
 use ::rpc::admin_cli::OutputFormat;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn handle_show(
     output_format: OutputFormat,
     query: Args,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let devices = api_client.0.get_network_topology(query).await?;
 
     match output_format {
@@ -40,7 +40,7 @@ pub async fn handle_show(
     Ok(())
 }
 
-fn show_network_devices_info(data: rpc::forge::NetworkTopologyData) -> CarbideCliResult<()> {
+fn show_network_devices_info(data: rpc::nico::NetworkTopologyData) -> NicoCliResult<()> {
     let mut lines = String::new();
 
     writeln!(&mut lines, "{}", "-".repeat(95))?;

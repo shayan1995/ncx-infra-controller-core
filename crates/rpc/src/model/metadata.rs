@@ -28,7 +28,7 @@ impl From<Metadata> for rpc::Metadata {
             labels: metadata
                 .labels
                 .iter()
-                .map(|(key, value)| rpc::forge::Label {
+                .map(|(key, value)| rpc::nico::Label {
                     key: key.clone(),
                     value: if value.is_empty() {
                         None
@@ -68,8 +68,8 @@ impl TryFrom<rpc::Metadata> for Metadata {
     }
 }
 
-impl From<rpc::forge::Label> for LabelFilter {
-    fn from(label: rpc::forge::Label) -> Self {
+impl From<rpc::nico::Label> for LabelFilter {
+    fn from(label: rpc::nico::Label) -> Self {
         LabelFilter {
             key: label.key,
             value: label.value,
@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn label_filter_from_rpc_with_value() {
-        let rpc_label = rpc::forge::Label {
+        let rpc_label = rpc::nico::Label {
             key: "env".to_string(),
             value: Some("prod".to_string()),
         };
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn label_filter_from_rpc_without_value() {
-        let rpc_label = rpc::forge::Label {
+        let rpc_label = rpc::nico::Label {
             key: "env".to_string(),
             value: None,
         };
@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     fn label_filter_from_rpc_empty_key() {
-        let rpc_label = rpc::forge::Label {
+        let rpc_label = rpc::nico::Label {
             key: String::new(),
             value: Some("prod".to_string()),
         };

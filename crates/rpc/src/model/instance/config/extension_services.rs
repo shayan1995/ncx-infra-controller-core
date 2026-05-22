@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-use carbide_uuid::extension_service::ExtensionServiceId;
+use nico_uuid::extension_service::ExtensionServiceId;
 use config_version::ConfigVersion;
 use model::instance::config::extension_services::{
     InstanceExtensionServiceConfig, InstanceExtensionServicesConfig,
 };
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<rpc::InstanceDpuExtensionServiceConfig> for InstanceExtensionServiceConfig {
     type Error = RpcDataConversionError;

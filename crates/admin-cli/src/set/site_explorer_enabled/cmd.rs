@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::ConfigSetting;
+use ::rpc::nico::ConfigSetting;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn site_explorer_enabled(opts: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn site_explorer_enabled(opts: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     let enabled = opts.is_enabled();
     api_client
         .set_dynamic_config(

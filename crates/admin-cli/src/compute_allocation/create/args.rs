@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::{self as forgerpc, CreateComputeAllocationRequest};
-use carbide_uuid::compute_allocation::ComputeAllocationId;
+use ::rpc::nico::{self as nicorpc, CreateComputeAllocationRequest};
+use nico_uuid::compute_allocation::ComputeAllocationId;
 use clap::Parser;
 
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 #[derive(Parser, Debug, Clone)]
 pub struct Args {
@@ -58,7 +58,7 @@ pub struct Args {
 }
 
 impl TryFrom<Args> for CreateComputeAllocationRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
 
     fn try_from(args: Args) -> Result<Self, Self::Error> {
         let labels = if let Some(labels_json) = args.labels {
@@ -67,7 +67,7 @@ impl TryFrom<Args> for CreateComputeAllocationRequest {
             vec![]
         };
 
-        let metadata = forgerpc::Metadata {
+        let metadata = nicorpc::Metadata {
             name: args.name.unwrap_or_default(),
             description: args.description.unwrap_or_default(),
             labels,
@@ -77,7 +77,7 @@ impl TryFrom<Args> for CreateComputeAllocationRequest {
             id: args.id,
             tenant_organization_id: args.tenant_organization_id,
             metadata: Some(metadata),
-            attributes: Some(forgerpc::ComputeAllocationAttributes {
+            attributes: Some(nicorpc::ComputeAllocationAttributes {
                 instance_type_id: args.instance_type_id,
                 count: args.count,
             }),

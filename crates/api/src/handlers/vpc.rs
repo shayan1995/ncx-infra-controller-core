@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 use ::rpc::errors::RpcDataConversionError;
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use ::rpc::network::vpc_virtualization_type_try_from_rpc;
-use carbide_network::virtualization::{DEFAULT_NETWORK_VIRTUALIZATION_TYPE, VpcVirtualizationType};
-use carbide_uuid::network_security_group::NetworkSecurityGroupId;
-use carbide_uuid::vpc::VpcId;
+use nico_network::virtualization::{DEFAULT_NETWORK_VIRTUALIZATION_TYPE, VpcVirtualizationType};
+use nico_uuid::network_security_group::NetworkSecurityGroupId;
+use nico_uuid::vpc::VpcId;
 use db::resource_pool::ResourcePoolDatabaseError;
 use db::vpc::{self};
 use db::{self, ObjectColumnFilter, network_security_group};
@@ -31,7 +31,7 @@ use model::vpc::{
 use sqlx::PgConnection;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 use crate::cfg::file::FnnConfig;
 
@@ -66,7 +66,7 @@ pub(crate) async fn create(
 
     if let Some(ref nsg_id) = vpc_creation_request.network_security_group_id {
         let id = nsg_id.parse::<NetworkSecurityGroupId>().map_err(|e| {
-            CarbideError::from(RpcDataConversionError::InvalidNetworkSecurityGroupId(
+            NicoError::from(RpcDataConversionError::InvalidNetworkSecurityGroupId(
                 e.value(),
             ))
         })?;
@@ -81,7 +81,7 @@ pub(crate) async fn create(
                     .tenant_organization_id
                     .parse()
                     .map_err(|e: InvalidTenantOrg| {
-                        CarbideError::from(RpcDataConversionError::InvalidTenantOrg(e.to_string()))
+                        NicoError::from(RpcDataConversionError::InvalidTenantOrg(e.to_string()))
                     })?,
             ),
             true,
@@ -90,7 +90,7 @@ pub(crate) async fn create(
         .pop()
         .is_none()
         {
-            return Err(CarbideError::FailedPrecondition(format!(
+            return Err(NicoError::FailedPrecondition(format!(
                 "NetworkSecurityGroup `{}` does not exist or is not owned by Tenant `{}`",
                 id, vpc_creation_request.tenant_organization_id,
             ))
@@ -104,13 +104,13 @@ pub(crate) async fn create(
     // apply. We still allocate a VNI and persist the VPC like any other type.
     let requested_virtualization_type = match vpc_creation_request.network_virtualization_type {
         None => DEFAULT_NETWORK_VIRTUALIZATION_TYPE,
-        Some(v) => vpc_virtualization_type_try_from_rpc(v).map_err(CarbideError::from)?,
+        Some(v) => vpc_virtualization_type_try_from_rpc(v).map_err(NicoError::from)?,
     };
 
     if vpc_creation_request.routing_profile_type.is_some() {
         requested_virtualization_type
             .ensure_supports_routing_profiles()
-            .map_err(CarbideError::from)?;
+            .map_err(NicoError::from)?;
     }
 
     let ResolvedVpcRouting {
@@ -161,14 +161,14 @@ pub(crate) async fn update(
     // If a security group is applied to the VPC, we need to do some validation.
     if let Some(ref nsg_id) = vpc_update_request.network_security_group_id {
         let id = nsg_id.parse::<NetworkSecurityGroupId>().map_err(|e| {
-            CarbideError::from(RpcDataConversionError::InvalidNetworkSecurityGroupId(
+            NicoError::from(RpcDataConversionError::InvalidNetworkSecurityGroupId(
                 e.value(),
             ))
         })?;
 
         let vpc_id = vpc_update_request
             .id
-            .ok_or_else(|| CarbideError::InvalidArgument("VPC ID is required".to_string()))?;
+            .ok_or_else(|| NicoError::InvalidArgument("VPC ID is required".to_string()))?;
 
         // Query for the VPC because we need to do
         // some validation against the request.
@@ -176,7 +176,7 @@ pub(crate) async fn update(
             .await?
             .pop()
         else {
-            return Err(CarbideError::NotFoundError {
+            return Err(NicoError::NotFoundError {
                 kind: "Vpc",
                 id: vpc_id.to_string(),
             }
@@ -192,7 +192,7 @@ pub(crate) async fn update(
                 &vpc.tenant_organization_id
                     .parse()
                     .map_err(|e: InvalidTenantOrg| {
-                        CarbideError::from(RpcDataConversionError::InvalidTenantOrg(e.to_string()))
+                        NicoError::from(RpcDataConversionError::InvalidTenantOrg(e.to_string()))
                     })?,
             ),
             true,
@@ -201,7 +201,7 @@ pub(crate) async fn update(
         .pop()
         .is_none()
         {
-            return Err(CarbideError::FailedPrecondition(format!(
+            return Err(NicoError::FailedPrecondition(format!(
                 "NetworkSecurityGroup `{}` does not exist or is not owned by Tenant `{}`",
                 id, vpc.tenant_organization_id
             ))
@@ -244,7 +244,7 @@ pub(crate) async fn update_virtualization(
     .await?;
 
     if !instances.is_empty() {
-        return Err(CarbideError::internal(format!(
+        return Err(NicoError::internal(format!(
             "cannot modify VPC virtualization type in VPC with existing instances (found: {})",
             instances.len()
         ))
@@ -270,14 +270,14 @@ pub(crate) async fn delete(
     let vpc_id: VpcId = request
         .into_inner()
         .id
-        .ok_or(CarbideError::MissingArgument("id"))?;
+        .ok_or(NicoError::MissingArgument("id"))?;
 
     let vpc = match db::vpc::try_delete(&mut txn, vpc_id).await? {
         Some(vpc) => vpc,
         None => {
             // VPC didn't exist or was deleted in the past. We are not allowed
             // to free the VNI again
-            return Err(CarbideError::NotFoundError {
+            return Err(NicoError::NotFoundError {
                 kind: "vpc",
                 id: vpc_id.to_string(),
             }
@@ -295,7 +295,7 @@ pub(crate) async fn delete(
             (None, _) | (Some(_), None) => true,
             (Some(f), Some(profile_type)) => {
                 let Some(profile) = f.routing_profiles.get(&profile_type) else {
-                    return Err(CarbideError::NotFoundError {
+                    return Err(NicoError::NotFoundError {
                         kind: "routing_profile_type",
                         id: profile_type,
                     }
@@ -308,7 +308,7 @@ pub(crate) async fn delete(
         if internal {
             db::resource_pool::release(&api.common_pools.ethernet.pool_vpc_vni, &mut txn, vni)
                 .await
-                .map_err(CarbideError::from)?;
+                .map_err(NicoError::from)?;
         } else {
             db::resource_pool::release(
                 &api.common_pools.ethernet.pool_external_vpc_vni,
@@ -316,7 +316,7 @@ pub(crate) async fn delete(
                 vni,
             )
             .await
-            .map_err(CarbideError::from)?;
+            .map_err(NicoError::from)?;
         }
     }
 
@@ -351,13 +351,13 @@ pub(crate) async fn find_by_ids(
 
     let max_find_by_ids = api.runtime_config.max_find_by_ids as usize;
     if vpc_ids.len() > max_find_by_ids {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "no more than {max_find_by_ids} IDs can be accepted"
         ))
         .into());
     } else if vpc_ids.is_empty() {
         return Err(
-            CarbideError::InvalidArgument("at least one ID must be provided".to_string()).into(),
+            NicoError::InvalidArgument("at least one ID must be provided".to_string()).into(),
         );
     }
 
@@ -385,7 +385,7 @@ async fn allocate_vpc_vni(
     owner_id: &str,
     internal: bool,
     requested_vni: Option<i32>,
-) -> Result<i32, CarbideError> {
+) -> Result<i32, NicoError> {
     // If FNN is not configured, then there is no distinction between internal
     // and external tenants: they're all internal.  This matches how things are
     // deployed today.
@@ -412,7 +412,7 @@ async fn allocate_vpc_vni(
                 pool = source_pool.name(),
                 "Pool exhausted, cannot allocate"
             );
-            Err(CarbideError::ResourceExhausted(format!(
+            Err(NicoError::ResourceExhausted(format!(
                 "pool {}",
                 source_pool.name
             )))
@@ -425,7 +425,7 @@ async fn allocate_vpc_vni(
                     value = requested_vni,
                     "invalid pool value requested, cannot allocate"
                 );
-                CarbideError::FailedPrecondition(format!(
+                NicoError::FailedPrecondition(format!(
                     "VNI `{}` cannot be requested or is already allocated",
                     requested_vni.unwrap_or_default()
                 ))
@@ -482,7 +482,7 @@ impl Default for ResolvedVpcRouting {
 /// request from (1) the VPC's virtualization type's capabilities,
 /// (2) the request's `routing_profile_type`, (3) the tenant's
 /// `routing_profile_type`, and (4) the site's FNN config. Surfaces
-/// any contradictions as [`CarbideError`].
+/// any contradictions as [`NicoError`].
 ///
 /// This exists as a function so that resolution rules can be
 /// more easily unit-tested directly, vs. as part of a wider
@@ -493,14 +493,14 @@ pub(crate) fn resolve_vpc_routing(
     tenant: Option<&Tenant>,
     fnn_config: Option<&FnnConfig>,
     organization_id: &str,
-) -> Result<ResolvedVpcRouting, CarbideError> {
+) -> Result<ResolvedVpcRouting, NicoError> {
     // Only VPC types that use routing profiles (FNN today) run the
     // full resolution. ETV and Flat short-circuit to the default --
     // no profile stored, `internal: true` so VNI allocation lands in
     // the internal pool. The REST API at
     // `infra-controller-rest/api/pkg/api/handler/vpc.go` rejects
     // `routingProfile` on non-FNN creates upstream; this short-circuit
-    // is the defense-in-depth gate at the carbide-core layer.
+    // is the defense-in-depth gate at the nico-core layer.
     if !virt_type.supports_routing_profiles() {
         return Ok(ResolvedVpcRouting::default());
     }
@@ -519,7 +519,7 @@ pub(crate) fn resolve_vpc_routing(
 
         // Request asks for a routing profile but no tenant context
         // exists to validate it against -- reject.
-        (Some(_), None) => Err(CarbideError::FailedPrecondition(format!(
+        (Some(_), None) => Err(NicoError::FailedPrecondition(format!(
             "VPC routing-profile type requested but no tenant or routing profile-type found for organization id `{organization_id}`"
         ))),
 
@@ -527,7 +527,7 @@ pub(crate) fn resolve_vpc_routing(
         (request_profile_type, Some(tenant_profile_type)) => {
             match (fnn_config, request_profile_type) {
                 // FNN disabled but the request named a profile -- reject.
-                (None, Some(_)) => Err(CarbideError::FailedPrecondition(
+                (None, Some(_)) => Err(NicoError::FailedPrecondition(
                     "FNN configuration required to request routing-profile for VPCs".to_string(),
                 )),
 
@@ -545,7 +545,7 @@ pub(crate) fn resolve_vpc_routing(
                     let tenant_profile =
                         fnn.routing_profiles
                             .get(tenant_profile_type)
-                            .ok_or_else(|| CarbideError::NotFoundError {
+                            .ok_or_else(|| NicoError::NotFoundError {
                                 kind: "routing_profile",
                                 id: tenant_profile_type.to_owned(),
                             })?;
@@ -562,7 +562,7 @@ pub(crate) fn resolve_vpc_routing(
                 (Some(fnn), Some(profile_type)) => {
                     let routing_profile =
                         fnn.routing_profiles.get(profile_type).ok_or_else(|| {
-                            CarbideError::NotFoundError {
+                            NicoError::NotFoundError {
                                 kind: "routing_profile",
                                 id: profile_type.to_owned(),
                             }
@@ -570,12 +570,12 @@ pub(crate) fn resolve_vpc_routing(
                     let tenant_profile =
                         fnn.routing_profiles
                             .get(tenant_profile_type)
-                            .ok_or_else(|| CarbideError::NotFoundError {
+                            .ok_or_else(|| NicoError::NotFoundError {
                                 kind: "routing_profile",
                                 id: tenant_profile_type.to_owned(),
                             })?;
                     if routing_profile.access_tier < tenant_profile.access_tier {
-                        return Err(CarbideError::FailedPrecondition(
+                        return Err(NicoError::FailedPrecondition(
                             "requested VPC routing-profile access tier is broader than associated tenant routing-profile access tier"
                                 .to_string(),
                         ));
@@ -687,7 +687,7 @@ mod tests {
             "test-org",
         )
         .expect_err("request without tenant must be rejected");
-        assert!(matches!(err, CarbideError::FailedPrecondition(_)));
+        assert!(matches!(err, NicoError::FailedPrecondition(_)));
     }
 
     #[test]
@@ -701,7 +701,7 @@ mod tests {
             "test-org",
         )
         .expect_err("FNN-disabled + explicit request must be rejected");
-        assert!(matches!(err, CarbideError::FailedPrecondition(_)));
+        assert!(matches!(err, NicoError::FailedPrecondition(_)));
     }
 
     #[test]
@@ -770,7 +770,7 @@ mod tests {
             "test-org",
         )
         .expect_err("broader request than tenant access tier must be rejected");
-        assert!(matches!(err, CarbideError::FailedPrecondition(_)));
+        assert!(matches!(err, NicoError::FailedPrecondition(_)));
     }
 
     #[test]
@@ -786,7 +786,7 @@ mod tests {
         )
         .expect_err("request naming an undefined routing profile must error");
         assert!(
-            matches!(err, CarbideError::NotFoundError { kind, .. } if kind == "routing_profile")
+            matches!(err, NicoError::NotFoundError { kind, .. } if kind == "routing_profile")
         );
     }
 
@@ -803,7 +803,7 @@ mod tests {
         )
         .expect_err("tenant naming an undefined routing profile must error");
         assert!(
-            matches!(err, CarbideError::NotFoundError { kind, .. } if kind == "routing_profile")
+            matches!(err, NicoError::NotFoundError { kind, .. } if kind == "routing_profile")
         );
     }
 }

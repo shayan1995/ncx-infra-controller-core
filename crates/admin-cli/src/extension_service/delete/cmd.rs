@@ -18,14 +18,14 @@
 use ::rpc::admin_cli::output::OutputFormat;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn handle_delete(
     args: Args,
     _output_format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     api_client.0.delete_dpu_extension_service(args).await?;
 
     println!("Delete successful");

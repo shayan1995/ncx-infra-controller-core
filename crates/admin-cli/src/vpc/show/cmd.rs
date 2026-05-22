@@ -18,12 +18,12 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::{self as forgerpc};
-use carbide_uuid::vpc::VpcId;
+use ::rpc::nico::{self as nicorpc};
+use nico_uuid::vpc::VpcId;
 use prettytable::{Table, row};
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 pub async fn show(
@@ -31,7 +31,7 @@ pub async fn show(
     output_format: OutputFormat,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
     if let Some(id) = args.id {
         show_vpc_details(id, is_json, api_client).await?;
@@ -58,7 +58,7 @@ async fn show_vpcs(
     name: Option<String>,
     label_key: Option<String>,
     label_value: Option<String>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let all_vpcs = match api_client
         .get_all_vpcs(tenant_org_id, name, page_size, label_key, label_value)
         .await
@@ -78,11 +78,11 @@ async fn show_vpc_details(
     vpc_id: VpcId,
     json: bool,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let vpcs = api_client.0.find_vpcs_by_ids(vec![vpc_id]).await?;
 
     if vpcs.vpcs.len() != 1 {
-        return Err(CarbideCliError::GenericError("Unknown VPC ID".to_string()));
+        return Err(NicoCliError::GenericError("Unknown VPC ID".to_string()));
     }
 
     let vpcs = &vpcs.vpcs[0];
@@ -98,7 +98,7 @@ async fn show_vpc_details(
     Ok(())
 }
 
-fn convert_vpcs_to_nice_table(vpcs: forgerpc::VpcList) -> Box<Table> {
+fn convert_vpcs_to_nice_table(vpcs: nicorpc::VpcList) -> Box<Table> {
     let mut table = Table::new();
 
     table.set_titles(row![
@@ -115,7 +115,7 @@ fn convert_vpcs_to_nice_table(vpcs: forgerpc::VpcList) -> Box<Table> {
 
     for vpc in vpcs.vpcs {
         let metadata = vpc.metadata.as_ref().unwrap_or(&default_metadata);
-        let virt_type = forgerpc::VpcVirtualizationType::try_from(
+        let virt_type = nicorpc::VpcVirtualizationType::try_from(
             vpc.network_virtualization_type.unwrap_or_default(),
         )
         .unwrap_or_default()
@@ -146,7 +146,7 @@ fn convert_vpcs_to_nice_table(vpcs: forgerpc::VpcList) -> Box<Table> {
     table.into()
 }
 
-fn convert_vpc_to_nice_format(vpc: &forgerpc::Vpc) -> CarbideCliResult<String> {
+fn convert_vpc_to_nice_format(vpc: &nicorpc::Vpc) -> NicoCliResult<String> {
     let width = 25;
     let mut lines = String::new();
 
@@ -187,7 +187,7 @@ fn convert_vpc_to_nice_format(vpc: &forgerpc::Vpc) -> CarbideCliResult<String> {
         ),
         (
             "NW VIRTUALIZATION",
-            forgerpc::VpcVirtualizationType::try_from(
+            nicorpc::VpcVirtualizationType::try_from(
                 vpc.network_virtualization_type.unwrap_or_default(),
             )
             .unwrap_or_default()

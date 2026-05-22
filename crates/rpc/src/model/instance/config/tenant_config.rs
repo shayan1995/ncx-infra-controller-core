@@ -21,10 +21,10 @@ use model::tenant::TenantOrganizationId;
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
 
-impl TryFrom<rpc::forge::TenantConfig> for TenantConfig {
+impl TryFrom<rpc::nico::TenantConfig> for TenantConfig {
     type Error = RpcDataConversionError;
 
-    fn try_from(config: rpc::forge::TenantConfig) -> Result<Self, Self::Error> {
+    fn try_from(config: rpc::nico::TenantConfig) -> Result<Self, Self::Error> {
         let truncated_hostname = config.hostname.map(|mut name| {
             if name.len() > 63 {
                 name.truncate(63);
@@ -44,10 +44,10 @@ impl TryFrom<rpc::forge::TenantConfig> for TenantConfig {
     }
 }
 
-impl TryFrom<TenantConfig> for rpc::forge::TenantConfig {
+impl TryFrom<TenantConfig> for rpc::nico::TenantConfig {
     type Error = RpcDataConversionError;
 
-    fn try_from(config: TenantConfig) -> Result<rpc::forge::TenantConfig, Self::Error> {
+    fn try_from(config: TenantConfig) -> Result<rpc::nico::TenantConfig, Self::Error> {
         Ok(Self {
             tenant_organization_id: config.tenant_organization_id.to_string(),
             tenant_keyset_ids: config.tenant_keyset_ids,

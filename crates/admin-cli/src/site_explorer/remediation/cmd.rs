@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::PauseExploredEndpointRemediationRequest;
+use ::rpc::nico::PauseExploredEndpointRemediationRequest;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
-pub async fn remediation(api_client: &ApiClient, opts: Args) -> CarbideCliResult<()> {
+pub async fn remediation(api_client: &ApiClient, opts: Args) -> NicoCliResult<()> {
     if opts.pause {
         api_client
             .0
@@ -41,7 +41,7 @@ pub async fn remediation(api_client: &ApiClient, opts: Args) -> CarbideCliResult
             .await?;
         println!("Remediation resumed for endpoint {}", opts.address);
     } else {
-        return Err(CarbideCliError::RequireOneError("--pause", "--resume"));
+        return Err(NicoCliError::RequireOneError("--pause", "--resume"));
     }
     Ok(())
 }

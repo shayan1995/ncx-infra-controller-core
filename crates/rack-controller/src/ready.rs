@@ -17,9 +17,9 @@
 
 //! Handler for RackState::Ready.
 
-use carbide_rack_controller::context::RackStateHandlerContextObjects;
-use carbide_rack_controller::maintenance::first_maintenance_state;
-use carbide_uuid::rack::RackId;
+use nico_rack_controller::context::RackStateHandlerContextObjects;
+use nico_rack_controller::maintenance::first_maintenance_state;
+use nico_uuid::rack::RackId;
 use db::{
     machine as db_machine, power_shelf as db_power_shelf, rack as db_rack, switch as db_switch,
 };
@@ -32,7 +32,7 @@ use state_controller::state_handler::{
     StateHandlerContext, StateHandlerError, StateHandlerOutcome,
 };
 
-use crate as carbide_rack_controller;
+use crate as nico_rack_controller;
 
 const COMPONENT_ERROR_STATE: &str = "error";
 const MACHINE_FAILED_STATE: &str = "failed";

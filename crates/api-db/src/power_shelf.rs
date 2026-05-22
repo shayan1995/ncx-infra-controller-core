@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use chrono::prelude::*;
 use config_version::{ConfigVersion, Versioned};
 use health_report::{HealthReport, HealthReportApplyMode};
@@ -362,7 +362,7 @@ pub async fn update(
 
 use std::net::IpAddr;
 
-use carbide_uuid::rack::RackId;
+use nico_uuid::rack::RackId;
 use mac_address::MacAddress;
 
 /// Resolve PowerShelfIds to BMC/PMC IPs via the machine_interfaces path.
@@ -569,7 +569,7 @@ pub async fn remove_health_report(
 
 #[cfg(test)]
 mod tests {
-    use carbide_uuid::power_shelf::{HardwareHash, PowerShelfIdSource, PowerShelfType};
+    use nico_uuid::power_shelf::{HardwareHash, PowerShelfIdSource, PowerShelfType};
     use model::metadata::Metadata;
     use model::power_shelf::PowerShelfConfig;
 

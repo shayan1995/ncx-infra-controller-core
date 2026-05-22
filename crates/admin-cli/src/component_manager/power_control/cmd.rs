@@ -20,20 +20,20 @@ use prettytable::{Cell, Row, Table};
 
 use super::args::Args;
 use crate::component_manager::common;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 pub async fn power_control(
     opts: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
-    let request: rpc::forge::ComponentPowerControlRequest = opts.into();
+) -> Result<(), NicoCliError> {
+    let request: rpc::nico::ComponentPowerControlRequest = opts.into();
     let response = api_client
         .0
         .component_power_control(request)
         .await
-        .map_err(CarbideCliError::from)?;
+        .map_err(NicoCliError::from)?;
 
     if format == OutputFormat::Json {
         let results = response
@@ -66,7 +66,7 @@ pub async fn power_control(
         common::component_failure_count_and_summary(response.results.iter().map(Some));
 
     if failures > 0 {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "{failures} component power control request(s) failed{failure_summary}"
         )));
     }

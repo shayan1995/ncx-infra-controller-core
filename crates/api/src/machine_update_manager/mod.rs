@@ -26,9 +26,9 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::time::Duration;
 
-use carbide_machine_controller::dpf::DpfOperations;
-use carbide_utils::periodic_timer::PeriodicTimer;
-use carbide_uuid::machine::MachineId;
+use nico_machine_controller::dpf::DpfOperations;
+use nico_utils::periodic_timer::PeriodicTimer;
+use nico_uuid::machine::MachineId;
 use db::work_lock_manager::WorkLockManagerHandle;
 use db::{DatabaseError, ObjectFilter, Transaction};
 use host_firmware::HostFirmwareUpdate;
@@ -43,8 +43,8 @@ use tokio_util::sync::CancellationToken;
 
 use self::dpu_nic_firmware::DpuNicFirmwareUpdate;
 use self::metrics::MachineUpdateManagerMetrics;
-use crate::CarbideResult;
-use crate::cfg::file::{CarbideConfig, MaxConcurrentUpdates};
+use crate::NicoResult;
+use crate::cfg::file::{NicoConfig, MaxConcurrentUpdates};
 
 /// The MachineUpdateManager periodically runs [modules](machine_update_module::MachineUpdateModule) to initiate upgrades of machine components.
 /// On each iteration the MachineUpdateManager will:
@@ -52,7 +52,7 @@ use crate::cfg::file::{CarbideConfig, MaxConcurrentUpdates};
 /// 2. if there are less than the max allowed updates each module will be told to start updates until
 ///    the number of updates reaches the maximum allowed.
 ///
-/// Config from [CarbideConfig]:
+/// Config from [NicoConfig]:
 /// * `max_concurrent_machine_updates` the maximum number of updates allowed across all modules
 /// * `machine_update_run_interval` how often the manager calls the modules to start updates
 pub struct MachineUpdateManager {
@@ -73,7 +73,7 @@ impl MachineUpdateManager {
     #[cfg(test)]
     pub fn new_with_modules(
         database_connection: sqlx::PgPool,
-        config: Arc<CarbideConfig>,
+        config: Arc<NicoConfig>,
         modules: Vec<Box<dyn MachineUpdateModule>>,
         work_lock_manager_handle: WorkLockManagerHandle,
     ) -> Self {
@@ -91,7 +91,7 @@ impl MachineUpdateManager {
     /// Create a MachineUpdateManager with the default modules.
     pub fn new(
         database_connection: sqlx::PgPool,
-        config: Arc<CarbideConfig>,
+        config: Arc<NicoConfig>,
         meter: opentelemetry::metrics::Meter,
         work_lock_manager_handle: WorkLockManagerHandle,
         dpf: Option<Arc<dyn DpfOperations>>,
@@ -162,7 +162,7 @@ impl MachineUpdateManager {
     async fn get_all_snapshots(
         &self,
         txn: &mut PgConnection,
-    ) -> CarbideResult<HashMap<MachineId, ManagedHostStateSnapshot>> {
+    ) -> NicoResult<HashMap<MachineId, ManagedHostStateSnapshot>> {
         let machine_ids = db::machine::find_machine_ids(
             &mut *txn,
             MachineSearchConfig {
@@ -184,7 +184,7 @@ impl MachineUpdateManager {
         .map_err(Into::into)
     }
 
-    pub async fn run_single_iteration(&self) -> CarbideResult<()> {
+    pub async fn run_single_iteration(&self) -> NicoResult<()> {
         let mut updates_started_count = 0;
 
         let _lock = match self
@@ -195,7 +195,7 @@ impl MachineUpdateManager {
             Ok(lock) => lock,
             Err(e) => {
                 tracing::warn!(
-                    "MachineUpdateManager failed to acquire work lock: Another instance of carbide running? {e}"
+                    "MachineUpdateManager failed to acquire work lock: Another instance of nico running? {e}"
                 );
                 return Ok(());
             }
@@ -293,7 +293,7 @@ impl MachineUpdateManager {
     pub async fn remove_machine_update_markers(
         txn: &mut PgConnection,
         machine_update: &DpuMachineUpdate,
-    ) -> CarbideResult<()> {
+    ) -> NicoResult<()> {
         db::machine::remove_health_report(
             txn,
             &machine_update.host_machine_id,

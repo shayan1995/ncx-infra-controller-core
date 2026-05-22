@@ -22,13 +22,13 @@ use ::rpc::measured_boot::FromGrpc;
 use askama::Template;
 use axum::extract::{Path as AxumPath, Query as AxumQuery, State as AxumState};
 use axum::response::{Html, IntoResponse};
-use carbide_uuid::measured_boot::MeasurementReportId;
+use nico_uuid::measured_boot::MeasurementReportId;
 use hyper::http::StatusCode;
 use measured_boot::site::{MachineAttestationSummary, MachineAttestationSummaryList};
 use measured_boot::{
     bundle as mbbundle, journal as mbjournal, profile as mbprofile, report as mbreport,
 };
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 use rpc::protos::measured_boot as mbprotos;
 
 use super::{Base, filters};

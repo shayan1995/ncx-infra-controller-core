@@ -24,14 +24,14 @@ use rpc::admin_cli::OutputFormat;
 use rpc::protos::mlx_device as mlx_device_pb;
 
 use super::args::{RegistryCommand, RegistryListCommand, RegistryShowCommand};
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::mlx::{CliContext, wrap_text};
 
 // dispatch routes registry subcommands to their handlers.
 pub async fn dispatch(
     command: RegistryCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match command {
         RegistryCommand::List(cmd) => handle_list(cmd, ctxt).await,
         RegistryCommand::Show(cmd) => handle_show(cmd, ctxt).await,
@@ -42,13 +42,13 @@ pub async fn dispatch(
 async fn handle_list(
     cmd: RegistryListCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let request: mlx_device_pb::MlxAdminRegistryListRequest = cmd.into();
     let response = ctxt.grpc_conn.0.mlx_admin_registry_list(request).await?;
 
     let registry_listing = response
         .registry_listing
-        .ok_or_else(|| CarbideCliError::GenericError("no registry listing returned".to_string()))?;
+        .ok_or_else(|| NicoCliError::GenericError("no registry listing returned".to_string()))?;
 
     let mut registry_names = registry_listing.registry_names;
     registry_names.sort();
@@ -84,16 +84,16 @@ async fn handle_list(
     Ok(())
 }
 
-// handle_show shows a profile configured in carbide-api.
+// handle_show shows a profile configured in nico-api.
 async fn handle_show(
     cmd: RegistryShowCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let request: mlx_device_pb::MlxAdminRegistryShowRequest = cmd.into();
     let response = ctxt.grpc_conn.0.mlx_admin_registry_show(request).await?;
 
     let variable_registry_pb = response.variable_registry.ok_or_else(|| {
-        CarbideCliError::GenericError("no variable_registry returned".to_string())
+        NicoCliError::GenericError("no variable_registry returned".to_string())
     })?;
 
     let variable_registry: MlxVariableRegistry = variable_registry_pb.try_into()?;

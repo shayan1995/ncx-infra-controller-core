@@ -16,7 +16,7 @@
  */
 use std::net::IpAddr;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Duration, Utc};
 use config_version::ConfigVersion;
 use health_report::HealthReport;
@@ -79,14 +79,14 @@ impl MachineNetworkStatusObservation {
     ) -> Option<HealthReport> {
         let Some(agent_version) = self.agent_version.as_ref() else {
             return Some(health_report::HealthReport::stale_agent_version(
-                "forge-dpu-agent".to_string(),
+                "nico-dpu-agent".to_string(),
                 self.machine_id.to_string(),
                 "Agent version is not known".to_string(),
                 prevent_allocations,
             ));
         };
 
-        if agent_version == carbide_version::v!(build_version) {
+        if agent_version == nico_version::v!(build_version) {
             // Same version as the server, all good.
             return None;
         }
@@ -96,7 +96,7 @@ impl MachineNetworkStatusObservation {
                 let staleness = Utc::now().signed_duration_since(superseded_at);
                 if staleness > staleness_threshold {
                     Some(health_report::HealthReport::stale_agent_version(
-                        "forge-dpu-agent".to_string(),
+                        "nico-dpu-agent".to_string(),
                         self.machine_id.to_string(),
                         format!(
                             "Agent version is {}, which is out of date since {}",

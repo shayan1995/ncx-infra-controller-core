@@ -19,14 +19,14 @@
 
 use std::sync::Arc;
 
-use carbide_power_shelf_controller::context::{
+use nico_power_shelf_controller::context::{
     PowerShelfStateHandlerContextObjects, PowerShelfStateHandlerServices,
 };
-use carbide_power_shelf_controller::handler::PowerShelfStateHandler;
-use carbide_power_shelf_controller::metrics::PowerShelfMetrics;
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_power_shelf_controller::handler::PowerShelfStateHandler;
+use nico_power_shelf_controller::metrics::PowerShelfMetrics;
+use nico_uuid::power_shelf::PowerShelfId;
 use db::power_shelf as db_power_shelf;
-use forge_secrets::credentials::TestCredentialManager;
+use nico_secrets::credentials::TestCredentialManager;
 use model::power_shelf::{PowerShelf, PowerShelfControllerState, PowerShelfMaintenanceOperation};
 use sqlx::PgConnection;
 use state_controller::db_write_batch::DbWriteBatch;

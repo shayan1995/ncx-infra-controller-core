@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 use ::rpc::common::MachineIdList;
-use ::rpc::forge::{self as rpc};
-use carbide_machine_controller::handler::attestation::trigger_attestation;
-use carbide_uuid::machine::MachineId;
+use ::rpc::nico::{self as rpc};
+use nico_machine_controller::handler::attestation::trigger_attestation;
+use nico_uuid::machine::MachineId;
 use db::ObjectFilter;
 use model::machine::machine_search_config::MachineSearchConfig;
 use tokio::time as tt;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_machine_id, log_request_data};
 
 pub(crate) async fn trigger_machine_attestation(
@@ -35,7 +35,7 @@ pub(crate) async fn trigger_machine_attestation(
     let request_payload = request.get_ref();
     let machine_id = request_payload
         .machine_id
-        .ok_or(Status::from(CarbideError::Internal {
+        .ok_or(Status::from(NicoError::Internal {
             message: "No machine id supplied".to_string(),
         }))?;
     let redfish_timeout_duration =
@@ -53,21 +53,21 @@ pub(crate) async fn trigger_machine_attestation(
     .await?;
     let bmc_info = match machines.len() {
         0 => {
-            return Err(Status::from(CarbideError::NotFoundError {
+            return Err(Status::from(NicoError::NotFoundError {
                 kind: "machine",
                 id: format!("{}", machine_id),
             }));
         }
         1 => &machines[0].bmc_info,
         _ => {
-            return Err(Status::from(CarbideError::Internal {
+            return Err(Status::from(NicoError::Internal {
                 message: format!("Found more than one machine for machine id {}", machine_id),
             }));
         }
     };
 
     let redfish_client_future = api.redfish_pool.create_client_for_ingested_host(
-        bmc_info.ip_addr().map_err(|e| CarbideError::Internal {
+        bmc_info.ip_addr().map_err(|e| NicoError::Internal {
             message: format!("{}", e),
         })?,
         bmc_info.port,
@@ -75,12 +75,12 @@ pub(crate) async fn trigger_machine_attestation(
     );
 
     let redfish_client = match tt::timeout(redfish_timeout_duration, redfish_client_future).await {
-        Ok(redfish_result) => redfish_result.map_err(|e| CarbideError::RedfishClientCreation {
+        Ok(redfish_result) => redfish_result.map_err(|e| NicoError::RedfishClientCreation {
             inner: Box::new(e),
             machine_id,
         })?,
         Err(_) => {
-            return Err(Status::from(CarbideError::Internal {
+            return Err(Status::from(NicoError::Internal {
                 message: format!(
                     "redfish creation could not finish in {} seconds",
                     redfish_timeout_duration.as_secs()
@@ -97,7 +97,7 @@ pub(crate) async fn trigger_machine_attestation(
         redfish_timeout_duration,
     )
     .await
-    .map_err(|e| CarbideError::AttestationError(format!("trigger error: {e}")))?;
+    .map_err(|e| NicoError::AttestationError(format!("trigger error: {e}")))?;
 
     Ok(Response::new(rpc::SpdmMachineAttestationTriggerResponse {
         machine_id: Some(machine_id),
@@ -152,7 +152,7 @@ pub(crate) async fn list_attestations_for_machine_id(
         attestations_details: attestations_details
             .iter()
             .map(|elem| {
-                std::convert::Into::<::rpc::forge::SpdmAttestationDetails>::into((*elem).clone())
+                std::convert::Into::<::rpc::nico::SpdmAttestationDetails>::into((*elem).clone())
             })
             .collect(),
     }))
@@ -198,7 +198,7 @@ pub(crate) async fn attest_quote(
         match db::attestation::secret_ak_pub::get_by_secret(&mut txn, &request.credential).await? {
             Some(entry) => entry.ak_pub,
             None => {
-                return Err(CarbideError::AttestQuoteError(
+                return Err(NicoError::AttestQuoteError(
                     "Could not form SQL query to fetch AK Pub".into(),
                 )
                 .into());
@@ -255,7 +255,7 @@ pub(crate) async fn attest_quote(
     // throw it away.
     let report = db::measured_boot::report::new(&mut txn, machine_id, &pcr_values.0)
         .await
-        .map_err(|e| CarbideError::Internal {
+        .map_err(|e| NicoError::Internal {
             message: format!(
                 "Failed storing measurement report: (machine_id: {}, err: {})",
                 &machine_id, e
@@ -288,12 +288,12 @@ pub(crate) async fn attest_quote(
 
     let id_str = machine_id.to_string();
     let certificate = if std::env::var("UNSUPPORTED_CERTIFICATE_PROVIDER").is_ok() {
-        forge_secrets::certificates::Certificate::default()
+        nico_secrets::certificates::Certificate::default()
     } else {
         api.certificate_provider
             .get_certificate(id_str.as_str(), None, None)
             .await
-            .map_err(|err| CarbideError::ClientCertificateError(err.to_string()))?
+            .map_err(|err| NicoError::ClientCertificateError(err.to_string()))?
     };
 
     tracing::info!(

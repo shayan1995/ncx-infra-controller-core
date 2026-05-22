@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::vpc::VpcPrefixId;
+use nico_uuid::vpc::VpcPrefixId;
 use ipnetwork::IpNetwork;
 use model::metadata::Metadata;
 use model::vpc_prefix::{
@@ -25,11 +25,11 @@ use model::vpc_prefix::{
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
 
-impl TryFrom<rpc::forge::VpcPrefixCreationRequest> for NewVpcPrefix {
+impl TryFrom<rpc::nico::VpcPrefixCreationRequest> for NewVpcPrefix {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::VpcPrefixCreationRequest) -> Result<Self, Self::Error> {
-        let rpc::forge::VpcPrefixCreationRequest {
+    fn try_from(value: rpc::nico::VpcPrefixCreationRequest) -> Result<Self, Self::Error> {
+        let rpc::nico::VpcPrefixCreationRequest {
             id,
             prefix,
             vpc_id,
@@ -68,11 +68,11 @@ impl TryFrom<rpc::forge::VpcPrefixCreationRequest> for NewVpcPrefix {
     }
 }
 
-impl TryFrom<rpc::forge::VpcPrefixConfig> for VpcPrefixConfig {
+impl TryFrom<rpc::nico::VpcPrefixConfig> for VpcPrefixConfig {
     type Error = RpcDataConversionError;
 
-    fn try_from(rpc_config: rpc::forge::VpcPrefixConfig) -> Result<Self, Self::Error> {
-        let rpc::forge::VpcPrefixConfig { prefix } = rpc_config;
+    fn try_from(rpc_config: rpc::nico::VpcPrefixConfig) -> Result<Self, Self::Error> {
+        let rpc::nico::VpcPrefixConfig { prefix } = rpc_config;
 
         Ok(Self {
             prefix: IpNetwork::try_from(prefix.as_str())?,
@@ -80,13 +80,13 @@ impl TryFrom<rpc::forge::VpcPrefixConfig> for VpcPrefixConfig {
     }
 }
 
-impl TryFrom<rpc::forge::VpcPrefixUpdateRequest> for UpdateVpcPrefix {
+impl TryFrom<rpc::nico::VpcPrefixUpdateRequest> for UpdateVpcPrefix {
     type Error = RpcDataConversionError;
 
     fn try_from(
-        rpc_update_prefix: rpc::forge::VpcPrefixUpdateRequest,
+        rpc_update_prefix: rpc::nico::VpcPrefixUpdateRequest,
     ) -> Result<Self, Self::Error> {
-        let rpc::forge::VpcPrefixUpdateRequest {
+        let rpc::nico::VpcPrefixUpdateRequest {
             id,
             prefix,
             config,
@@ -121,11 +121,11 @@ impl TryFrom<rpc::forge::VpcPrefixUpdateRequest> for UpdateVpcPrefix {
     }
 }
 
-impl TryFrom<rpc::forge::VpcPrefixDeletionRequest> for DeleteVpcPrefix {
+impl TryFrom<rpc::nico::VpcPrefixDeletionRequest> for DeleteVpcPrefix {
     type Error = RpcDataConversionError;
 
     fn try_from(
-        rpc_delete_prefix: rpc::forge::VpcPrefixDeletionRequest,
+        rpc_delete_prefix: rpc::nico::VpcPrefixDeletionRequest,
     ) -> Result<Self, Self::Error> {
         let id = rpc_delete_prefix
             .id
@@ -134,7 +134,7 @@ impl TryFrom<rpc::forge::VpcPrefixDeletionRequest> for DeleteVpcPrefix {
     }
 }
 
-impl From<VpcPrefixStatus> for rpc::forge::VpcPrefixStatus {
+impl From<VpcPrefixStatus> for rpc::nico::VpcPrefixStatus {
     fn from(db_status: VpcPrefixStatus) -> Self {
         let VpcPrefixStatus {
             total_31_segments,
@@ -153,7 +153,7 @@ impl From<VpcPrefixStatus> for rpc::forge::VpcPrefixStatus {
     }
 }
 
-impl From<VpcPrefix> for rpc::forge::VpcPrefix {
+impl From<VpcPrefix> for rpc::nico::VpcPrefix {
     fn from(db_vpc_prefix: VpcPrefix) -> Self {
         let VpcPrefix {
             id,
@@ -176,7 +176,7 @@ impl From<VpcPrefix> for rpc::forge::VpcPrefix {
             available_31_segments: status.available_31_segments, // Deprecated
             status: Some(status.into()),
             metadata: Some(metadata.into()),
-            config: Some(rpc::forge::VpcPrefixConfig { prefix }),
+            config: Some(rpc::nico::VpcPrefixConfig { prefix }),
         }
     }
 }

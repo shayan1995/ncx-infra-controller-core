@@ -297,7 +297,7 @@ impl KeyId {
     /// Computes key_id as hex(sha256(public_key)).
     /// Works with any public key representation (PEM, DER, etc.).
     ///
-    /// API domain code should prefer `KeyId::from_public_key_material` in `carbide-api-model`, which
+    /// API domain code should prefer `KeyId::from_public_key_material` in `nico-api-model`, which
     /// delegates to this function (one implementation).
     fn key_id_from_public_key(public_key: &str) -> String {
         let hash = Sha256::digest(public_key.as_bytes());
@@ -528,7 +528,7 @@ mod key_id_tests {
     #[test]
     fn generate_es256_key_pair_produces_valid_outputs() {
         let (private_pem, public_pem) =
-            forge_secrets::key_encryption::generate_es256_key_pair().unwrap();
+            nico_secrets::key_encryption::generate_es256_key_pair().unwrap();
         assert!(private_pem.starts_with(b"-----BEGIN"));
         assert!(public_pem.contains("PUBLIC KEY"));
         let key_id = KeyId::key_id_from_public_key(&public_pem);

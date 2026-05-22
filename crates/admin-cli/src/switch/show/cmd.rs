@@ -17,14 +17,14 @@
 
 use std::fmt::Write;
 
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 use prettytable::{Table, row};
 use rpc::admin_cli::OutputFormat;
-use rpc::forge::{Switch, SwitchList, SwitchSearchFilter};
+use rpc::nico::{Switch, SwitchList, SwitchSearchFilter};
 
 use super::args::Args;
 use crate::cfg::cli_options::SortField;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 use crate::{async_write, async_write_table_as_csv};
 
@@ -121,7 +121,7 @@ async fn show_switches(
     api_client: &ApiClient,
     page_size: usize,
     sort_by: &SortField,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let filter: SwitchSearchFilter = SwitchSearchFilter::default();
     let mut switch_list = api_client.get_all_switches(filter, page_size).await?;
 
@@ -146,7 +146,7 @@ async fn show_switches(
 
     match output_format {
         OutputFormat::Json | OutputFormat::Yaml => {
-            return Err(CarbideCliError::NotImplemented(output_format.to_string()));
+            return Err(NicoCliError::NotImplemented(output_format.to_string()));
         }
         OutputFormat::Csv | OutputFormat::AsciiTable => {
             let table = to_table(&switch_list);
@@ -170,13 +170,13 @@ async fn show_switch_information(
     output_format: &OutputFormat,
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let switches = api_client.get_one_switch(switch_id).await?.switches;
     if switches.is_empty() {
-        return Err(CarbideCliError::SwitchNotFound(switch_id));
+        return Err(NicoCliError::SwitchNotFound(switch_id));
     } else if switches.len() > 1 {
         // This really shouldn't happen in practice.
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "Expected 1 switch, but got {}.",
             switches.len()
         )));
@@ -185,7 +185,7 @@ async fn show_switch_information(
     let switch = &switches[0];
     match output_format {
         OutputFormat::Json => {
-            return Err(CarbideCliError::NotImplemented(output_format.to_string()));
+            return Err(NicoCliError::NotImplemented(output_format.to_string()));
         }
         OutputFormat::AsciiTable => async_write!(
             output_file,
@@ -193,10 +193,10 @@ async fn show_switch_information(
             switch_details_text(switch).unwrap_or_else(|x| x.to_string())
         )?,
         OutputFormat::Csv => {
-            return Err(CarbideCliError::NotImplemented(output_format.to_string()));
+            return Err(NicoCliError::NotImplemented(output_format.to_string()));
         }
         OutputFormat::Yaml => {
-            return Err(CarbideCliError::NotImplemented(output_format.to_string()));
+            return Err(NicoCliError::NotImplemented(output_format.to_string()));
         }
     }
 
@@ -205,7 +205,7 @@ async fn show_switch_information(
 
 /// Builds and returns a detailed text representation of the Switch for CLI output,
 /// roughly following the structure of the Switch RPC message.
-fn switch_details_text(switch: &Switch) -> CarbideCliResult<String> {
+fn switch_details_text(switch: &Switch) -> NicoCliResult<String> {
     let mut lines = String::new();
 
     let data: Vec<(&str, String)> = vec![
@@ -435,7 +435,7 @@ pub async fn handle_show(
     api_client: &ApiClient,
     page_size: usize,
     sort_by: &SortField,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     if let Some(switch_id) = args.switch_id {
         show_switch_information(switch_id, output_format, output_file, api_client).await
     } else {
@@ -447,9 +447,9 @@ pub async fn handle_show(
 mod tests {
     use std::str::FromStr;
 
-    use carbide_uuid::rack::RackId;
-    use carbide_uuid::switch::SwitchId;
-    use rpc::forge::{BmcInfo, Metadata, PlacementInRack, Switch, SwitchConfig, SwitchStatus};
+    use nico_uuid::rack::RackId;
+    use nico_uuid::switch::SwitchId;
+    use rpc::nico::{BmcInfo, Metadata, PlacementInRack, Switch, SwitchConfig, SwitchStatus};
 
     use super::*;
 

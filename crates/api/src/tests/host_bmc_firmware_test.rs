@@ -22,11 +22,11 @@ use std::os::unix::fs::PermissionsExt;
 use std::str::FromStr;
 use std::time::Duration;
 
-use carbide_machine_controller::config::{FirmwareGlobal, TimePeriod};
-use carbide_machine_controller::handler::MAX_FIRMWARE_UPGRADE_RETRIES;
-use carbide_preingestion_manager::PreingestionManager;
-use carbide_redfish::libredfish::test_support::RedfishSimAction;
-use carbide_uuid::machine::MachineId;
+use nico_machine_controller::config::{FirmwareGlobal, TimePeriod};
+use nico_machine_controller::handler::MAX_FIRMWARE_UPGRADE_RETRIES;
+use nico_preingestion_manager::PreingestionManager;
+use nico_redfish::libredfish::test_support::RedfishSimAction;
+use nico_uuid::machine::MachineId;
 use common::api_fixtures::instance::TestInstance;
 use common::api_fixtures::{
     self, TestEnv, TestManagedHost, create_test_env_with_overrides, get_config,
@@ -42,16 +42,16 @@ use model::site_explorer::{
     TimeSyncResetPhase,
 };
 use regex::Regex;
-use rpc::forge::forge_server::Forge;
-use rpc::forge_agent_control_response::{Action, LegacyAction};
+use rpc::nico::nico_server::NICo;
+use rpc::nico_agent_control_response::{Action, LegacyAction};
 use rpc::model::instance::snapshot::instance_snapshot_derive_status;
 use sqlx::PgConnection;
 use temp_dir::TempDir;
 use tokio::time::sleep;
 use tonic::Request;
 
-use crate::CarbideResult;
-use crate::cfg::file::CarbideConfig;
+use crate::NicoResult;
+use crate::cfg::file::NicoConfig;
 use crate::machine_update_manager::MachineUpdateManager;
 use crate::tests::common;
 use crate::tests::common::api_fixtures::managed_host::HardwareInfoTemplate;
@@ -444,7 +444,7 @@ fn build_exploration_report(
 }
 
 #[crate::sqlx_test]
-async fn test_postingestion_bmc_upgrade(pool: sqlx::PgPool) -> CarbideResult<()> {
+async fn test_postingestion_bmc_upgrade(pool: sqlx::PgPool) -> NicoResult<()> {
     // Create an environment with one managed host in the ready state.
     let env = create_test_env(pool.clone()).await;
 
@@ -731,13 +731,13 @@ async fn test_postingestion_bmc_upgrade(pool: sqlx::PgPool) -> CarbideResult<()>
 
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_pending_host_firmware_update_count")
+            .formatted_metric("nico_pending_host_firmware_update_count")
             .unwrap(),
         "0"
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_active_host_firmware_update_count")
+            .formatted_metric("nico_active_host_firmware_update_count")
             .unwrap(),
         "0"
     );
@@ -764,7 +764,7 @@ async fn test_postingestion_bmc_upgrade(pool: sqlx::PgPool) -> CarbideResult<()>
 #[crate::sqlx_test]
 async fn test_host_fw_upgrade_enabledisable_global_enabled(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let (env, mh) = test_host_fw_upgrade_enabledisable_generic(pool, true).await?;
     let host_machine_id = mh.host().id;
 
@@ -803,7 +803,7 @@ async fn test_host_fw_upgrade_enabledisable_global_enabled(
 #[crate::sqlx_test]
 async fn test_host_fw_upgrade_enabledisable_global_disabled(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let (env, mh) = test_host_fw_upgrade_enabledisable_generic(pool, false).await?;
     let host_machine_id = mh.host().id;
     // Create and start an update manager
@@ -840,7 +840,7 @@ async fn test_host_fw_upgrade_enabledisable_global_disabled(
 async fn test_host_fw_upgrade_enabledisable_generic(
     pool: sqlx::PgPool,
     global_enabled: bool,
-) -> CarbideResult<(TestEnv, TestManagedHost)> {
+) -> NicoResult<(TestEnv, TestManagedHost)> {
     // Create an environment with one managed host in the ready state.  Tweak the default config to enable or disable firmware global autoupdate.
     let mut config = get_config();
     config.firmware_global.autoupdate = global_enabled;
@@ -1223,10 +1223,10 @@ async fn test_instance_upgrading_actual(
         txn.commit().await.unwrap();
 
         // Simulate a tenant OKing the request
-        let request = rpc::forge::InstancePowerRequest {
+        let request = rpc::nico::InstancePowerRequest {
             instance_id: tinstance.id.into(),
             machine_id: None,
-            operation: rpc::forge::instance_power_request::Operation::PowerReset.into(),
+            operation: rpc::nico::instance_power_request::Operation::PowerReset.into(),
             boot_with_custom_ipxe: false,
             apply_updates_on_reboot: true,
         };
@@ -1318,7 +1318,7 @@ async fn test_instance_upgrading_actual_part_2(
     txn.commit().await.unwrap();
 
     // Simulate agent saying it's booted so we can continue
-    mh.host().forge_agent_control().await;
+    mh.host().nico_agent_control().await;
     sleep(std::time::Duration::from_secs(2)).await;
 
     env.run_machine_state_controller_iteration().await;
@@ -1849,7 +1849,7 @@ async fn test_instance_upgrading_actual_part_2(
     Ok(())
 }
 
-fn script_setup() -> (TempDir, CarbideConfig) {
+fn script_setup() -> (TempDir, NicoConfig) {
     let tmpdir = TempDir::with_prefix("test_script_upgrade").unwrap();
     let mut filename = tmpdir.path().to_path_buf();
     filename.push("testscript_delete_me.sh");
@@ -1898,7 +1898,7 @@ exit 0
 }
 
 #[crate::sqlx_test]
-async fn test_script_upgrade(pool: sqlx::PgPool) -> CarbideResult<()> {
+async fn test_script_upgrade(pool: sqlx::PgPool) -> NicoResult<()> {
     let (_tmpdir, config) = script_setup();
     let env = create_test_env_with_overrides(pool, TestEnvOverrides::with_config(config)).await;
 
@@ -1979,7 +1979,7 @@ async fn test_script_upgrade(pool: sqlx::PgPool) -> CarbideResult<()> {
 }
 
 #[crate::sqlx_test]
-async fn test_script_upgrade_failure(pool: sqlx::PgPool) -> CarbideResult<()> {
+async fn test_script_upgrade_failure(pool: sqlx::PgPool) -> NicoResult<()> {
     let mut config = get_config();
     config.host_models = HashMap::from([(
         "1".to_string(),
@@ -2147,7 +2147,7 @@ async fn test_script_upgrade_failure(pool: sqlx::PgPool) -> CarbideResult<()> {
 }
 
 #[crate::sqlx_test]
-async fn test_explicit_update(pool: sqlx::PgPool) -> CarbideResult<()> {
+async fn test_explicit_update(pool: sqlx::PgPool) -> NicoResult<()> {
     let mut config = common::api_fixtures::get_config();
     config
         .host_models
@@ -2568,7 +2568,7 @@ async fn test_preingestion_time_sync_retry_logic(
 }
 
 #[crate::sqlx_test]
-async fn test_manual_firmware_upgrade_workflow(pool: sqlx::PgPool) -> CarbideResult<()> {
+async fn test_manual_firmware_upgrade_workflow(pool: sqlx::PgPool) -> NicoResult<()> {
     // create an env with requires_manual_upgrade = true
     let mut config = common::api_fixtures::get_config();
     config.firmware_global.requires_manual_upgrade = true;
@@ -2739,9 +2739,9 @@ async fn test_manual_firmware_upgrade_workflow(pool: sqlx::PgPool) -> CarbideRes
 }
 
 #[crate::sqlx_test]
-async fn test_forge_agent_control_waiting_for_scout_upgrade_returns_task_without_cleanup_timestamp(
+async fn test_nico_agent_control_waiting_for_scout_upgrade_returns_task_without_cleanup_timestamp(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
     let upgrade_task_id = uuid::Uuid::new_v4().to_string();
@@ -2790,7 +2790,7 @@ async fn test_forge_agent_control_waiting_for_scout_upgrade_returns_task_without
 
     let response = env
         .api
-        .forge_agent_control(Request::new(rpc::forge::ForgeAgentControlRequest {
+        .nico_agent_control(Request::new(rpc::nico::NicoAgentControlRequest {
             machine_id: Some(mh.host().id),
         }))
         .await
@@ -2828,9 +2828,9 @@ async fn test_forge_agent_control_waiting_for_scout_upgrade_returns_task_without
 }
 
 #[crate::sqlx_test]
-async fn test_forge_agent_control_invalid_json_falls_back_to_noop(
+async fn test_nico_agent_control_invalid_json_falls_back_to_noop(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
     let task_json = "{not valid json".to_string();
@@ -2855,7 +2855,7 @@ async fn test_forge_agent_control_invalid_json_falls_back_to_noop(
 
     let response = env
         .api
-        .forge_agent_control(Request::new(rpc::forge::ForgeAgentControlRequest {
+        .nico_agent_control(Request::new(rpc::nico::NicoAgentControlRequest {
             machine_id: Some(mh.host().id),
         }))
         .await
@@ -2869,7 +2869,7 @@ async fn test_forge_agent_control_invalid_json_falls_back_to_noop(
 }
 
 #[crate::sqlx_test]
-async fn test_report_scout_firmware_upgrade_status(pool: sqlx::PgPool) -> CarbideResult<()> {
+async fn test_report_scout_firmware_upgrade_status(pool: sqlx::PgPool) -> NicoResult<()> {
     const UPGRADE_TASK_ID: &str = "scout-upgrade-task-id";
 
     let env = create_test_env(pool).await;
@@ -2899,7 +2899,7 @@ async fn test_report_scout_firmware_upgrade_status(pool: sqlx::PgPool) -> Carbid
     // Call the RPC endpoint with a successful result
     env.api
         .report_scout_firmware_upgrade_status(Request::new(
-            rpc::forge::ScoutFirmwareUpgradeStatusRequest {
+            rpc::nico::ScoutFirmwareUpgradeStatusRequest {
                 machine_id: Some(mh.host().id),
                 success: true,
                 exit_code: 0,
@@ -2936,7 +2936,7 @@ async fn test_report_scout_firmware_upgrade_status(pool: sqlx::PgPool) -> Carbid
 #[crate::sqlx_test]
 async fn test_report_scout_firmware_upgrade_status_failure(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     const UPGRADE_TASK_ID: &str = "scout-upgrade-task-id";
 
     let env = create_test_env(pool).await;
@@ -2966,7 +2966,7 @@ async fn test_report_scout_firmware_upgrade_status_failure(
     // Call the RPC endpoint with a failure result
     env.api
         .report_scout_firmware_upgrade_status(Request::new(
-            rpc::forge::ScoutFirmwareUpgradeStatusRequest {
+            rpc::nico::ScoutFirmwareUpgradeStatusRequest {
                 machine_id: Some(mh.host().id),
                 success: false,
                 exit_code: 1,
@@ -3004,7 +3004,7 @@ async fn test_report_scout_firmware_upgrade_status_failure(
 #[crate::sqlx_test]
 async fn test_report_scout_firmware_upgrade_status_wrong_state(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
 
@@ -3012,7 +3012,7 @@ async fn test_report_scout_firmware_upgrade_status_wrong_state(
     let err = env
         .api
         .report_scout_firmware_upgrade_status(Request::new(
-            rpc::forge::ScoutFirmwareUpgradeStatusRequest {
+            rpc::nico::ScoutFirmwareUpgradeStatusRequest {
                 machine_id: Some(mh.host().id),
                 upgrade_task_id: "scout-upgrade-task-id".to_string(),
                 success: true,
@@ -3033,7 +3033,7 @@ async fn test_report_scout_firmware_upgrade_status_wrong_state(
 #[crate::sqlx_test]
 async fn test_report_scout_firmware_upgrade_status_rejects_stale_task_id(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     const CURRENT_TASK_ID: &str = "current-scout-upgrade-task-id";
     const STALE_TASK_ID: &str = "stale-scout-upgrade-task-id";
 
@@ -3063,7 +3063,7 @@ async fn test_report_scout_firmware_upgrade_status_rejects_stale_task_id(
     let err = env
         .api
         .report_scout_firmware_upgrade_status(Request::new(
-            rpc::forge::ScoutFirmwareUpgradeStatusRequest {
+            rpc::nico::ScoutFirmwareUpgradeStatusRequest {
                 machine_id: Some(mh.host().id),
                 success: true,
                 exit_code: 0,
@@ -3104,7 +3104,7 @@ async fn test_report_scout_firmware_upgrade_status_rejects_stale_task_id(
 #[crate::sqlx_test]
 async fn test_report_scout_firmware_upgrade_status_truncates_output(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     const UPGRADE_TASK_ID: &str = "scout-upgrade-task-id";
 
     let env = create_test_env(pool).await;
@@ -3135,7 +3135,7 @@ async fn test_report_scout_firmware_upgrade_status_truncates_output(
     let large_output = "x".repeat(10_000);
     env.api
         .report_scout_firmware_upgrade_status(Request::new(
-            rpc::forge::ScoutFirmwareUpgradeStatusRequest {
+            rpc::nico::ScoutFirmwareUpgradeStatusRequest {
                 machine_id: Some(mh.host().id),
                 success: true,
                 exit_code: 0,
@@ -3201,7 +3201,7 @@ async fn put_in_waiting_for_scout_upgrade(
 #[crate::sqlx_test]
 async fn test_waiting_for_scout_upgrade_success_transitions_to_reset_for_new_firmware(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
 
@@ -3245,7 +3245,7 @@ async fn test_waiting_for_scout_upgrade_success_transitions_to_reset_for_new_fir
 #[crate::sqlx_test]
 async fn test_waiting_for_scout_upgrade_failure_uses_error_as_reason(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
 
@@ -3285,7 +3285,7 @@ async fn test_waiting_for_scout_upgrade_failure_uses_error_as_reason(
 #[crate::sqlx_test]
 async fn test_waiting_for_scout_upgrade_failure_without_error_uses_exit_code(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
 
@@ -3328,7 +3328,7 @@ async fn test_waiting_for_scout_upgrade_failure_without_error_uses_exit_code(
 #[crate::sqlx_test]
 async fn test_waiting_for_scout_upgrade_past_deadline_times_out(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
 
@@ -3367,7 +3367,7 @@ async fn test_waiting_for_scout_upgrade_past_deadline_times_out(
 #[crate::sqlx_test]
 async fn test_waiting_for_scout_upgrade_before_deadline_waits(
     pool: sqlx::PgPool,
-) -> CarbideResult<()> {
+) -> NicoResult<()> {
     let env = create_test_env(pool).await;
     let mh = common::api_fixtures::create_managed_host(&env).await;
 

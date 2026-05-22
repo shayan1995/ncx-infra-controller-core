@@ -20,7 +20,7 @@
 //! functions used by main.
 
 use crate::cfg::measurement::GlobalOptions;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 /// CliData is a simple struct containing the single database connection
@@ -44,12 +44,12 @@ pub enum IdentifierType {
     Detect,
 }
 
-pub fn get_identifier<T>(args: &T) -> CarbideCliResult<IdentifierType>
+pub fn get_identifier<T>(args: &T) -> NicoCliResult<IdentifierType>
 where
     T: IdNameIdentifier,
 {
     if args.is_id() && args.is_name() {
-        return Err(CarbideCliError::GenericError(String::from(
+        return Err(NicoCliError::GenericError(String::from(
             "identifier cant be an ID *and* a name, u so silly",
         )));
     }

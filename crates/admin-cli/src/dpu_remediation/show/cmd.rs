@@ -18,12 +18,12 @@
 use std::fmt::Write;
 
 use ::rpc::admin_cli::OutputFormat;
-use carbide_uuid::dpu_remediations::RemediationId;
+use nico_uuid::dpu_remediations::RemediationId;
 use prettytable::{Table, row};
-use rpc::forge::{Remediation, RemediationList};
+use rpc::nico::{Remediation, RemediationList};
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 use crate::{async_write, async_writeln};
 
@@ -33,7 +33,7 @@ pub(crate) async fn handle_show(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     if let Some(remediation_id) = args.id {
         show_remediation_information(
             remediation_id,
@@ -51,7 +51,7 @@ pub(crate) async fn handle_show(
 fn convert_remediation_to_nice_format(
     remediation: Remediation,
     display_script: bool,
-) -> CarbideCliResult<String> {
+) -> NicoCliResult<String> {
     let mut lines = String::new();
 
     let data = vec![
@@ -100,7 +100,7 @@ async fn show_remediation_information(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     display_script: bool,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let remediation = api_client.get_remediation(remediation_id).await?;
 
     match output_format {
@@ -128,7 +128,7 @@ async fn show_all_remediations(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let remediations = api_client.get_all_remediations(page_size).await?;
     match output_format {
         OutputFormat::AsciiTable => {

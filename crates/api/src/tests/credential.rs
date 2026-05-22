@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-use forge_secrets::credentials::{
+use nico_secrets::credentials::{
     BgpCredentialType, CredentialKey, CredentialReader, CredentialType, CredentialWriter,
     Credentials,
 };
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{
     CredentialCreationRequest, CredentialDeletionRequest, CredentialType as RpcCredentialType,
 };
 use tonic::Code;
@@ -269,7 +269,7 @@ async fn test_get_switch_nvos_credentials(pool: sqlx::PgPool) -> eyre::Result<()
     let response = env
         .api
         .get_switch_nvos_credentials(tonic::Request::new(
-            rpc::forge::GetSwitchNvosCredentialsRequest {
+            rpc::nico::GetSwitchNvosCredentialsRequest {
                 switch_id: Some(switch_id),
             },
         ))
@@ -277,7 +277,7 @@ async fn test_get_switch_nvos_credentials(pool: sqlx::PgPool) -> eyre::Result<()
         .into_inner();
 
     let credentials = response.credentials.expect("credentials");
-    let Some(rpc::forge::bmc_credentials::Type::UsernamePassword(username_password)) =
+    let Some(rpc::nico::bmc_credentials::Type::UsernamePassword(username_password)) =
         credentials.r#type
     else {
         panic!("expected username/password credentials");

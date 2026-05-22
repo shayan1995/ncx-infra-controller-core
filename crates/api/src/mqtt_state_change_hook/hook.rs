@@ -19,9 +19,9 @@
 
 use std::time::Duration;
 
-use carbide_mqtt_common::hook::{MqttPublisher, QueuedMessage, process_events};
-use carbide_mqtt_common::metrics::MqttHookMetrics;
-use carbide_uuid::machine::MachineId;
+use nico_mqtt_common::hook::{MqttPublisher, QueuedMessage, process_events};
+use nico_mqtt_common::metrics::MqttHookMetrics;
+use nico_uuid::machine::MachineId;
 use model::machine::ManagedHostState;
 use opentelemetry::metrics::Meter;
 use state_controller::state_change_emitter::{StateChangeEvent, StateChangeHook};
@@ -34,7 +34,7 @@ use crate::mqtt_state_change_hook::message::ManagedHostStateChangeMessage;
 
 /// MQTT hook that publishes `ManagedHostState` changes to the MQTT broker.
 ///
-/// Implements the AsyncAPI specification in `carbide.yaml`, publishing to
+/// Implements the AsyncAPI specification in `nico.yaml`, publishing to
 /// `{topic_prefix}/{machineId}/state` where `topic_prefix` is supplied by the
 /// caller (defaults to `NICO/v1/machine` when sourced from config).
 ///
@@ -52,8 +52,8 @@ impl MqttStateChangeHook {
     ///
     /// Spawns a background task to process queued events.
     /// Emits metrics:
-    /// - `forge_dsx_event_bus_publish_count`: Total number of MQTT publish attempts
-    /// - `forge_dsx_event_bus_queue_depth`: Current queue depth
+    /// - `nico_dsx_event_bus_publish_count`: Total number of MQTT publish attempts
+    /// - `nico_dsx_event_bus_queue_depth`: Current queue depth
     pub fn new<P: MqttPublisher>(
         client: P,
         join_set: &mut JoinSet<()>,
@@ -135,7 +135,7 @@ mod tests {
     }
 
     fn test_machine_id() -> MachineId {
-        use carbide_uuid::machine::{MachineIdSource, MachineType};
+        use nico_uuid::machine::{MachineIdSource, MachineType};
         MachineId::new(
             MachineIdSource::ProductBoardChassisSerial,
             [0; 32],

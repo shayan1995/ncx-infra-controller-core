@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-//! Describes hardware that is discovered by Forge
+//! Describes hardware that is discovered by NICo
 
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use base64::prelude::*;
-use carbide_utils::arch::CpuArchitecture;
-use carbide_uuid::nvlink::NvLinkDomainId;
+use nico_utils::arch::CpuArchitecture;
+use nico_uuid::nvlink::NvLinkDomainId;
 use mac_address::{MacAddress, MacParseError};
 use serde::{Deserialize, Serialize};
 
@@ -59,7 +59,7 @@ pub struct HardwareInfo {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NetworkInterface {
-    #[serde(deserialize_with = "carbide_network::deserialize_mlx_mac")]
+    #[serde(deserialize_with = "nico_network::deserialize_mlx_mac")]
     pub mac_address: MacAddress,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pci_properties: Option<PciDeviceProperties>,

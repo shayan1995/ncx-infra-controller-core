@@ -21,11 +21,11 @@ use std::net::IpAddr;
 use std::pin::Pin;
 use std::sync::{Arc, RwLock};
 
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::nvlink::NvLinkDomainId;
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::nvlink::NvLinkDomainId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
 use mac_address::MacAddress;
 use url::Url;
 

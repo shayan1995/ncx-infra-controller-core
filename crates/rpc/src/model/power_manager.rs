@@ -19,32 +19,32 @@ use model::power_manager::{PowerOptions, PowerState};
 
 use crate as rpc;
 
-impl From<rpc::forge::PowerState> for PowerState {
-    fn from(value: rpc::forge::PowerState) -> Self {
+impl From<rpc::nico::PowerState> for PowerState {
+    fn from(value: rpc::nico::PowerState) -> Self {
         match value {
-            rpc::forge::PowerState::On => PowerState::On,
-            rpc::forge::PowerState::Off => PowerState::Off,
-            rpc::forge::PowerState::PowerManagerDisabled => PowerState::PowerManagerDisabled,
+            rpc::nico::PowerState::On => PowerState::On,
+            rpc::nico::PowerState::Off => PowerState::Off,
+            rpc::nico::PowerState::PowerManagerDisabled => PowerState::PowerManagerDisabled,
         }
     }
 }
 
-impl From<PowerState> for rpc::forge::PowerState {
+impl From<PowerState> for rpc::nico::PowerState {
     fn from(value: PowerState) -> Self {
         match value {
-            PowerState::Off => rpc::forge::PowerState::Off,
-            PowerState::On => rpc::forge::PowerState::On,
-            PowerState::PowerManagerDisabled => rpc::forge::PowerState::PowerManagerDisabled,
+            PowerState::Off => rpc::nico::PowerState::Off,
+            PowerState::On => rpc::nico::PowerState::On,
+            PowerState::PowerManagerDisabled => rpc::nico::PowerState::PowerManagerDisabled,
         }
     }
 }
 
-impl From<PowerOptions> for rpc::forge::PowerOptions {
+impl From<PowerOptions> for rpc::nico::PowerOptions {
     fn from(value: PowerOptions) -> Self {
         Self {
-            desired_state: rpc::forge::PowerState::from(value.desired_power_state) as i32,
+            desired_state: rpc::nico::PowerState::from(value.desired_power_state) as i32,
             desired_state_updated_at: Some(value.desired_power_state_version.timestamp().into()),
-            actual_state: rpc::forge::PowerState::from(value.last_fetched_power_state) as i32,
+            actual_state: rpc::nico::PowerState::from(value.last_fetched_power_state) as i32,
             actual_state_updated_at: Some(value.last_fetched_updated_at.into()),
             host_id: Some(value.host_id),
             desired_power_state_version: value.desired_power_state_version.to_string(),

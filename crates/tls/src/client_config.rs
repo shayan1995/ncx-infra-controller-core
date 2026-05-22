@@ -23,7 +23,7 @@ use serde::Deserialize;
 use tonic::transport::Uri;
 
 use crate::default as tls_default;
-pub const CONFIG_FILE_LOCATION: &str = ".config/carbide_api_cli.json";
+pub const CONFIG_FILE_LOCATION: &str = ".config/nico_api_cli.json";
 
 #[derive(thiserror::Error, Debug)]
 pub enum ClientConfigError {
@@ -61,7 +61,7 @@ pub fn get_api_url(api_url: Option<String>, file_config: Option<&FileConfig>) ->
 
     // TODO configurable default api_url
     // Otherwise we assume the admin-cli is called from inside a kubernetes pod
-    "https://carbide-api.forge-system.svc.cluster.local:1079".to_string()
+    "https://nico-api.nico-system.svc.cluster.local:1079".to_string()
 }
 
 pub fn get_client_cert_info(

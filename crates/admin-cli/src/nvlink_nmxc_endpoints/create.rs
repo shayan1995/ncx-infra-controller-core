@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-use ::rpc::forge::NvlinkNmxcEndpoint;
+use ::rpc::nico::NvlinkNmxcEndpoint;
 use clap::Parser;
 
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -21,9 +21,9 @@ pub struct Args {
 }
 
 impl Run for Args {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         if self.chassis_serial.is_empty() {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "chassis_serial must not be empty".to_string(),
             ));
         }
@@ -36,7 +36,7 @@ impl Run for Args {
             .0
             .create_nvlink_nmxc_endpoint(req)
             .await
-            .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+            .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
         println!("created {} -> {}", created.chassis_serial, created.endpoint);
         Ok(())
     }

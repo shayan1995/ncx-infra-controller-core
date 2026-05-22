@@ -17,9 +17,9 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::network_security_group::NetworkSecurityGroupId;
-use carbide_uuid::vpc::VpcId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::network_security_group::NetworkSecurityGroupId;
+use nico_uuid::vpc::VpcId;
 use chrono::prelude::*;
 use config_version::ConfigVersion;
 use ipnetwork;

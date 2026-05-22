@@ -18,15 +18,15 @@
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
-use ::rpc::forge::{self as rpc, IsBmcInManagedHostResponse};
-use carbide_site_explorer::{endpoint_exploration_work_key, enrich_endpoint_exploration_report};
+use ::rpc::nico::{self as rpc, IsBmcInManagedHostResponse};
+use nico_site_explorer::{endpoint_exploration_work_key, enrich_endpoint_exploration_report};
 use config_version::ConfigVersion;
 use db::work_lock_manager::AcquireLockError;
 use model::expected_entity::ExpectedEntity;
 use tokio::net::lookup_host;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 
 pub(crate) async fn find_explored_endpoint_ids(
@@ -58,17 +58,17 @@ pub(crate) async fn find_explored_endpoints_by_ids(
         .iter()
         .map(|rs| IpAddr::from_str(rs))
         .collect::<Result<Vec<IpAddr>, _>>()
-        .map_err(CarbideError::AddressParseError)?;
+        .map_err(NicoError::AddressParseError)?;
 
     let max_find_by_ids = api.runtime_config.max_find_by_ids as usize;
     if ips.len() > max_find_by_ids {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "no more than {max_find_by_ids} IDs can be accepted"
         ))
         .into());
     } else if ips.is_empty() {
         return Err(
-            CarbideError::InvalidArgument("at least one ID must be provided".to_string()).into(),
+            NicoError::InvalidArgument("at least one ID must be provided".to_string()).into(),
         );
     }
 
@@ -113,17 +113,17 @@ pub(crate) async fn find_explored_managed_hosts_by_ids(
         .iter()
         .map(|rs| IpAddr::from_str(rs))
         .collect::<Result<Vec<IpAddr>, _>>()
-        .map_err(CarbideError::AddressParseError)?;
+        .map_err(NicoError::AddressParseError)?;
 
     let max_find_by_ids = api.runtime_config.max_find_by_ids as usize;
     if ips.len() > max_find_by_ids {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "no more than {max_find_by_ids} IDs can be accepted"
         ))
         .into());
     } else if ips.is_empty() {
         return Err(
-            CarbideError::InvalidArgument("at least one ID must be provided".to_string()).into(),
+            NicoError::InvalidArgument("at least one ID must be provided".to_string()).into(),
         );
     }
 
@@ -142,7 +142,7 @@ pub(crate) async fn find_explored_managed_hosts_by_ids(
 
 pub(crate) async fn get_site_exploration_report(
     api: &Api,
-    request: tonic::Request<::rpc::forge::GetSiteExplorationRequest>,
+    request: tonic::Request<::rpc::nico::GetSiteExplorationRequest>,
 ) -> Result<Response<::rpc::site_explorer::SiteExplorationReport>, Status> {
     log_request_data(&request);
 
@@ -158,7 +158,7 @@ pub(crate) async fn clear_site_exploration_error(
     log_request_data(&request);
     let req = request.into_inner();
 
-    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(CarbideError::from)?;
+    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(NicoError::from)?;
 
     let mut txn = api.txn_begin().await?;
 
@@ -176,18 +176,18 @@ pub(crate) async fn re_explore_endpoint(
     log_request_data(&request);
     let req = request.into_inner();
 
-    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(CarbideError::from)?;
+    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(NicoError::from)?;
     let if_version_match = req
         .if_version_match
         .map(|v| v.parse::<ConfigVersion>())
         .transpose()
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
 
     let mut txn = api.txn_begin().await?;
 
     let eps = db::explored_endpoints::find_all_by_ip(bmc_ip, &mut txn).await?;
     if eps.is_empty() {
-        return Err(CarbideError::NotFoundError {
+        return Err(NicoError::NotFoundError {
             kind: "explored_endpoint",
             id: bmc_ip.to_string(),
         }
@@ -208,13 +208,13 @@ pub(crate) async fn re_explore_endpoint(
         {
             Ok(true) => {}
             Ok(false) => {
-                return Err(CarbideError::ConcurrentModificationError(
+                return Err(NicoError::ConcurrentModificationError(
                     "explored_endpoint",
                     expected_version.to_string(),
                 )
                 .into());
             }
-            Err(e) => return Err(CarbideError::from(e).into()),
+            Err(e) => return Err(NicoError::from(e).into()),
         }
     }
 
@@ -230,7 +230,7 @@ pub(crate) async fn refresh_endpoint_report(
     log_request_data(&request);
     let req = request.into_inner();
 
-    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(CarbideError::from)?;
+    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(NicoError::from)?;
     let bmc_addr = SocketAddr::new(bmc_ip, 443);
 
     let mut txn = api.txn_begin().await?;
@@ -239,7 +239,7 @@ pub(crate) async fn refresh_endpoint_report(
     let existing_ep = existing
         .into_iter()
         .next()
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "explored_endpoint",
             id: bmc_ip.to_string(),
         })?;
@@ -249,7 +249,7 @@ pub(crate) async fn refresh_endpoint_report(
 
     let bmc_interface = db::machine_interface::find_by_ip(&mut txn, bmc_ip)
         .await?
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "machine_interface",
             id: bmc_ip.to_string(),
         })?;
@@ -280,13 +280,13 @@ pub(crate) async fn refresh_endpoint_report(
     {
         Ok(lock) => lock,
         Err(AcquireLockError::WorkAlreadyLocked(_)) => {
-            return Err(CarbideError::AlreadyInProgress(format!(
+            return Err(NicoError::AlreadyInProgress(format!(
                 "Endpoint refresh already in progress for {bmc_ip}"
             ))
             .into());
         }
         Err(e) => {
-            return Err(CarbideError::internal(format!(
+            return Err(NicoError::internal(format!(
                 "Failed to acquire endpoint work lock for {bmc_ip}: {e}"
             ))
             .into());
@@ -335,7 +335,7 @@ pub(crate) async fn refresh_endpoint_report(
         let current_version = current
             .first()
             .ok_or_else(|| {
-                tonic::Status::from(CarbideError::NotFoundError {
+                tonic::Status::from(NicoError::NotFoundError {
                     kind: "explored_endpoint",
                     id: bmc_ip.to_string(),
                 })
@@ -348,7 +348,7 @@ pub(crate) async fn refresh_endpoint_report(
 
         if !updated {
             return Err(tonic::Status::from(
-                CarbideError::ConcurrentModificationError(
+                NicoError::ConcurrentModificationError(
                     "explored_endpoint",
                     current_version.to_string(),
                 ),
@@ -360,7 +360,7 @@ pub(crate) async fn refresh_endpoint_report(
         txn.commit().await?;
 
         let ep = endpoints.into_iter().next().ok_or_else(|| {
-            tonic::Status::from(CarbideError::internal(format!(
+            tonic::Status::from(NicoError::internal(format!(
                 "Endpoint {bmc_ip} not found after update"
             )))
         })?;
@@ -371,7 +371,7 @@ pub(crate) async fn refresh_endpoint_report(
     match join_handle.await {
         Ok(Ok(ep)) => Ok(Response::new(ep.into())),
         Ok(Err(status)) => Err(status),
-        Err(join_err) => Err(CarbideError::internal(format!(
+        Err(join_err) => Err(NicoError::internal(format!(
             "refresh_endpoint_report background task failed for {bmc_ip}: {join_err}"
         ))
         .into()),
@@ -385,13 +385,13 @@ pub(crate) async fn pause_explored_endpoint_remediation(
     log_request_data(&request);
     let req = request.into_inner();
 
-    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(CarbideError::from)?;
+    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(NicoError::from)?;
 
     let mut txn = api.txn_begin().await?;
 
     let eps = db::explored_endpoints::find_all_by_ip(bmc_ip, &mut txn).await?;
     if eps.is_empty() {
-        return Err(CarbideError::NotFoundError {
+        return Err(NicoError::NotFoundError {
             kind: "explored_endpoint",
             id: bmc_ip.to_string(),
         }
@@ -400,12 +400,12 @@ pub(crate) async fn pause_explored_endpoint_remediation(
 
     // Check if a machine exists for this endpoint
     let in_managed_host =
-        carbide_site_explorer::is_endpoint_in_managed_host(bmc_ip, txn.as_pgconn())
+        nico_site_explorer::is_endpoint_in_managed_host(bmc_ip, txn.as_pgconn())
             .await
-            .map_err(|e| CarbideError::internal(e.to_string()))?;
+            .map_err(|e| NicoError::internal(e.to_string()))?;
 
     if in_managed_host {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "Cannot pause/resume remediation for endpoint {bmc_ip} because a machine exists for it"
         ))
         .into());
@@ -420,7 +420,7 @@ pub(crate) async fn pause_explored_endpoint_remediation(
 
 pub(crate) async fn is_bmc_in_managed_host(
     api: &Api,
-    request: tonic::Request<::rpc::forge::BmcEndpointRequest>,
+    request: tonic::Request<::rpc::nico::BmcEndpointRequest>,
 ) -> Result<Response<IsBmcInManagedHostResponse>, tonic::Status> {
     log_request_data(&request);
     let req = request.into_inner();
@@ -432,7 +432,7 @@ pub(crate) async fn is_bmc_in_managed_host(
 
     let mut addrs = lookup_host(address).await?;
     let Some(bmc_addr) = addrs.next() else {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "Could not resolve {}. Must be hostname[:port] or IPv4[:port]",
             req.ip_address
         ))
@@ -440,9 +440,9 @@ pub(crate) async fn is_bmc_in_managed_host(
     };
 
     let in_managed_host =
-        carbide_site_explorer::is_endpoint_in_managed_host(bmc_addr.ip(), &api.database_connection)
+        nico_site_explorer::is_endpoint_in_managed_host(bmc_addr.ip(), &api.database_connection)
             .await
-            .map_err(|e| CarbideError::internal(e.to_string()))?;
+            .map_err(|e| NicoError::internal(e.to_string()))?;
 
     Ok(Response::new(IsBmcInManagedHostResponse {
         in_managed_host,
@@ -456,7 +456,7 @@ pub(crate) async fn delete_explored_endpoint(
     log_request_data(&request);
     let req = request.into_inner();
 
-    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(CarbideError::from)?;
+    let bmc_ip = IpAddr::from_str(&req.ip_address).map_err(NicoError::from)?;
 
     let mut txn = api.txn_begin().await?;
 
@@ -472,12 +472,12 @@ pub(crate) async fn delete_explored_endpoint(
 
     // Check if a machine exists for this endpoint
     let in_managed_host =
-        carbide_site_explorer::is_endpoint_in_managed_host(bmc_ip, txn.as_pgconn())
+        nico_site_explorer::is_endpoint_in_managed_host(bmc_ip, txn.as_pgconn())
             .await
-            .map_err(|e| CarbideError::internal(e.to_string()))?;
+            .map_err(|e| NicoError::internal(e.to_string()))?;
 
     if in_managed_host {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "Cannot delete endpoint {bmc_ip} because a machine exists for it. Did you mean to force-delete the machine?"
         ))
         .into());

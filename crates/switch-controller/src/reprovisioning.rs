@@ -17,7 +17,7 @@
 
 //! Handler for SwitchControllerState::ReProvisioning.
 
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 use db::db_read::PgPoolReader;
 use db::{ObjectColumnFilter, rack as db_rack, switch as db_switch};
 use model::rack::RackState;

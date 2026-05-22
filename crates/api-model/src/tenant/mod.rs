@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use std::str::FromStr;
 
-use carbide_uuid::instance::InstanceId;
+use nico_uuid::instance::InstanceId;
 use chrono::{DateTime, Utc};
 use config_version::ConfigVersion;
 use itertools::Itertools;
@@ -153,7 +153,7 @@ pub struct UpdateTenantKeyset {
     pub if_version_match: Option<String>,
 }
 
-/// Identifies a forge tenant
+/// Identifies a nico tenant
 #[derive(Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TenantOrganizationId(String);
 

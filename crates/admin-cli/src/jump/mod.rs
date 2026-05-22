@@ -26,18 +26,18 @@ pub use args::Cmd;
 use crate::cfg::dispatch::Dispatch;
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 impl Run for Cmd {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         cmds::jump(self, ctx)
             .await
-            .map_err(|e| crate::errors::CarbideCliError::GenericError(e.to_string()))
+            .map_err(|e| crate::errors::NicoCliError::GenericError(e.to_string()))
     }
 }
 
 impl Dispatch for Cmd {
-    async fn dispatch(self, mut ctx: RuntimeContext) -> CarbideCliResult<()> {
+    async fn dispatch(self, mut ctx: RuntimeContext) -> NicoCliResult<()> {
         self.run(&mut ctx).await
     }
 }

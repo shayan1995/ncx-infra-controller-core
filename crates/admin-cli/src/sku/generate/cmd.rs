@@ -18,7 +18,7 @@
 use ::rpc::admin_cli::OutputFormat;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 use crate::sku::show::cmd::show_sku_details;
 
@@ -28,7 +28,7 @@ pub async fn generate(
     output: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     output_format: &OutputFormat,
     extended: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let mut sku = api_client
         .0
         .generate_sku_from_machine(args.machine_id)

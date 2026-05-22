@@ -17,7 +17,7 @@
 
 //! Handler for SwitchControllerState::Error.
 
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::switch::SwitchId;
 use model::switch::{Switch, SwitchControllerState};
 use state_controller::state_handler::{
     StateHandlerContext, StateHandlerError, StateHandlerOutcome,

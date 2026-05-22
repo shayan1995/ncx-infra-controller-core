@@ -23,9 +23,9 @@ use model::sku::{
 
 use crate as rpc;
 
-impl From<Sku> for rpc::forge::Sku {
+impl From<Sku> for rpc::nico::Sku {
     fn from(value: Sku) -> Self {
-        rpc::forge::Sku {
+        rpc::nico::Sku {
             schema_version: value.schema_version,
             id: value.id,
             description: Some(value.description),
@@ -38,8 +38,8 @@ impl From<Sku> for rpc::forge::Sku {
     }
 }
 
-impl From<rpc::forge::Sku> for Sku {
-    fn from(value: rpc::forge::Sku) -> Self {
+impl From<rpc::nico::Sku> for Sku {
+    fn from(value: rpc::nico::Sku) -> Self {
         Sku {
             schema_version: value.schema_version,
             id: value.id,
@@ -55,8 +55,8 @@ impl From<rpc::forge::Sku> for Sku {
     }
 }
 
-impl From<rpc::forge::SkuComponents> for SkuComponents {
-    fn from(value: rpc::forge::SkuComponents) -> Self {
+impl From<rpc::nico::SkuComponents> for SkuComponents {
+    fn from(value: rpc::nico::SkuComponents) -> Self {
         SkuComponents {
             chassis: value.chassis.unwrap_or_default().into(),
             cpus: value
@@ -89,9 +89,9 @@ impl From<rpc::forge::SkuComponents> for SkuComponents {
     }
 }
 
-impl From<SkuComponents> for rpc::forge::SkuComponents {
+impl From<SkuComponents> for rpc::nico::SkuComponents {
     fn from(value: SkuComponents) -> Self {
-        rpc::forge::SkuComponents {
+        rpc::nico::SkuComponents {
             chassis: Some(value.chassis.into()),
             cpus: value
                 .cpus
@@ -124,8 +124,8 @@ impl From<SkuComponents> for rpc::forge::SkuComponents {
     }
 }
 
-impl From<rpc::forge::SkuComponentChassis> for SkuComponentChassis {
-    fn from(value: rpc::forge::SkuComponentChassis) -> Self {
+impl From<rpc::nico::SkuComponentChassis> for SkuComponentChassis {
+    fn from(value: rpc::nico::SkuComponentChassis) -> Self {
         SkuComponentChassis {
             vendor: value.vendor,
             model: value.model,
@@ -134,9 +134,9 @@ impl From<rpc::forge::SkuComponentChassis> for SkuComponentChassis {
     }
 }
 
-impl From<SkuComponentChassis> for rpc::forge::SkuComponentChassis {
+impl From<SkuComponentChassis> for rpc::nico::SkuComponentChassis {
     fn from(value: SkuComponentChassis) -> Self {
-        rpc::forge::SkuComponentChassis {
+        rpc::nico::SkuComponentChassis {
             vendor: value.vendor,
             model: value.model,
             architecture: value.architecture,
@@ -144,8 +144,8 @@ impl From<SkuComponentChassis> for rpc::forge::SkuComponentChassis {
     }
 }
 
-impl From<rpc::forge::SkuComponentCpu> for SkuComponentCpu {
-    fn from(value: rpc::forge::SkuComponentCpu) -> Self {
+impl From<rpc::nico::SkuComponentCpu> for SkuComponentCpu {
+    fn from(value: rpc::nico::SkuComponentCpu) -> Self {
         SkuComponentCpu {
             vendor: value.vendor,
             model: value.model,
@@ -155,9 +155,9 @@ impl From<rpc::forge::SkuComponentCpu> for SkuComponentCpu {
     }
 }
 
-impl From<SkuComponentCpu> for rpc::forge::SkuComponentCpu {
+impl From<SkuComponentCpu> for rpc::nico::SkuComponentCpu {
     fn from(value: SkuComponentCpu) -> Self {
-        rpc::forge::SkuComponentCpu {
+        rpc::nico::SkuComponentCpu {
             vendor: value.vendor,
             model: value.model,
             count: value.count,
@@ -166,8 +166,8 @@ impl From<SkuComponentCpu> for rpc::forge::SkuComponentCpu {
     }
 }
 
-impl From<rpc::forge::SkuComponentGpu> for SkuComponentGpu {
-    fn from(value: rpc::forge::SkuComponentGpu) -> Self {
+impl From<rpc::nico::SkuComponentGpu> for SkuComponentGpu {
+    fn from(value: rpc::nico::SkuComponentGpu) -> Self {
         SkuComponentGpu {
             vendor: value.vendor,
             model: value.model,
@@ -177,9 +177,9 @@ impl From<rpc::forge::SkuComponentGpu> for SkuComponentGpu {
     }
 }
 
-impl From<SkuComponentGpu> for rpc::forge::SkuComponentGpu {
+impl From<SkuComponentGpu> for rpc::nico::SkuComponentGpu {
     fn from(value: SkuComponentGpu) -> Self {
-        rpc::forge::SkuComponentGpu {
+        rpc::nico::SkuComponentGpu {
             vendor: value.vendor,
             model: value.model,
             total_memory: value.total_memory,
@@ -188,8 +188,8 @@ impl From<SkuComponentGpu> for rpc::forge::SkuComponentGpu {
     }
 }
 
-impl From<rpc::forge::SkuComponentMemory> for SkuComponentMemory {
-    fn from(value: rpc::forge::SkuComponentMemory) -> Self {
+impl From<rpc::nico::SkuComponentMemory> for SkuComponentMemory {
+    fn from(value: rpc::nico::SkuComponentMemory) -> Self {
         SkuComponentMemory {
             memory_type: value.memory_type,
             capacity_mb: value.capacity_mb,
@@ -198,9 +198,9 @@ impl From<rpc::forge::SkuComponentMemory> for SkuComponentMemory {
     }
 }
 
-impl From<SkuComponentMemory> for rpc::forge::SkuComponentMemory {
+impl From<SkuComponentMemory> for rpc::nico::SkuComponentMemory {
     fn from(value: SkuComponentMemory) -> Self {
-        rpc::forge::SkuComponentMemory {
+        rpc::nico::SkuComponentMemory {
             memory_type: value.memory_type,
             capacity_mb: value.capacity_mb,
             count: value.count,
@@ -208,8 +208,8 @@ impl From<SkuComponentMemory> for rpc::forge::SkuComponentMemory {
     }
 }
 
-impl From<rpc::forge::SkuComponentInfinibandDevices> for SkuComponentInfinibandDevices {
-    fn from(value: rpc::forge::SkuComponentInfinibandDevices) -> Self {
+impl From<rpc::nico::SkuComponentInfinibandDevices> for SkuComponentInfinibandDevices {
+    fn from(value: rpc::nico::SkuComponentInfinibandDevices) -> Self {
         SkuComponentInfinibandDevices {
             vendor: value.vendor,
             model: value.model,
@@ -219,9 +219,9 @@ impl From<rpc::forge::SkuComponentInfinibandDevices> for SkuComponentInfinibandD
     }
 }
 
-impl From<SkuComponentInfinibandDevices> for rpc::forge::SkuComponentInfinibandDevices {
+impl From<SkuComponentInfinibandDevices> for rpc::nico::SkuComponentInfinibandDevices {
     fn from(value: SkuComponentInfinibandDevices) -> Self {
-        rpc::forge::SkuComponentInfinibandDevices {
+        rpc::nico::SkuComponentInfinibandDevices {
             vendor: value.vendor,
             model: value.model,
             count: value.count,
@@ -230,8 +230,8 @@ impl From<SkuComponentInfinibandDevices> for rpc::forge::SkuComponentInfinibandD
     }
 }
 
-impl From<rpc::forge::SkuComponentStorage> for SkuComponentStorage {
-    fn from(value: rpc::forge::SkuComponentStorage) -> Self {
+impl From<rpc::nico::SkuComponentStorage> for SkuComponentStorage {
+    fn from(value: rpc::nico::SkuComponentStorage) -> Self {
         SkuComponentStorage {
             model: value.model,
             count: value.count,
@@ -239,9 +239,9 @@ impl From<rpc::forge::SkuComponentStorage> for SkuComponentStorage {
     }
 }
 
-impl From<SkuComponentStorage> for rpc::forge::SkuComponentStorage {
+impl From<SkuComponentStorage> for rpc::nico::SkuComponentStorage {
     fn from(value: SkuComponentStorage) -> Self {
-        rpc::forge::SkuComponentStorage {
+        rpc::nico::SkuComponentStorage {
             vendor: String::default(),
             model: value.model,
             capacity_mb: 0u32,
@@ -250,8 +250,8 @@ impl From<SkuComponentStorage> for rpc::forge::SkuComponentStorage {
     }
 }
 
-impl From<rpc::forge::SkuComponentTpm> for SkuComponentTpm {
-    fn from(value: rpc::forge::SkuComponentTpm) -> Self {
+impl From<rpc::nico::SkuComponentTpm> for SkuComponentTpm {
+    fn from(value: rpc::nico::SkuComponentTpm) -> Self {
         SkuComponentTpm {
             vendor: value.vendor,
             version: value.version,
@@ -259,17 +259,17 @@ impl From<rpc::forge::SkuComponentTpm> for SkuComponentTpm {
     }
 }
 
-impl From<SkuComponentTpm> for rpc::forge::SkuComponentTpm {
+impl From<SkuComponentTpm> for rpc::nico::SkuComponentTpm {
     fn from(value: SkuComponentTpm) -> Self {
-        rpc::forge::SkuComponentTpm {
+        rpc::nico::SkuComponentTpm {
             vendor: value.vendor,
             version: value.version,
         }
     }
 }
 
-impl From<rpc::forge::SkuStatus> for SkuStatus {
-    fn from(value: rpc::forge::SkuStatus) -> Self {
+impl From<rpc::nico::SkuStatus> for SkuStatus {
+    fn from(value: rpc::nico::SkuStatus) -> Self {
         let verify_request_time = value
             .verify_request_time
             .map(|t| DateTime::<Utc>::try_from(t).unwrap_or_default());
@@ -288,9 +288,9 @@ impl From<rpc::forge::SkuStatus> for SkuStatus {
     }
 }
 
-impl From<SkuStatus> for rpc::forge::SkuStatus {
+impl From<SkuStatus> for rpc::nico::SkuStatus {
     fn from(value: SkuStatus) -> Self {
-        rpc::forge::SkuStatus {
+        rpc::nico::SkuStatus {
             verify_request_time: value.verify_request_time.map(|t| t.into()),
             last_match_attempt: value.last_match_attempt.map(|t| t.into()),
             last_generate_attempt: value.last_generate_attempt.map(|t| t.into()),

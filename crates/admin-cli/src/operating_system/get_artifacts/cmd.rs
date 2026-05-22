@@ -16,11 +16,11 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge::IpxeTemplateArtifactCacheStrategy;
+use ::rpc::nico::IpxeTemplateArtifactCacheStrategy;
 use prettytable::{Cell, Row, Table};
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::operating_system::common::{SerializableArtifact, str_to_os_id};
 use crate::rpc::ApiClient;
 
@@ -28,16 +28,16 @@ pub async fn get_artifacts(
     opts: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let id = str_to_os_id(&opts.id)?;
 
     let resp = api_client
         .0
         .get_operating_system_cachable_ipxe_template_artifacts(
-            ::rpc::forge::GetOperatingSystemCachableIpxeTemplateArtifactsRequest { id: Some(id) },
+            ::rpc::nico::GetOperatingSystemCachableIpxeTemplateArtifactsRequest { id: Some(id) },
         )
         .await
-        .map_err(CarbideCliError::from)?;
+        .map_err(NicoCliError::from)?;
 
     if format == OutputFormat::Json {
         let serializable: Vec<SerializableArtifact> = resp
@@ -47,7 +47,7 @@ pub async fn get_artifacts(
             .collect();
         println!(
             "{}",
-            serde_json::to_string_pretty(&serializable).map_err(CarbideCliError::JsonError)?
+            serde_json::to_string_pretty(&serializable).map_err(NicoCliError::JsonError)?
         );
         return Ok(());
     }

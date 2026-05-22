@@ -256,7 +256,7 @@ pub struct RackProfile {
 /* ********************************** */
 
 /// RackProfileConfig contains all known rack profiles, keyed by profile id.
-/// Loaded from the Carbide configuration file and used to validate that
+/// Loaded from the NICo configuration file and used to validate that
 /// the correct number of expected devices have been registered for a rack.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RackProfileConfig {

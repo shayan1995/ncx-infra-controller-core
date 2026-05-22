@@ -21,7 +21,7 @@ pub mod network;
 pub mod nvlink;
 pub mod tenant_config;
 
-use carbide_uuid::network_security_group::NetworkSecurityGroupId;
+use nico_uuid::network_security_group::NetworkSecurityGroupId;
 use serde::{Deserialize, Serialize};
 
 use crate::ConfigValidationError;

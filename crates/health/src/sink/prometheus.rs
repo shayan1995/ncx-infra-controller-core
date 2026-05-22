@@ -236,8 +236,8 @@ impl DataSink for PrometheusSink {
 mod tests {
     use std::str::FromStr;
 
-    use carbide_uuid::nvlink::NvLinkDomainId;
-    use carbide_uuid::switch::{SwitchId, SwitchIdSource, SwitchType};
+    use nico_uuid::nvlink::NvLinkDomainId;
+    use nico_uuid::switch::{SwitchId, SwitchIdSource, SwitchType};
     use mac_address::MacAddress;
 
     use super::*;

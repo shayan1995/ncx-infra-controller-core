@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::machine::{MachineId, MachineIdSource, MachineType};
+use nico_uuid::machine::{MachineId, MachineIdSource, MachineType};
 use sha2::{Digest, Sha256};
 
 use crate::hardware_info::HardwareInfo;
@@ -105,7 +105,7 @@ pub enum MissingHardwareInfo {
 
 #[cfg(test)]
 mod tests {
-    use carbide_uuid::machine::MACHINE_ID_LENGTH;
+    use nico_uuid::machine::MACHINE_ID_LENGTH;
 
     use super::*;
     use crate::hardware_info::TpmEkCertificate;

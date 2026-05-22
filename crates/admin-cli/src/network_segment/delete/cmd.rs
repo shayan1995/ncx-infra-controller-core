@@ -17,11 +17,11 @@
 
 use super::args::Args;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
-pub async fn handle_delete(args: Args, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+pub async fn handle_delete(args: Args, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
     if !ctx.config.cloud_unsafe_op_enabled {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "Operation not allowed due to potential inconsistencies with cloud database."
                 .to_owned(),
         ));

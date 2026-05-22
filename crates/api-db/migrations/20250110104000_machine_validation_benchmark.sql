@@ -1,26 +1,26 @@
 UPDATE
     machine_validation_tests
 SET
-    pre_condition = '/opt/forge/benchpress-cuda-pre-setup.sh',
+    pre_condition = '/opt/nico/benchpress-cuda-pre-setup.sh',
     extra_output_file = '/opt/benchpress/results/cuda_samples_stdout.txt',
     extra_err_file = '/opt/benchpress/results/cuda_samples_stderr.txt',
     command = '/opt/benchpress/benchpress',
     img_name = null,
     container_arg = null
 where
-    test_id = 'forge_CudaSample';
+    test_id = 'nico_CudaSample';
 
 UPDATE
     machine_validation_tests
 SET
-    pre_condition = '/opt/forge/benchpress-raytracing-pre-setup.sh',
+    pre_condition = '/opt/nico/benchpress-raytracing-pre-setup.sh',
     extra_output_file = '/opt/benchpress/results/raytracing_vk_stdout.txt',
     extra_err_file = '/opt/benchpress/results/raytracing_vk_stderr.txt',
     command = '/opt/benchpress/benchpress',
     img_name = null,
     container_arg = null
 where
-    test_id = 'forge_RaytracingVk';
+    test_id = 'nico_RaytracingVk';
 
 INSERT INTO
     machine_validation_tests (
@@ -50,7 +50,7 @@ INSERT INTO
     )
 VALUES
     (
-        'forge_Nvbandwidth',
+        'nico_Nvbandwidth',
         'Nvbandwidth',
         'Running nvbandwidth test using benechpress',
         NULL,
@@ -61,7 +61,7 @@ VALUES
         'run nvbandwidth',
         '/opt/benchpress/results/nvbandwidth_stdout.txt',
         '/opt/benchpress/results/nvbandwidth_stderr.txt',
-        '/opt/forge/benchpress-nvbandwidth-pre-setup.sh',
+        '/opt/nico/benchpress-nvbandwidth-pre-setup.sh',
         '{Discovery,OnDemand}',
         7200,
         'V1-T1734600519831720',

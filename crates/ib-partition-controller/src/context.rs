@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use carbide_ib_fabric::ib::IBFabricManager;
+use nico_ib_fabric::ib::IBFabricManager;
 use model::resource_pool::common::IbPools;
 use sqlx::PgPool;
 use state_controller::state_handler::StateHandlerContextObjects;
@@ -27,7 +27,7 @@ pub struct IBPartitionStateHandlerContextObjects {}
 #[derive(Clone)]
 pub struct IBPartitionStateHandlerServices {
     pub db_pool: PgPool,
-    /// API for interaction with Forge IBFabricManager
+    /// API for interaction with NICo IBFabricManager
     pub ib_fabric_manager: Arc<dyn IBFabricManager>,
     /// Resource pools for ib pkey allocation/release.
     pub ib_pools: IbPools,

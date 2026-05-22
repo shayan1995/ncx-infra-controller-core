@@ -22,7 +22,7 @@ use model::power_shelf::{
 };
 
 use crate::errors::RpcDataConversionError;
-use crate::forge::{self as rpc, LifecycleStatus};
+use crate::nico::{self as rpc, LifecycleStatus};
 
 impl TryFrom<rpc::PowerShelfCreationRequest> for NewPowerShelf {
     type Error = RpcDataConversionError;

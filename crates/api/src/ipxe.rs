@@ -16,12 +16,12 @@
  */
 use std::net::IpAddr;
 
-use ::rpc::forge as rpc;
-use carbide_ipxe_renderer::{
+use ::rpc::nico as rpc;
+use nico_ipxe_renderer::{
     DefaultIpxeScriptRenderer, IpxeScript, IpxeScriptRenderer, IpxeTemplateArtifact,
     IpxeTemplateArtifactCacheStrategy, IpxeTemplateParameter,
 };
-use carbide_uuid::machine::{MachineId, MachineInterfaceId, MachineType};
+use nico_uuid::machine::{MachineId, MachineInterfaceId, MachineType};
 use db::{self};
 use mac_address::MacAddress;
 use model::machine::machine_search_config::MachineSearchConfig;
@@ -31,7 +31,7 @@ use model::machine::{
 };
 use sqlx::PgConnection;
 
-use crate::CarbideError;
+use crate::NicoError;
 
 pub struct PxeInstructionRequest {
     pub arch: rpc::MachineArchitecture,
@@ -41,7 +41,7 @@ pub struct PxeInstructionRequest {
 
 /// Input provided to `PxeInstructions::get_pxe_instructions`.
 /// The PxeInstructionsRequest model contains the client_ip
-/// as determined by carbide-pxe, whereas PxeInstructionsInput
+/// as determined by nico-pxe, whereas PxeInstructionsInput
 /// contains the resolved machine_interface_id.
 pub struct PxeInstructionsInput {
     pub interface_id: MachineInterfaceId,
@@ -76,9 +76,9 @@ impl TryFrom<rpc::PxeInstructionRequest> for PxeInstructionRequest {
 /// Converts an operating_systems row (type ipxe_os_definition) to IpxeScript for the renderer.
 fn operating_system_row_to_ipxe_script(
     row: &db::operating_system::OperatingSystem,
-) -> Result<IpxeScript, CarbideError> {
+) -> Result<IpxeScript, NicoError> {
     if row.type_ != model::operating_system_definition::OS_TYPE_TEMPLATED_IPXE {
-        return Err(CarbideError::internal(format!(
+        return Err(NicoError::internal(format!(
             "operating_system {} has type {}, expected {}",
             row.id,
             row.type_,
@@ -214,9 +214,9 @@ impl PxeInstructions {
                 else {
                      // For the DPUs, bfks => BlueField Kick Start script
                      InstructionGenerator {
-                        kernel: "${base-url}/internal/aarch64/carbide.efi".to_string(),
+                        kernel: "${base-url}/internal/aarch64/nico.efi".to_string(),
                         command_line: format!("console=tty0 console=ttyS0,115200 console=ttyAMA0 console=hvc0 ip=dhcp cli_cmd=auto-detect bfnet=oob_net0:dhcp bfks=${{cloudinit-url}}/user-data machine_id={machine_interface_id} server_uri=[api_url] pxe_uri=[pxe_url]"),
-                        initrd: Some("${base-url}/internal/aarch64/carbide.root".to_string()),
+                        initrd: Some("${base-url}/internal/aarch64/nico.root".to_string()),
                     }
                 }
             }
@@ -235,7 +235,7 @@ impl PxeInstructions {
         ipxeos: &IpxeScript,
         base_url: &str,
         console: &str,
-    ) -> Result<String, CarbideError> {
+    ) -> Result<String, NicoError> {
         let renderer = DefaultIpxeScriptRenderer::new();
 
         let mut reserved_params = Vec::new();
@@ -266,13 +266,13 @@ impl PxeInstructions {
 
         renderer
             .render(ipxeos, &reserved_params)
-            .map_err(|e| CarbideError::internal(format!("Failed to render iPXE script: {}", e)))
+            .map_err(|e| NicoError::internal(format!("Failed to render iPXE script: {}", e)))
     }
 
     pub async fn get_pxe_instructions(
         txn: &mut PgConnection,
         target: PxeInstructionsInput,
-    ) -> Result<String, CarbideError> {
+    ) -> Result<String, NicoError> {
         let error_instructions = |machine_id: MachineId,
                                   interface_id: MachineInterfaceId,
                                   state: &ManagedHostState|
@@ -327,7 +327,7 @@ exit ||
         }
 
         let Some(machine_id) = interface.machine_id else {
-            // FORGE-7330: If site-explorer can't get the interface info from the bmc, then it won't associate the interface with a machine.
+            // NICO-7330: If site-explorer can't get the interface info from the bmc, then it won't associate the interface with a machine.
             // if the pxe request included the product and its a DPU, the machine record is not needed and we can just use the DPU type.
             if let Some(product) = target.product
                 && product.to_ascii_lowercase().contains("bluefield")
@@ -389,8 +389,8 @@ exit ||
 
         let machine = db::machine::find_one(&mut *txn, &machine_id, MachineSearchConfig::default())
             .await
-            .map_err(|e| CarbideError::InvalidArgument(format!("Get machine failed, Error: {e}")))?
-            .ok_or(CarbideError::InvalidArgument(
+            .map_err(|e| NicoError::InvalidArgument(format!("Get machine failed, Error: {e}")))?
+            .ok_or(NicoError::InvalidArgument(
                 "Invalid machine id. Not found in db.".to_string(),
             ))?;
 
@@ -422,7 +422,7 @@ exit ||
             match &machine.current_state() {
                 ManagedHostState::DPUInit { dpu_states } => {
                     let Some(dpu_state) = dpu_states.states.get(&machine_id) else {
-                        return Err(CarbideError::MissingDpu(machine_id));
+                        return Err(NicoError::MissingDpu(machine_id));
                     };
 
                     match dpu_state {
@@ -509,7 +509,7 @@ exit ||
                 InstanceState::Ready => {
                     let instance = db::instance::find_by_machine_id(txn, &machine_id)
                         .await?
-                        .ok_or(CarbideError::NotFoundError {
+                        .ok_or(NicoError::NotFoundError {
                             kind: "machine",
                             id: machine_id.to_string(),
                         })?;

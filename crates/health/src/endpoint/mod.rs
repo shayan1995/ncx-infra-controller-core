@@ -29,8 +29,8 @@ mod tests {
     use std::str::FromStr;
     use std::sync::Arc;
 
-    use carbide_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
-    use carbide_uuid::switch::{SwitchIdSource, SwitchType};
+    use nico_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
+    use nico_uuid::switch::{SwitchIdSource, SwitchType};
     use mac_address::MacAddress;
 
     use super::*;
@@ -55,18 +55,18 @@ mod tests {
         )
     }
 
-    fn test_switch_id(label: &str) -> carbide_uuid::switch::SwitchId {
+    fn test_switch_id(label: &str) -> nico_uuid::switch::SwitchId {
         let mut hash = [0u8; 32];
         let bytes = label.as_bytes();
         hash[..bytes.len().min(32)].copy_from_slice(&bytes[..bytes.len().min(32)]);
-        carbide_uuid::switch::SwitchId::new(SwitchIdSource::Tpm, hash, SwitchType::NvLink)
+        nico_uuid::switch::SwitchId::new(SwitchIdSource::Tpm, hash, SwitchType::NvLink)
     }
 
-    fn test_power_shelf_id(label: &str) -> carbide_uuid::power_shelf::PowerShelfId {
+    fn test_power_shelf_id(label: &str) -> nico_uuid::power_shelf::PowerShelfId {
         let mut hash = [0u8; 32];
         let bytes = label.as_bytes();
         hash[..bytes.len().min(32)].copy_from_slice(&bytes[..bytes.len().min(32)]);
-        carbide_uuid::power_shelf::PowerShelfId::new(
+        nico_uuid::power_shelf::PowerShelfId::new(
             PowerShelfIdSource::ProductBoardChassisSerial,
             hash,
             PowerShelfType::Rack,

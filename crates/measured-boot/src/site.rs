@@ -24,8 +24,8 @@
 
 use std::vec::Vec;
 
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::measured_boot::MeasurementBundleId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::measured_boot::MeasurementBundleId;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "sqlx")]

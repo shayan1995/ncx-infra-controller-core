@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-use forge_ssh::ssh::is_rshim_enabled;
+use nico_ssh::ssh::is_rshim_enabled;
 
 use super::super::common::SshArgs;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
-pub async fn get_rshim_status(args: SshArgs) -> CarbideCliResult<()> {
+pub async fn get_rshim_status(args: SshArgs) -> NicoCliResult<()> {
     let is_rshim_enabled = is_rshim_enabled(
         args.credentials.bmc_ip_address,
         args.credentials.bmc_username,
         args.credentials.bmc_password,
     )
     .await
-    .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+    .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
     tracing::info!("{is_rshim_enabled}");
     Ok(())
 }

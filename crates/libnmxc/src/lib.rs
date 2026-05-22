@@ -34,8 +34,8 @@ use crate::nmxc_model::nmx_controller_client::NmxControllerClient;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// `gateway_id` sent on NMX-C gRPC requests from Carbide and the `nmxc` test client.
-pub const NMX_C_GATEWAY_ID: &str = "carbide";
+/// `gateway_id` sent on NMX-C gRPC requests from NICo and the `nmxc` test client.
+pub const NMX_C_GATEWAY_ID: &str = "nico";
 
 #[derive(thiserror::Error, Debug)]
 pub enum NmxcError {
@@ -226,7 +226,7 @@ impl NmxcClientPool {
     }
 }
 
-/// Abstraction over [`NmxcClientPool`] and test doubles (e.g. `NmxcSimClient` in carbide-api).
+/// Abstraction over [`NmxcClientPool`] and test doubles (e.g. `NmxcSimClient` in nico-api).
 #[async_trait::async_trait]
 pub trait NmxcPool: Send + Sync + 'static {
     async fn create_client(&self, endpoint: Endpoint) -> Result<Box<dyn Nmxc>, NmxcError>;

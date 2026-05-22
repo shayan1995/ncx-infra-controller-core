@@ -19,7 +19,7 @@ use model::dhcp_record::DhcpRecord;
 
 use crate as rpc;
 
-impl From<DhcpRecord> for rpc::forge::DhcpRecord {
+impl From<DhcpRecord> for rpc::nico::DhcpRecord {
     fn from(record: DhcpRecord) -> Self {
         Self {
             machine_id: record.machine_id,

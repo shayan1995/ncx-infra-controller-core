@@ -18,11 +18,11 @@
 use std::fmt::Write;
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 use prettytable::{Table, row};
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 pub async fn show(
@@ -30,9 +30,9 @@ pub async fn show(
     output_format: OutputFormat,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
-    let identifier: Option<forgerpc::TenantKeysetIdentifier> = (&args).try_into()?;
+    let identifier: Option<nicorpc::TenantKeysetIdentifier> = (&args).try_into()?;
 
     if let Some(identifier) = identifier {
         show_keyset_details(identifier, is_json, api_client).await?;
@@ -48,7 +48,7 @@ async fn show_keysets(
     api_client: &ApiClient,
     page_size: usize,
     tenant_org_id: Option<String>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let all_keysets = match api_client.get_all_keysets(tenant_org_id, page_size).await {
         Ok(all_vpc_ids) => all_vpc_ids,
         Err(e) => return Err(e),
@@ -62,14 +62,14 @@ async fn show_keysets(
 }
 
 async fn show_keyset_details(
-    identifier: forgerpc::TenantKeysetIdentifier,
+    identifier: nicorpc::TenantKeysetIdentifier,
     json: bool,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let keysets = api_client.get_one_keyset(identifier).await?;
 
     if keysets.keyset.len() != 1 {
-        return Err(CarbideCliError::GenericError(
+        return Err(NicoCliError::GenericError(
             "Unknown Tenant KeySet ID".to_string(),
         ));
     }
@@ -87,7 +87,7 @@ async fn show_keyset_details(
     Ok(())
 }
 
-fn convert_keysets_to_nice_table(keysets: forgerpc::TenantKeySetList) -> Box<Table> {
+fn convert_keysets_to_nice_table(keysets: nicorpc::TenantKeySetList) -> Box<Table> {
     let mut table = Table::new();
 
     table.set_titles(row!["Id", "TenantOrg", "Version", "Keys",]);
@@ -117,7 +117,7 @@ fn convert_keysets_to_nice_table(keysets: forgerpc::TenantKeySetList) -> Box<Tab
     table.into()
 }
 
-fn convert_keyset_to_nice_format(keyset: &forgerpc::TenantKeyset) -> CarbideCliResult<String> {
+fn convert_keyset_to_nice_format(keyset: &nicorpc::TenantKeyset) -> NicoCliResult<String> {
     let width = 25;
     let mut lines = String::new();
 

@@ -22,7 +22,7 @@ use prettytable::{Cell, Row, Table};
 
 use crate::cfg::dispatch::Dispatch;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 mod config;
@@ -59,7 +59,7 @@ pub struct CliContext<'g, 'a> {
 }
 
 impl Dispatch for MlxAction {
-    async fn dispatch(self, ctx: RuntimeContext) -> CarbideCliResult<()> {
+    async fn dispatch(self, ctx: RuntimeContext) -> NicoCliResult<()> {
         let mut ctxt = CliContext {
             grpc_conn: &ctx.api_client,
             format: &ctx.config.format,

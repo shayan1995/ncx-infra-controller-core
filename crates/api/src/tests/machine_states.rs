@@ -20,12 +20,12 @@ use std::sync::atomic::AtomicBool;
 
 use ::rpc::measured_boot::FromGrpc;
 use base64::prelude::*;
-use carbide_machine_controller::context::MachineStateHandlerContextObjects;
-use carbide_machine_controller::handler::{MachineStateHandlerBuilder, handler_host_power_control};
-use carbide_machine_controller::metrics::MachineMetrics;
-use carbide_redfish::libredfish::test_support::RedfishSimAction;
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::machine_validation::MachineValidationId;
+use nico_machine_controller::context::MachineStateHandlerContextObjects;
+use nico_machine_controller::handler::{MachineStateHandlerBuilder, handler_host_power_control};
+use nico_machine_controller::metrics::MachineMetrics;
+use nico_redfish::libredfish::test_support::RedfishSimAction;
+use nico_uuid::machine::MachineId;
+use nico_uuid::machine_validation::MachineValidationId;
 use chrono::Duration;
 use common::api_fixtures::dpu::{
     create_dpu_machine, create_dpu_machine_in_waiting_for_network_install,
@@ -57,16 +57,16 @@ use model::machine::{
     MachineState, MachineValidatingState, ManagedHostState, MeasuringState, PowerState, RetryInfo,
     SpdmMeasuringState, StateMachineArea, ValidationState,
 };
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{HealthReportEntry, InsertMachineHealthReportRequest, TpmCaCert, TpmCaCertId};
-use rpc::forge_agent_control_response::{Action, LegacyAction};
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{HealthReportEntry, InsertMachineHealthReportRequest, TpmCaCert, TpmCaCertId};
+use rpc::nico_agent_control_response::{Action, LegacyAction};
 use rpc::machine_discovery::AttestKeyInfo;
 use rpc::{DiscoveryData, DiscoveryInfo};
 use state_controller::db_write_batch::DbWriteBatch;
 use state_controller::state_handler::StateHandlerContext;
 use tonic::{Code, Request};
 
-use crate::handlers::measured_boot::rpc_forge::MachineDiscoveryInfo;
+use crate::handlers::measured_boot::rpc_nico::MachineDiscoveryInfo;
 use crate::measured_boot::convert_vec;
 use crate::tests::common;
 use crate::tests::common::api_fixtures::dpu::{
@@ -77,7 +77,7 @@ use crate::tests::common::api_fixtures::instance::{
 };
 use crate::tests::common::api_fixtures::managed_host::ManagedHostConfig;
 use crate::tests::common::api_fixtures::{
-    TestEnvOverrides, create_managed_host_with_ek, discovery_completed, forge_agent_control,
+    TestEnvOverrides, create_managed_host_with_ek, discovery_completed, nico_agent_control,
     on_demand_machine_validation, update_time_params,
 };
 use crate::tests::common::attestation::spdm_attestation_run_to_failed_then_to_success;
@@ -181,7 +181,7 @@ async fn test_managed_host_network_config_group_sync(pool: sqlx::PgPool) {
 
 // Per-DPU network-config sync is rooted in the host-level
 // `network_config.version`, not the DPU's own row version.
-// carbide-api serves `host.version` to carbide-dpu-agent as
+// nico-api serves `host.version` to nico-dpu-agent as
 // `managed_host_config_version`, and the agent echoes it back
 // as its observation; this just makes sure the host-level
 // verison is looked at, and the DPU-level version is ignored.
@@ -287,9 +287,9 @@ async fn test_dpu_and_host_till_ready(pool: sqlx::PgPool) {
 
     assert!(matches!(dpu.current_state(), ManagedHostState::Ready));
 
-    let carbide_machines_per_state = env.test_meter.parsed_metrics("carbide_machines_per_state");
+    let nico_machines_per_state = env.test_meter.parsed_metrics("nico_machines_per_state");
 
-    assert!(carbide_machines_per_state.contains(&(
+    assert!(nico_machines_per_state.contains(&(
         "{fresh=\"true\",state=\"ready\",substate=\"\"}".to_string(),
         "3".to_string()
     )));
@@ -319,7 +319,7 @@ async fn test_dpu_and_host_till_ready(pool: sqlx::PgPool) {
 
     let states_entered = env
         .test_meter
-        .parsed_metrics("carbide_machines_state_entered_total");
+        .parsed_metrics("nico_machines_state_entered_total");
 
     for expected in expected_states_entered.iter() {
         let actual = states_entered
@@ -363,7 +363,7 @@ async fn test_dpu_and_host_till_ready(pool: sqlx::PgPool) {
 
     let states_exited = env
         .test_meter
-        .parsed_metrics("carbide_machines_state_exited_total");
+        .parsed_metrics("nico_machines_state_exited_total");
 
     for expected in expected_states_exited.iter() {
         let actual = states_exited
@@ -625,8 +625,8 @@ async fn test_nvme_clean_failed_state_host(pool: sqlx::PgPool) {
     let clean_failed_req = tonic::Request::new(rpc::MachineCleanupInfo {
         machine_id: mh.id.into(),
         nvme: Some(
-            rpc::protos::forge::machine_cleanup_info::CleanupStepResult {
-                result: rpc::protos::forge::machine_cleanup_info::CleanupResult::Error as i32,
+            rpc::protos::nico::machine_cleanup_info::CleanupStepResult {
+                result: rpc::protos::nico::machine_cleanup_info::CleanupResult::Error as i32,
                 message: "test nvme failure".to_string(),
             },
         ),
@@ -666,8 +666,8 @@ async fn test_nvme_clean_failed_state_host(pool: sqlx::PgPool) {
     let clean_failed_req = tonic::Request::new(rpc::MachineCleanupInfo {
         machine_id: mh.id.into(),
         nvme: Some(
-            rpc::protos::forge::machine_cleanup_info::CleanupStepResult {
-                result: rpc::protos::forge::machine_cleanup_info::CleanupResult::Error as i32,
+            rpc::protos::nico::machine_cleanup_info::CleanupStepResult {
+                result: rpc::protos::nico::machine_cleanup_info::CleanupResult::Error as i32,
                 message: "test nvme failure".to_string(),
             },
         ),
@@ -727,8 +727,8 @@ async fn test_repeated_initial_discovery_cleanup_failure_preserves_host_init_sou
         Request::new(rpc::MachineCleanupInfo {
             machine_id: machine_id.into(),
             nvme: Some(
-                rpc::protos::forge::machine_cleanup_info::CleanupStepResult {
-                    result: rpc::protos::forge::machine_cleanup_info::CleanupResult::Error as i32,
+                rpc::protos::nico::machine_cleanup_info::CleanupStepResult {
+                    result: rpc::protos::nico::machine_cleanup_info::CleanupResult::Error as i32,
                     message: "test nvme failure".to_string(),
                 },
             ),
@@ -840,8 +840,8 @@ async fn test_hdd_clean_failed_state_host(pool: sqlx::PgPool) {
     let clean_failed_req = tonic::Request::new(rpc::MachineCleanupInfo {
         machine_id: mh.id.into(),
         hdd: Some(
-            rpc::protos::forge::machine_cleanup_info::CleanupStepResult {
-                result: rpc::protos::forge::machine_cleanup_info::CleanupResult::Error as i32,
+            rpc::protos::nico::machine_cleanup_info::CleanupStepResult {
+                result: rpc::protos::nico::machine_cleanup_info::CleanupResult::Error as i32,
                 message: "test hdd failure".to_string(),
             },
         ),
@@ -902,29 +902,29 @@ async fn test_dpu_heartbeat(pool: sqlx::PgPool) -> sqlx::Result<()> {
 
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpus_up_count{fresh=\"true\"}")
+            .formatted_metric("nico_dpus_up_count{fresh=\"true\"}")
             .unwrap(),
         "1"
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpus_healthy_count{fresh=\"true\"}")
+            .formatted_metric("nico_dpus_healthy_count{fresh=\"true\"}")
             .unwrap(),
         r#"1"#
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpu_health_check_failed_count"),
+            .formatted_metric("nico_dpu_health_check_failed_count"),
         None
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_hosts_unhealthy_by_probe_id_count{fresh=\"true\",probe_id=\"HeartbeatTimeout\",probe_target=\"forge-dpu-agent\"}"),
+            .formatted_metric("nico_hosts_unhealthy_by_probe_id_count{fresh=\"true\",probe_id=\"HeartbeatTimeout\",probe_target=\"nico-dpu-agent\"}"),
         None,
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_hosts_unhealthy_by_probe_id_count{fresh=\"true\",probe_id=\"HeartbeatTimeout\",probe_target=\"hardware-health\"}"),
+            .formatted_metric("nico_hosts_unhealthy_by_probe_id_count{fresh=\"true\",probe_id=\"HeartbeatTimeout\",probe_target=\"hardware-health\"}"),
         None,
     );
 
@@ -962,38 +962,38 @@ async fn test_dpu_heartbeat(pool: sqlx::PgPool) -> sqlx::Result<()> {
     // The up count reflects the heartbeat timeout.
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpus_up_count{fresh=\"true\"}")
+            .formatted_metric("nico_dpus_up_count{fresh=\"true\"}")
             .unwrap(),
         "0"
     );
     // The report now says heartbeat timeout, which is unhealthy.
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpus_healthy_count{fresh=\"true\"}")
+            .formatted_metric("nico_dpus_healthy_count{fresh=\"true\"}")
             .unwrap(),
         "0"
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpu_health_check_failed_count{failure=\"HeartbeatTimeout [Target: forge-dpu-agent]\",fresh=\"true\",probe_id=\"HeartbeatTimeout\",probe_target=\"forge-dpu-agent\"}")
+            .formatted_metric("nico_dpu_health_check_failed_count{failure=\"HeartbeatTimeout [Target: nico-dpu-agent]\",fresh=\"true\",probe_id=\"HeartbeatTimeout\",probe_target=\"nico-dpu-agent\"}")
             .unwrap(),
         "1"
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_hosts_unhealthy_by_probe_id_count{fresh=\"true\",in_use=\"false\",probe_id=\"HeartbeatTimeout\",probe_target=\"forge-dpu-agent\"}")
+            .formatted_metric("nico_hosts_unhealthy_by_probe_id_count{fresh=\"true\",in_use=\"false\",probe_id=\"HeartbeatTimeout\",probe_target=\"nico-dpu-agent\"}")
             .unwrap(),
         "1",
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_hosts_unhealthy_by_probe_id_count{fresh=\"true\",in_use=\"false\",probe_id=\"HeartbeatTimeout\",probe_target=\"hardware-health\"}"),
+            .formatted_metric("nico_hosts_unhealthy_by_probe_id_count{fresh=\"true\",in_use=\"false\",probe_id=\"HeartbeatTimeout\",probe_target=\"hardware-health\"}"),
         None,
     );
     assert_eq!(
         env.test_meter
             .formatted_metric(
-                "carbide_hosts_health_status_count{fresh=\"true\",healthy=\"false\",in_use=\"false\"}"
+                "nico_hosts_health_status_count{fresh=\"true\",healthy=\"false\",in_use=\"false\"}"
             )
             .unwrap(),
         "1"
@@ -1051,8 +1051,8 @@ async fn test_failed_state_host_discovery_recovery(pool: sqlx::PgPool) {
     txn.commit().await.unwrap();
     let pxe = env
         .api
-        .get_pxe_instructions(tonic::Request::new(rpc::forge::PxeInstructionRequest {
-            arch: rpc::forge::MachineArchitecture::X86 as i32,
+        .get_pxe_instructions(tonic::Request::new(rpc::nico::PxeInstructionRequest {
+            arch: rpc::nico::MachineArchitecture::X86 as i32,
             product: None,
             client_ip: Some(host.interfaces[0].addresses[0].to_string()),
             ..Default::default()
@@ -1063,7 +1063,7 @@ async fn test_failed_state_host_discovery_recovery(pool: sqlx::PgPool) {
 
     assert!(pxe.pxe_script.contains("scout.efi"));
 
-    let response = forge_agent_control(&env, mh.id).await;
+    let response = nico_agent_control(&env, mh.id).await;
     assert!(matches!(response.action, Some(Action::Discovery(_))));
     assert_eq!(response.legacy_action, LegacyAction::Discovery as i32);
 
@@ -1072,13 +1072,13 @@ async fn test_failed_state_host_discovery_recovery(pool: sqlx::PgPool) {
     env.run_machine_state_controller_iteration().await;
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_reboot_attempts_in_failed_during_discovery_sum")
+            .formatted_metric("nico_reboot_attempts_in_failed_during_discovery_sum")
             .unwrap(),
         "1"
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_reboot_attempts_in_failed_during_discovery_count")
+            .formatted_metric("nico_reboot_attempts_in_failed_during_discovery_count")
             .unwrap(),
         "1"
     );
@@ -1156,7 +1156,7 @@ async fn test_failed_state_host_discovery_recovery(pool: sqlx::PgPool) {
     );
     txn.commit().await.unwrap();
 
-    let response = forge_agent_control(&env, mh.id).await;
+    let response = nico_agent_control(&env, mh.id).await;
     assert!(matches!(response.action, Some(Action::Noop(_))));
     assert_eq!(response.legacy_action, LegacyAction::Noop as i32);
     env.run_machine_state_controller_iteration_until_state_matches(
@@ -1177,13 +1177,13 @@ async fn test_managed_host_version_metrics(pool: sqlx::PgPool) {
 
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_gpus_in_use_count")
+            .formatted_metric("nico_gpus_in_use_count")
             .unwrap(),
         r#"{fresh="true"} 0"#
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_hosts_in_use_count")
+            .formatted_metric("nico_hosts_in_use_count")
             .unwrap(),
         r#"{fresh="true"} 0"#
     );
@@ -1191,26 +1191,26 @@ async fn test_managed_host_version_metrics(pool: sqlx::PgPool) {
     // and never becomes ready. Once it does, the test should be updated.
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_hosts_usable_count")
+            .formatted_metric("nico_hosts_usable_count")
             .unwrap(),
         r#"{fresh="true"} 1"#
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_gpus_usable_count")
+            .formatted_metric("nico_gpus_usable_count")
             .unwrap(),
         r#"{fresh="true"} 1"#
     );
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_gpus_total_count")
+            .formatted_metric("nico_gpus_total_count")
             .unwrap(),
         r#"{fresh="true"} 2"#
     );
 
     let mut health_status_metrics = env
         .test_meter
-        .formatted_metrics("carbide_hosts_health_status_count");
+        .formatted_metrics("nico_hosts_health_status_count");
     health_status_metrics.sort();
     assert_eq!(health_status_metrics.len(), 4);
 
@@ -1228,21 +1228,21 @@ async fn test_managed_host_version_metrics(pool: sqlx::PgPool) {
 
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpu_firmware_version_count")
+            .formatted_metric("nico_dpu_firmware_version_count")
             .unwrap(),
         r#"{firmware_version="24.42.1000",fresh="true"} 2"#,
     );
 
     assert_eq!(
         env.test_meter
-            .formatted_metric("carbide_dpu_agent_version_count")
+            .formatted_metric("nico_dpu_agent_version_count")
             .unwrap(),
         format!(r#"{{fresh="true",version="{TEST_DPU_AGENT_VERSION}"}} 2"#)
     );
 
     let mut inventory_metrics = env
         .test_meter
-        .formatted_metrics("carbide_machine_inventory_component_version_count");
+        .formatted_metrics("nico_machine_inventory_component_version_count");
     inventory_metrics.sort();
 
     for expected in &[
@@ -1263,7 +1263,7 @@ async fn test_managed_host_version_metrics(pool: sqlx::PgPool) {
     // we should have SKU metrics for the created hosts
     let sku_metrics = env
         .test_meter
-        .formatted_metric("carbide_hosts_by_sku_count");
+        .formatted_metric("nico_hosts_by_sku_count");
     assert_eq!(
         sku_metrics.unwrap(),
         r#"{device_type="unknown",fresh="true",sku="unknown"} 2"#
@@ -1296,7 +1296,7 @@ async fn test_state_outcome(pool: sqlx::PgPool) {
 
     // Scout does its thing
 
-    let _ = mh.dpu().forge_agent_control().await;
+    let _ = mh.dpu().nico_agent_control().await;
 
     // Now we're stuck waiting for DPU agent to run
     env.run_machine_state_controller_iteration().await;
@@ -1827,7 +1827,7 @@ async fn test_measurement_host_init_failed_to_waiting_for_measurements_to_pendin
         .await
         .expect("Failed to add hardware health report to newly created machine");
 
-    let response = mh.host().forge_agent_control().await;
+    let response = mh.host().nico_agent_control().await;
     assert!(matches!(response.action, Some(Action::Retry(_))));
     assert_eq!(response.legacy_action, LegacyAction::Retry as i32);
 
@@ -1843,7 +1843,7 @@ async fn test_measurement_host_init_failed_to_waiting_for_measurements_to_pendin
     )
     .await;
 
-    let response = mh.host().forge_agent_control().await;
+    let response = mh.host().nico_agent_control().await;
     assert!(matches!(response.action, Some(Action::Reset(_))));
     assert_eq!(response.legacy_action, LegacyAction::Reset as i32);
 
@@ -1864,7 +1864,7 @@ async fn test_measurement_host_init_failed_to_waiting_for_measurements_to_pendin
     )
     .await;
 
-    let response = mh.host().forge_agent_control().await;
+    let response = mh.host().nico_agent_control().await;
     assert!(matches!(response.action, Some(Action::Discovery(_))));
     assert_eq!(response.legacy_action, LegacyAction::Discovery as i32);
 
@@ -1886,7 +1886,7 @@ async fn test_measurement_host_init_failed_to_waiting_for_measurements_to_pendin
     )
     .await;
 
-    // We use forge_dpu_agent's health reporting as a signal that
+    // We use nico_dpu_agent's health reporting as a signal that
     // DPU has rebooted.
     mh.network_configured(env).await;
 
@@ -1921,7 +1921,7 @@ async fn test_measurement_host_init_failed_to_waiting_for_measurements_to_pendin
     .await;
 
     // This is what simulates a reboot being completed.
-    let response = mh.host().forge_agent_control().await;
+    let response = mh.host().nico_agent_control().await;
     assert!(matches!(response.action, Some(Action::Noop(_))));
     assert_eq!(response.legacy_action, LegacyAction::Noop as i32);
 
@@ -1934,7 +1934,7 @@ async fn test_measurement_host_init_failed_to_waiting_for_measurements_to_pendin
 }
 
 #[crate::sqlx_test]
-async fn test_forge_agent_control_host_reprovision_scout_upgrade_does_not_reset_without_cleanup_timestamp(
+async fn test_nico_agent_control_host_reprovision_scout_upgrade_does_not_reset_without_cleanup_timestamp(
     pool: sqlx::PgPool,
 ) {
     let env = create_test_env(pool).await;
@@ -1981,13 +1981,13 @@ async fn test_forge_agent_control_host_reprovision_scout_upgrade_does_not_reset_
         .unwrap();
     txn.commit().await.unwrap();
 
-    let response = mh.host().forge_agent_control().await;
+    let response = mh.host().nico_agent_control().await;
     assert!(matches!(response.action, Some(Action::FirmwareUpgrade(_))));
     assert_eq!(response.legacy_action, LegacyAction::FirmwareUpgrade as i32);
 }
 
 #[crate::sqlx_test]
-async fn test_forge_agent_control_assigned_discovery_boot_does_not_reset_without_cleanup_timestamp(
+async fn test_nico_agent_control_assigned_discovery_boot_does_not_reset_without_cleanup_timestamp(
     pool: sqlx::PgPool,
 ) {
     let env = create_test_env(pool).await;
@@ -2013,7 +2013,7 @@ async fn test_forge_agent_control_assigned_discovery_boot_does_not_reset_without
     assert!(host.last_cleanup_time.is_none());
     txn.commit().await.unwrap();
 
-    let response = mh.host().forge_agent_control().await;
+    let response = mh.host().nico_agent_control().await;
     assert!(matches!(response.action, Some(Action::Noop(_))));
     assert_eq!(response.legacy_action, LegacyAction::Noop as i32);
 }
@@ -2613,7 +2613,7 @@ async fn test_scout_heartbeat_timeout_alert_cleared_on_instance_creation_transit
     env.run_machine_state_controller_iteration().await;
 
     env.api
-        .allocate_instance(Request::new(rpc::forge::InstanceAllocationRequest {
+        .allocate_instance(Request::new(rpc::nico::InstanceAllocationRequest {
             instance_id: None,
             machine_id: Some(host_machine_id),
             instance_type_id: None,
@@ -2694,7 +2694,7 @@ async fn test_scout_heartbeat_timeout_alert_not_cleared_when_unhealthy_allocatio
 
     let err = env
         .api
-        .allocate_instance(Request::new(rpc::forge::InstanceAllocationRequest {
+        .allocate_instance(Request::new(rpc::nico::InstanceAllocationRequest {
             instance_id: None,
             machine_id: Some(host_machine_id),
             instance_type_id: None,

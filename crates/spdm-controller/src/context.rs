@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use carbide_redfish::libredfish::RedfishClientPool;
+use nico_redfish::libredfish::RedfishClientPool;
 use sqlx::PgPool;
 use state_controller::state_handler::StateHandlerContextObjects;
 

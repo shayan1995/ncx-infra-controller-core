@@ -14,7 +14,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use model::machine::{FailureDetails, ManagedHostState};
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 use sqlx::{Postgres, Transaction};
 use tonic::Request;
 
@@ -57,7 +57,7 @@ pub(crate) async fn spdm_attestation_run_to_failed_then_to_success(
         .into_inner();
 
     assert_eq!(
-        rpc::forge::SpdmAttestationStatus::SpdmAttInProgress,
+        rpc::nico::SpdmAttestationStatus::SpdmAttInProgress,
         response.attestation_status()
     );
 
@@ -74,7 +74,7 @@ pub(crate) async fn spdm_attestation_run_to_failed_then_to_success(
         .into_inner();
 
     assert_eq!(
-        rpc::forge::SpdmAttestationStatus::SpdmAttFailed,
+        rpc::nico::SpdmAttestationStatus::SpdmAttFailed,
         response.attestation_status()
     );
 
@@ -107,7 +107,7 @@ pub(crate) async fn spdm_attestation_run_to_failed_then_to_success(
     let res = env
         .api
         .trigger_machine_attestation(tonic::Request::new(
-            rpc::forge::SpdmMachineAttestationTriggerRequest {
+            rpc::nico::SpdmMachineAttestationTriggerRequest {
                 machine_id: Some(host.id),
                 redfish_timeout_secs: u32::MAX,
             },
@@ -133,7 +133,7 @@ pub(crate) async fn spdm_attestation_run_to_failed_then_to_success(
         .into_inner();
 
     assert_eq!(
-        rpc::forge::SpdmAttestationStatus::SpdmAttPassed,
+        rpc::nico::SpdmAttestationStatus::SpdmAttPassed,
         response.attestation_status()
     );
 }

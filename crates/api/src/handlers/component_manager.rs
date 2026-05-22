@@ -19,18 +19,18 @@ use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
 
 use ::rpc::common::SystemPowerControl;
-use ::rpc::forge::{self as rpc};
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
+use ::rpc::nico::{self as rpc};
+use nico_uuid::machine::MachineId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
 use component_manager::component_manager::ComponentManager;
 use component_manager::compute_tray_manager::{ComputeTrayEndpoint, ComputeTrayVendor};
 use component_manager::error::ComponentManagerError;
 use component_manager::nv_switch_manager::SwitchEndpoint;
 use component_manager::power_shelf_manager::{PowerShelfEndpoint, PowerShelfVendor};
 use db::{self, WithTransaction};
-use forge_secrets::credentials::{
+use nico_secrets::credentials::{
     BmcCredentialType, CredentialKey, CredentialManager, Credentials,
 };
 use futures_util::FutureExt;
@@ -921,17 +921,17 @@ fn map_bmc_vendor_to_compute_tray(vendor: bmc_vendor::BMCVendor) -> ComputeTrayV
 
 struct ResolvedComputeTrayEndpoints {
     endpoints: Vec<ComputeTrayEndpoint>,
-    ip_to_machine_id: HashMap<IpAddr, carbide_uuid::machine::MachineId>,
+    ip_to_machine_id: HashMap<IpAddr, nico_uuid::machine::MachineId>,
 }
 
 struct ComputeTrayEndpoints {
     resolved: ResolvedComputeTrayEndpoints,
-    unresolved: Vec<UnresolvedDevice<carbide_uuid::machine::MachineId>>,
+    unresolved: Vec<UnresolvedDevice<nico_uuid::machine::MachineId>>,
 }
 
 async fn resolve_compute_tray_endpoints(
     api: &Api,
-    machine_ids: &[carbide_uuid::machine::MachineId],
+    machine_ids: &[nico_uuid::machine::MachineId],
 ) -> Result<ComputeTrayEndpoints, Status> {
     let machines = db::machine::find(
         api.db_reader().as_mut(),
@@ -1263,7 +1263,7 @@ pub(crate) async fn component_power_control(
 /// Returns `true` when the operation succeeded.
 async fn power_control_health_override(
     api: &Api,
-    machine_id: carbide_uuid::machine::MachineId,
+    machine_id: nico_uuid::machine::MachineId,
     insert: bool,
 ) -> bool {
     let result = if insert {
@@ -2535,12 +2535,12 @@ mod tests {
     }
 
     fn test_switch_id() -> SwitchId {
-        use carbide_uuid::switch::{SwitchIdSource, SwitchType};
+        use nico_uuid::switch::{SwitchIdSource, SwitchType};
         SwitchId::new(SwitchIdSource::Tpm, [0u8; 32], SwitchType::NvLink)
     }
 
     fn test_power_shelf_id() -> PowerShelfId {
-        use carbide_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
+        use nico_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
         PowerShelfId::new(PowerShelfIdSource::Tpm, [0u8; 32], PowerShelfType::Rack)
     }
 

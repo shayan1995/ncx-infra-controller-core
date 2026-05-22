@@ -19,7 +19,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use bytes::Bytes;
-use carbide_metrics_utils::OtelView;
+use nico_metrics_utils::OtelView;
 use http_body_util::Full;
 use hyper::header::{CONTENT_LENGTH, CONTENT_TYPE};
 use hyper::service::service_fn;
@@ -145,8 +145,8 @@ pub fn new_metrics_setup(
 /// buckets are 0, 5, 10, 25
 fn create_metric_view_for_retry_histograms(
     name_filter: &'static str,
-) -> carbide_metrics_utils::Result<OtelView> {
-    carbide_metrics_utils::new_view(
+) -> nico_metrics_utils::Result<OtelView> {
+    nico_metrics_utils::new_view(
         name_filter,
         Some(opentelemetry_sdk::metrics::InstrumentKind::Histogram),
         opentelemetry_sdk::metrics::Aggregation::ExplicitBucketHistogram {

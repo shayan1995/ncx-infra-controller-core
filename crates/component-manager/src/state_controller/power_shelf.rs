@@ -11,8 +11,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
 use db::ObjectColumnFilter;
 use mac_address::MacAddress;
 use model::component_manager::{PowerAction, PowerShelfComponent};
@@ -337,7 +337,7 @@ struct EndpointResolution {
 mod tests {
     use std::sync::Mutex;
 
-    use forge_secrets::credentials::Credentials;
+    use nico_secrets::credentials::Credentials;
     use model::power_shelf::PowerShelfMaintenanceRequest;
     use model::rack::{FirmwareUpgradeState, RackMaintenanceState};
 
@@ -453,7 +453,7 @@ mod tests {
         shelf.power_shelf_maintenance_requested
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn power_control_writes_per_shelf_maintenance(pool: PgPool) {
         let (rack_id, ps1, ps2, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -483,7 +483,7 @@ mod tests {
         assert_eq!(*direct.power_control_calls.lock().unwrap(), 0);
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn power_control_on_maps_to_power_on(pool: PgPool) {
         let (_rack_id, ps1, _, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -498,7 +498,7 @@ mod tests {
         assert_eq!(req.operation, PowerShelfMaintenanceOperation::PowerOn);
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn power_control_force_off_maps_to_power_off(pool: PgPool) {
         let (_rack_id, ps1, _, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -516,7 +516,7 @@ mod tests {
         assert_eq!(req.operation, PowerShelfMaintenanceOperation::PowerOff);
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn power_control_unsupported_action_is_rejected(pool: PgPool) {
         let (_rack_id, ps1, _, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -548,7 +548,7 @@ mod tests {
         );
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn update_firmware_writes_maintenance_scope(pool: PgPool) {
         let (rack_id, ps1, _, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -577,7 +577,7 @@ mod tests {
         assert_eq!(*direct.update_firmware_calls.lock().unwrap(), 0);
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn update_firmware_empty_version_becomes_none(pool: PgPool) {
         let (rack_id, _, _, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -599,7 +599,7 @@ mod tests {
         }
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn partial_unknown_mac_known_still_written(pool: PgPool) {
         let (rack_id, _, ps2, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -628,7 +628,7 @@ mod tests {
         );
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn all_unknown_macs_nothing_written(pool: PgPool) {
         let (rack_id, ps1, ps2, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -653,7 +653,7 @@ mod tests {
     /// it routes through the per-shelf state controller, not the rack-level
     /// `MaintenanceScope`. A rack stuck in firmware-upgrade maintenance must
     /// not block a power-on/power-off request to one of its shelves.
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn power_control_ignores_rack_maintenance_state(pool: PgPool) {
         let (rack_id, ps1, _, _, _) = seed_test_data(&pool).await;
         set_rack_state(
@@ -684,7 +684,7 @@ mod tests {
     /// maintenance request (mirrors the behaviour of the existing
     /// `set_power_shelf_maintenance` API handler so operators can flip
     /// On -> Off before the controller has acted on either request).
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn power_control_overwrites_pending_request(pool: PgPool) {
         let (_rack_id, ps1, _, _, _) = seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -703,7 +703,7 @@ mod tests {
         assert_eq!(req.operation, PowerShelfMaintenanceOperation::PowerOff);
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn get_firmware_status_passes_through(pool: PgPool) {
         seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -716,7 +716,7 @@ mod tests {
         assert_eq!(*direct.get_firmware_status_calls.lock().unwrap(), 1);
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn list_firmware_passes_through(pool: PgPool) {
         seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());
@@ -729,7 +729,7 @@ mod tests {
         assert_eq!(*direct.list_firmware_calls.lock().unwrap(), 1);
     }
 
-    #[carbide_macros::sqlx_test]
+    #[nico_macros::sqlx_test]
     async fn direct_field_exposes_underlying_backend(pool: PgPool) {
         seed_test_data(&pool).await;
         let direct = Arc::new(RecordingDirect::default());

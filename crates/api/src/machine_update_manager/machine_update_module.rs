@@ -19,11 +19,11 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use async_trait::async_trait;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use model::machine::ManagedHostStateSnapshot;
 use sqlx::PgConnection;
 
-use crate::CarbideResult;
+use crate::NicoResult;
 
 /// Used by [MachineUpdateManager](crate::machine_update_manager::MachineUpdateManager) to initiate
 /// machine updates.  A module is responsible for managing its own updates and accurately reporting
@@ -36,7 +36,7 @@ pub trait MachineUpdateModule: Send + Sync + fmt::Display {
     async fn get_updates_in_progress(
         &self,
         txn: &mut PgConnection,
-    ) -> CarbideResult<HashSet<MachineId>>;
+    ) -> NicoResult<HashSet<MachineId>>;
 
     async fn start_updates(
         &self,
@@ -44,9 +44,9 @@ pub trait MachineUpdateModule: Send + Sync + fmt::Display {
         available_updates: i32,
         updating_host_machines: &HashSet<MachineId>,
         snapshots: &HashMap<MachineId, ManagedHostStateSnapshot>,
-    ) -> CarbideResult<HashSet<MachineId>>;
+    ) -> NicoResult<HashSet<MachineId>>;
 
-    async fn clear_completed_updates(&self, txn: &mut PgConnection) -> CarbideResult<()>;
+    async fn clear_completed_updates(&self, txn: &mut PgConnection) -> NicoResult<()>;
 
     async fn update_metrics(
         &self,

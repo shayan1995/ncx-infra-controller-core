@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-//use rpc::forge::NvlPartitionSearchFilter;
+//use rpc::nico::NvlPartitionSearchFilter;
 use ::rpc::machine_discovery::Gpu;
-use carbide_uuid::nvlink::NvLinkPartitionId;
+use nico_uuid::nvlink::NvLinkPartitionId;
 use common::api_fixtures::create_managed_host_with_hardware_info_template;
 use common::api_fixtures::instance::{
     create_instance_with_nvlink_config, update_instance_nvlink_config,
@@ -30,8 +30,8 @@ use libnmxc::nmxc_model::{
 };
 use model::instance::config::nvlink::InstanceNvLinkConfig;
 use model::nvl_partition::{NewNvlPartition, NvlPartitionName};
-use rpc::forge::TenantState;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::TenantState;
+use rpc::nico::nico_server::NICo;
 
 // model::instance::config::nvlink::{InstanceNvLinkConfig, InstanceNvLinkGpuConfig},
 use crate::tests::common;
@@ -137,7 +137,7 @@ async fn test_create_instance_with_nvl_config(pool: sqlx::PgPool) {
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -165,12 +165,12 @@ async fn test_create_instance_with_nvl_config(pool: sqlx::PgPool) {
 
     println!("{gpus:?}");
 
-    let mut nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let mut nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -191,7 +191,7 @@ async fn test_create_instance_with_nvl_config(pool: sqlx::PgPool) {
     assert_eq!(instance, check_instance);
 
     // test getting all ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -220,7 +220,7 @@ async fn test_create_instance_with_nvl_config(pool: sqlx::PgPool) {
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -237,14 +237,14 @@ async fn test_create_instance_with_nvl_config(pool: sqlx::PgPool) {
     // fully deleted after we run one iteration of monitor
     env.api
         .delete_nv_link_logical_partition(tonic::Request::new(
-            rpc::forge::NvLinkLogicalPartitionDeletionRequest {
+            rpc::nico::NvLinkLogicalPartitionDeletionRequest {
                 id: Some(logical_partition_id),
             },
         ))
         .await
         .expect("expect deletion to succeed");
 
-    let request_partitions = tonic::Request::new(rpc::forge::NvLinkLogicalPartitionsByIdsRequest {
+    let request_partitions = tonic::Request::new(rpc::nico::NvLinkLogicalPartitionsByIdsRequest {
         partition_ids: logical_ids_list.partition_ids,
         include_history: false,
     });
@@ -271,7 +271,7 @@ async fn test_create_instance_with_nvl_config(pool: sqlx::PgPool) {
 
     env.run_nvl_partition_monitor_iteration().await;
     let request_all =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_partition_list = env
         .api
@@ -307,7 +307,7 @@ async fn test_detach_gpus_from_partition_by_clearing_nvlink_config(pool: sqlx::P
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -335,12 +335,12 @@ async fn test_detach_gpus_from_partition_by_clearing_nvlink_config(pool: sqlx::P
 
     println!("{gpus:?}");
 
-    let mut nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let mut nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -361,7 +361,7 @@ async fn test_detach_gpus_from_partition_by_clearing_nvlink_config(pool: sqlx::P
     assert_eq!(instance, check_instance);
 
     // test getting all ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -408,7 +408,7 @@ async fn test_detach_gpus_from_partition_by_clearing_nvlink_config(pool: sqlx::P
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -444,14 +444,14 @@ async fn test_detach_gpus_from_partition_by_clearing_nvlink_config(pool: sqlx::P
     // fully deleted after we run one iteration of monitor
     env.api
         .delete_nv_link_logical_partition(tonic::Request::new(
-            rpc::forge::NvLinkLogicalPartitionDeletionRequest {
+            rpc::nico::NvLinkLogicalPartitionDeletionRequest {
                 id: Some(logical_partition_id),
             },
         ))
         .await
         .expect("expect deletion to succeed");
 
-    let request_partitions = tonic::Request::new(rpc::forge::NvLinkLogicalPartitionsByIdsRequest {
+    let request_partitions = tonic::Request::new(rpc::nico::NvLinkLogicalPartitionsByIdsRequest {
         partition_ids: logical_ids_list.partition_ids,
         include_history: false,
     });
@@ -478,7 +478,7 @@ async fn test_detach_gpus_from_partition_by_clearing_nvlink_config(pool: sqlx::P
 
     env.run_nvl_partition_monitor_iteration().await;
     let request_all =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_partition_list = env
         .api
@@ -515,7 +515,7 @@ async fn test_with_multiple_nv_link_logical_partitions(pool: sqlx::PgPool) {
     } = create_nvl_logical_partition(&env, "test_partition2".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -543,7 +543,7 @@ async fn test_with_multiple_nv_link_logical_partitions(pool: sqlx::PgPool) {
 
     println!("{gpus:?}");
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
@@ -553,7 +553,7 @@ async fn test_with_multiple_nv_link_logical_partitions(pool: sqlx::PgPool) {
                     } else {
                         Some(logical_partition_id1)
                     };
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: nvl_logical_partition_id,
                     }
@@ -576,7 +576,7 @@ async fn test_with_multiple_nv_link_logical_partitions(pool: sqlx::PgPool) {
     env.run_nvl_partition_monitor_iteration().await;
 
     // get all nvlink physical partition ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -628,12 +628,12 @@ async fn test_nvl_partition_monitor_adds_successful_partitions_when_some_creates
     let discovery_info = mh.host().rpc_machine().await.discovery_info.unwrap();
     let gpus: Vec<Gpu> = discovery_info.gpus.to_vec();
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: None,
                     }
@@ -645,7 +645,7 @@ async fn test_nvl_partition_monitor_adds_successful_partitions_when_some_creates
     let (_tinstance, instance) =
         create_instance_with_nvlink_config(&env, &mh, nvl_config.clone(), segment_id).await;
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
@@ -655,7 +655,7 @@ async fn test_nvl_partition_monitor_adds_successful_partitions_when_some_creates
                     } else {
                         Some(logical_partition_id1)
                     };
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: nvl_logical_partition_id,
                     }
@@ -676,7 +676,7 @@ async fn test_nvl_partition_monitor_adds_successful_partitions_when_some_creates
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -724,7 +724,7 @@ async fn test_create_instances_with_nvl_configs_same_logical_partition_different
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -760,12 +760,12 @@ async fn test_create_instances_with_nvl_configs_same_logical_partition_different
     let gpus1: Vec<Gpu> = discovery_info1.gpus.to_vec();
     let gpus2: Vec<Gpu> = discovery_info2.gpus.to_vec();
 
-    let mut nvl_config1 = rpc::forge::InstanceNvLinkConfig {
+    let mut nvl_config1 = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus1
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -774,12 +774,12 @@ async fn test_create_instances_with_nvl_configs_same_logical_partition_different
             .collect(),
     };
 
-    let mut nvl_config2 = rpc::forge::InstanceNvLinkConfig {
+    let mut nvl_config2 = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus2
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -807,7 +807,7 @@ async fn test_create_instances_with_nvl_configs_same_logical_partition_different
     assert_eq!(instance2, check_instance2);
 
     // test getting all ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -847,7 +847,7 @@ async fn test_create_instances_with_nvl_configs_same_logical_partition_different
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -866,14 +866,14 @@ async fn test_create_instances_with_nvl_configs_same_logical_partition_different
     // fully deleted after we run one iteration of monitor
     env.api
         .delete_nv_link_logical_partition(tonic::Request::new(
-            rpc::forge::NvLinkLogicalPartitionDeletionRequest {
+            rpc::nico::NvLinkLogicalPartitionDeletionRequest {
                 id: Some(logical_partition_id),
             },
         ))
         .await
         .expect("expect deletion to succeed");
 
-    let request_partitions = tonic::Request::new(rpc::forge::NvLinkLogicalPartitionsByIdsRequest {
+    let request_partitions = tonic::Request::new(rpc::nico::NvLinkLogicalPartitionsByIdsRequest {
         partition_ids: logical_ids_list.partition_ids,
         include_history: false,
     });
@@ -900,7 +900,7 @@ async fn test_create_instances_with_nvl_configs_same_logical_partition_different
 
     env.run_nvl_partition_monitor_iteration().await;
     let request_all =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_partition_list = env
         .api
@@ -932,7 +932,7 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -960,12 +960,12 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
 
     println!("{gpus:?}");
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: None,
                     }
@@ -987,12 +987,12 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
 
     env.run_nvl_partition_monitor_iteration().await;
 
-    let new_nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let new_nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -1007,7 +1007,7 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
     let instance = env
         .api
         .update_instance_config(tonic::Request::new(
-            rpc::forge::InstanceConfigUpdateRequest {
+            rpc::nico::InstanceConfigUpdateRequest {
                 instance_id: instance.id().into(),
                 if_version_match: None,
                 config: Some(new_config.clone()),
@@ -1033,7 +1033,7 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
     assert_eq!(_nvl_status.configs_synced(), rpc::SyncState::Synced);
 
     // test getting all ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1047,7 +1047,7 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
         .unwrap();
     assert_eq!(ids_all.partition_ids.len(), 1);
 
-    let new_nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let new_nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
@@ -1058,7 +1058,7 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
                         Some(logical_partition_id)
                     };
 
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: lp_id,
                     }
@@ -1073,7 +1073,7 @@ async fn test_update_instance_with_nvl_config(pool: sqlx::PgPool) {
     let instance = env
         .api
         .update_instance_config(tonic::Request::new(
-            rpc::forge::InstanceConfigUpdateRequest {
+            rpc::nico::InstanceConfigUpdateRequest {
                 instance_id: instance.id().into(),
                 if_version_match: None,
                 config: Some(new_config.clone()),
@@ -1134,7 +1134,7 @@ async fn test_instance_update_logical_partition(pool: sqlx::PgPool) {
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -1162,12 +1162,12 @@ async fn test_instance_update_logical_partition(pool: sqlx::PgPool) {
 
     println!("{gpus:?}");
 
-    let mut nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let mut nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id_1),
                     }
@@ -1182,7 +1182,7 @@ async fn test_instance_update_logical_partition(pool: sqlx::PgPool) {
     let machine = mh.host().rpc_machine().await;
     assert_eq!(&machine.state, "Assigned/Ready");
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1210,7 +1210,7 @@ async fn test_instance_update_logical_partition(pool: sqlx::PgPool) {
 
     env.api
         .update_instance_config(tonic::Request::new(
-            rpc::forge::InstanceConfigUpdateRequest {
+            rpc::nico::InstanceConfigUpdateRequest {
                 instance_id: instance.id().into(),
                 if_version_match: None,
                 config: Some(new_config),
@@ -1224,7 +1224,7 @@ async fn test_instance_update_logical_partition(pool: sqlx::PgPool) {
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1269,7 +1269,7 @@ async fn test_instance_delete_with_nvl_config(pool: sqlx::PgPool) {
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -1297,12 +1297,12 @@ async fn test_instance_delete_with_nvl_config(pool: sqlx::PgPool) {
 
     println!("{gpus:?}");
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -1323,7 +1323,7 @@ async fn test_instance_delete_with_nvl_config(pool: sqlx::PgPool) {
     assert_eq!(instance, check_instance);
 
     // test getting all ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1343,7 +1343,7 @@ async fn test_instance_delete_with_nvl_config(pool: sqlx::PgPool) {
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1378,7 +1378,7 @@ async fn test_create_instance_remove_from_default_partition(pool: sqlx::PgPool) 
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -1403,7 +1403,7 @@ async fn test_create_instance_remove_from_default_partition(pool: sqlx::PgPool) 
     assert_eq!(discovery_info.gpus.len(), 4);
 
     // There should be no partitions in the DB, but the default partition on NMX-C (sim).
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1446,12 +1446,12 @@ async fn test_create_instance_remove_from_default_partition(pool: sqlx::PgPool) 
     let gpus: Vec<Gpu> = discovery_info.gpus.to_vec();
     println!("{gpus:?}");
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -1473,7 +1473,7 @@ async fn test_create_instance_remove_from_default_partition(pool: sqlx::PgPool) 
 
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1534,7 +1534,7 @@ async fn test_create_instance_add_to_existing_partition(pool: sqlx::PgPool) {
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -1560,12 +1560,12 @@ async fn test_create_instance_add_to_existing_partition(pool: sqlx::PgPool) {
     let gpus: Vec<Gpu> = discovery_info1.gpus.to_vec();
     println!("{gpus:?}");
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -1587,7 +1587,7 @@ async fn test_create_instance_add_to_existing_partition(pool: sqlx::PgPool) {
 
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1637,12 +1637,12 @@ async fn test_create_instance_add_to_existing_partition(pool: sqlx::PgPool) {
     let gpus2: Vec<Gpu> = discovery_info2.gpus.to_vec();
     println!("{gpus2:?}");
 
-    let nvl_config2 = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config2 = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus2
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -1663,7 +1663,7 @@ async fn test_create_instance_add_to_existing_partition(pool: sqlx::PgPool) {
 
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1717,7 +1717,7 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
     } = create_nvl_logical_partition(&env, "test_partition2".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -1743,12 +1743,12 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
 
     let gpus: Vec<Gpu> = discovery_info.gpus.to_vec();
 
-    let mut nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let mut nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id1),
                     }
@@ -1769,7 +1769,7 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
     assert_eq!(instance, check_instance);
 
     // test getting all ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1798,7 +1798,7 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -1815,14 +1815,14 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
     // fully deleted after we run one iteration of monitor
     env.api
         .delete_nv_link_logical_partition(tonic::Request::new(
-            rpc::forge::NvLinkLogicalPartitionDeletionRequest {
+            rpc::nico::NvLinkLogicalPartitionDeletionRequest {
                 id: Some(logical_partition_id1),
             },
         ))
         .await
         .expect("expect deletion to succeed");
 
-    let request_partitions = tonic::Request::new(rpc::forge::NvLinkLogicalPartitionsByIdsRequest {
+    let request_partitions = tonic::Request::new(rpc::nico::NvLinkLogicalPartitionsByIdsRequest {
         partition_ids: logical_ids_list.partition_ids,
         include_history: false,
     });
@@ -1837,7 +1837,7 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
 
     env.run_nvl_partition_monitor_iteration().await;
     let request_all =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     // logical partition should be deleted by now, after partition moinitor ran
     let logical_partition_list = env
@@ -1866,7 +1866,7 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
     let delete_result = env
         .api
         .delete_nv_link_logical_partition(tonic::Request::new(
-            rpc::forge::NvLinkLogicalPartitionDeletionRequest {
+            rpc::nico::NvLinkLogicalPartitionDeletionRequest {
                 id: Some(logical_partition_id2),
             },
         ))
@@ -1876,7 +1876,7 @@ async fn test_logical_partition_delete_with_instance_config(pool: sqlx::PgPool) 
         "deletion should fail while instance still references the logical partition"
     );
     let request_all =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_partition_list = env
         .api
@@ -1906,7 +1906,7 @@ async fn test_create_instance_gpu_in_unknown_partition(pool: sqlx::PgPool) {
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -1953,12 +1953,12 @@ async fn test_create_instance_gpu_in_unknown_partition(pool: sqlx::PgPool) {
     let gpus: Vec<Gpu> = discovery_info1.gpus.to_vec();
     println!("{gpus:?}");
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -1980,7 +1980,7 @@ async fn test_create_instance_gpu_in_unknown_partition(pool: sqlx::PgPool) {
 
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -2064,7 +2064,7 @@ async fn run_create_instance_with_nvl_config_nmxc_simulator_scenario(
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -2092,12 +2092,12 @@ async fn run_create_instance_with_nvl_config_nmxc_simulator_scenario(
 
     println!("{gpus:?}");
 
-    let mut nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let mut nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -2117,7 +2117,7 @@ async fn run_create_instance_with_nvl_config_nmxc_simulator_scenario(
     assert_eq!(instance.status().tenant(), rpc::TenantState::Ready);
     assert_eq!(instance, check_instance);
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -2145,7 +2145,7 @@ async fn run_create_instance_with_nvl_config_nmxc_simulator_scenario(
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -2160,14 +2160,14 @@ async fn run_create_instance_with_nvl_config_nmxc_simulator_scenario(
 
     env.api
         .delete_nv_link_logical_partition(tonic::Request::new(
-            rpc::forge::NvLinkLogicalPartitionDeletionRequest {
+            rpc::nico::NvLinkLogicalPartitionDeletionRequest {
                 id: Some(logical_partition_id),
             },
         ))
         .await
         .expect("expect deletion to succeed");
 
-    let request_partitions = tonic::Request::new(rpc::forge::NvLinkLogicalPartitionsByIdsRequest {
+    let request_partitions = tonic::Request::new(rpc::nico::NvLinkLogicalPartitionsByIdsRequest {
         partition_ids: logical_ids_list.partition_ids,
         include_history: false,
     });
@@ -2194,7 +2194,7 @@ async fn run_create_instance_with_nvl_config_nmxc_simulator_scenario(
 
     env.run_nvl_partition_monitor_iteration().await;
     let request_all =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_partition_list = env
         .api
@@ -2264,7 +2264,7 @@ async fn test_update_nvlink_config_nmxm_existing_partitions_with_nmxc_simulator(
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -2373,12 +2373,12 @@ async fn test_update_nvlink_config_nmxm_existing_partitions_with_nmxc_simulator(
     .unwrap();
     txn.commit().await.unwrap();
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: None,
                     }
@@ -2395,7 +2395,7 @@ async fn test_update_nvlink_config_nmxm_existing_partitions_with_nmxc_simulator(
 
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -2407,12 +2407,12 @@ async fn test_update_nvlink_config_nmxm_existing_partitions_with_nmxc_simulator(
         .unwrap();
     assert_eq!(ids_before_update.partition_ids.len(), 1);
 
-    let new_nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let new_nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -2426,7 +2426,7 @@ async fn test_update_nvlink_config_nmxm_existing_partitions_with_nmxc_simulator(
     let instance = env
         .api
         .update_instance_config(tonic::Request::new(
-            rpc::forge::InstanceConfigUpdateRequest {
+            rpc::nico::InstanceConfigUpdateRequest {
                 instance_id: instance.id().into(),
                 if_version_match: None,
                 config: Some(new_config),
@@ -2453,7 +2453,7 @@ async fn test_update_nvlink_config_nmxm_existing_partitions_with_nmxc_simulator(
 
     // After partition monitor has run, it should delete the old partition created by NMX-M
     // and create a new one with the GPUs.
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -2479,7 +2479,7 @@ async fn test_update_nvlink_config_nmxm_existing_partitions_with_nmxc_simulator(
         .partition_info_list;
     assert!(
         nmxc_partitions.iter().any(|p| p.gpu_uid_list.len() == 4),
-        "expected a Carbide-managed NMX-C partition with four GPUs after instance update, got: {nmxc_partitions:?}"
+        "expected a NICo-managed NMX-C partition with four GPUs after instance update, got: {nmxc_partitions:?}"
     );
 }
 
@@ -2511,7 +2511,7 @@ async fn test_instance_delete_with_nvl_config_use_nmxc_simulator(pool: sqlx::PgP
     } = create_nvl_logical_partition(&env, "test_partition".to_string()).await;
 
     let request_logical_ids =
-        tonic::Request::new(rpc::forge::NvLinkLogicalPartitionSearchFilter { name: None });
+        tonic::Request::new(rpc::nico::NvLinkLogicalPartitionSearchFilter { name: None });
 
     let logical_ids_list = env
         .api
@@ -2539,12 +2539,12 @@ async fn test_instance_delete_with_nvl_config_use_nmxc_simulator(pool: sqlx::PgP
 
     println!("{gpus:?}");
 
-    let nvl_config = rpc::forge::InstanceNvLinkConfig {
+    let nvl_config = rpc::nico::InstanceNvLinkConfig {
         gpu_configs: gpus
             .iter()
             .filter_map(|gpu| {
                 gpu.platform_info.as_ref().map(|platform_info| {
-                    rpc::forge::InstanceNvLinkGpuConfig {
+                    rpc::nico::InstanceNvLinkGpuConfig {
                         device_instance: platform_info.module_id - 1,
                         logical_partition_id: Some(logical_partition_id),
                     }
@@ -2565,7 +2565,7 @@ async fn test_instance_delete_with_nvl_config_use_nmxc_simulator(pool: sqlx::PgP
     assert_eq!(instance, check_instance);
 
     // test getting all ids
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });
@@ -2585,7 +2585,7 @@ async fn test_instance_delete_with_nvl_config_use_nmxc_simulator(pool: sqlx::PgP
     env.run_nvl_partition_monitor_iteration().await;
     env.run_nvl_partition_monitor_iteration().await;
 
-    let request_all = tonic::Request::new(rpc::forge::NvLinkPartitionSearchFilter {
+    let request_all = tonic::Request::new(rpc::nico::NvLinkPartitionSearchFilter {
         name: None,
         tenant_organization_id: None,
     });

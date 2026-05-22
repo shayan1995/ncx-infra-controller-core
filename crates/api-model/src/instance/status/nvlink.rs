@@ -17,7 +17,7 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::nvlink::{NvLinkDomainId, NvLinkLogicalPartitionId};
+use nico_uuid::nvlink::{NvLinkDomainId, NvLinkLogicalPartitionId};
 use config_version::Versioned;
 use serde::{Deserialize, Serialize};
 

@@ -28,7 +28,7 @@ use model::machine::network::{
 };
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<rpc::DpuNetworkStatus> for MachineNetworkStatusObservation {
     type Error = RpcDataConversionError;
@@ -119,10 +119,10 @@ impl TryFrom<rpc::DpuNetworkStatus> for MachineNetworkStatusObservation {
     }
 }
 
-// TODO: This API is only used by the carbide-web generating the Network Status page
+// TODO: This API is only used by the nico-web generating the Network Status page
 // It improperly returns the values of a lot of things - since those are not actually
 // persisted.
-// It would be preferable to migrate carbide-web from reading the status to using
+// It would be preferable to migrate nico-web from reading the status to using
 // a better supported API. E.g. the FindMachinesByIds one.
 impl From<MachineNetworkStatusObservation> for rpc::DpuNetworkStatus {
     fn from(m: MachineNetworkStatusObservation) -> rpc::DpuNetworkStatus {

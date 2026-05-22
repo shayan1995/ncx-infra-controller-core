@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use common::api_fixtures::create_test_env;
 use common::api_fixtures::instance::{
     default_os_config, default_tenant_config, single_interface_network_config,
 };
 use model::machine::{FailureCause, FailureDetails, FailureSource, ManagedHostState};
-use rpc::forge as rpcf;
-use rpc::forge::forge_server::Forge;
+use rpc::nico as rpcf;
+use rpc::nico::nico_server::NICo;
 
 use crate::tests::common;
 use crate::tests::common::api_fixtures::{create_managed_host, create_managed_host_multi_dpu};
@@ -113,7 +113,7 @@ async fn test_maintenance(db_pool: sqlx::PgPool) -> Result<(), eyre::Report> {
     // list: should be included
     let machine_ids = env
         .api
-        .find_machine_ids(tonic::Request::new(rpc::forge::MachineSearchConfig {
+        .find_machine_ids(tonic::Request::new(rpc::nico::MachineSearchConfig {
             include_dpus: true,
             include_predicted_host: true,
             only_maintenance: true,
@@ -146,7 +146,7 @@ async fn test_maintenance(db_pool: sqlx::PgPool) -> Result<(), eyre::Report> {
     // There are now no machines in maintenance mode
     let machine_ids = env
         .api
-        .find_machine_ids(tonic::Request::new(rpc::forge::MachineSearchConfig {
+        .find_machine_ids(tonic::Request::new(rpc::nico::MachineSearchConfig {
             include_dpus: true,
             include_predicted_host: true,
             only_maintenance: true,
@@ -231,7 +231,7 @@ async fn test_maintenance_multi_dpu(db_pool: sqlx::PgPool) -> Result<(), eyre::R
     // list: should be included
     let machine_ids = env
         .api
-        .find_machine_ids(tonic::Request::new(rpc::forge::MachineSearchConfig {
+        .find_machine_ids(tonic::Request::new(rpc::nico::MachineSearchConfig {
             include_dpus: true,
             include_predicted_host: true,
             only_maintenance: true,
@@ -259,7 +259,7 @@ async fn test_maintenance_multi_dpu(db_pool: sqlx::PgPool) -> Result<(), eyre::R
     // There are now no machines in maintenance mode
     let machines_ids = env
         .api
-        .find_machine_ids(tonic::Request::new(rpc::forge::MachineSearchConfig {
+        .find_machine_ids(tonic::Request::new(rpc::nico::MachineSearchConfig {
             include_dpus: true,
             include_predicted_host: true,
             only_maintenance: true,
@@ -305,7 +305,7 @@ async fn test_maintenance_suppresses_state_machine_sla_alert(
     let rpc_host_id: MachineId = host_id;
 
     // force the host into Failed state (0-second SLA).
-    // this is what would otherwise drive `carbide_machines_per_state_above_sla > 0`
+    // this is what would otherwise drive `nico_machines_per_state_above_sla > 0`
     // and page on-call via `stuckInstanceCritical`.
     let mut txn = env.db_txn().await;
     db::machine::update_state(

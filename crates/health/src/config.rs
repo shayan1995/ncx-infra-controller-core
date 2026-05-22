@@ -74,8 +74,8 @@ impl Default for Config {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct EndpointSourcesConfig {
-    /// Carbide API connection settings (if present, Carbide API discovery is enabled)
-    pub carbide_api: Configurable<CarbideApiConnectionConfig>,
+    /// NICo API connection settings (if present, NICo API discovery is enabled)
+    pub nico_api: Configurable<NicoApiConnectionConfig>,
 
     /// Static BMC endpoints
     pub static_bmc_endpoints: Vec<StaticBmcEndpoint>,
@@ -84,7 +84,7 @@ pub struct EndpointSourcesConfig {
 impl Default for EndpointSourcesConfig {
     fn default() -> Self {
         Self {
-            carbide_api: Configurable::Enabled(CarbideApiConnectionConfig::default()),
+            nico_api: Configurable::Enabled(NicoApiConnectionConfig::default()),
             static_bmc_endpoints: Vec::new(),
         }
     }
@@ -209,19 +209,19 @@ pub struct SinksConfig {
     /// Prometheus sink: stores metric events in Prometheus exporter format.
     pub prometheus: Configurable<PrometheusSinkConfig>,
 
-    /// Health report sink: sends health report events to Carbide API.
-    #[serde(alias = "carbide_override", alias = "health_override")]
+    /// Health report sink: sends health report events to NICo API.
+    #[serde(alias = "nico_override", alias = "health_override")]
     pub health_report: Configurable<HealthReportSinkConfig>,
 
-    /// Rack health report sink: sends rack-level health reports to Carbide API.
+    /// Rack health report sink: sends rack-level health reports to NICo API.
     #[serde(alias = "rack_health_override")]
     pub rack_health_report: Configurable<RackHealthReportSinkConfig>,
 
-    /// Switch health report sink: sends switch-level health reports to Carbide API.
+    /// Switch health report sink: sends switch-level health reports to NICo API.
     #[serde(alias = "switch_health_override")]
     pub switch_health_report: Configurable<SwitchHealthReportSinkConfig>,
 
-    /// Power shelf health report sink: sends power-shelf-level health reports to Carbide API.
+    /// Power shelf health report sink: sends power-shelf-level health reports to NICo API.
     #[serde(alias = "power_shelf_health_override")]
     pub power_shelf_health_report: Configurable<PowerShelfHealthReportSinkConfig>,
 
@@ -294,30 +294,30 @@ impl Default for OtlpSinkConfig {
     }
 }
 
-/// Shared Carbide API connection configuration.
+/// Shared NICo API connection configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
-pub struct CarbideApiConnectionConfig {
-    /// Path to the root CA certificate for Carbide API connections
+pub struct NicoApiConnectionConfig {
+    /// Path to the root CA certificate for NICo API connections
     pub root_ca: String,
 
-    /// Path to the client certificate for Carbide API connections
+    /// Path to the client certificate for NICo API connections
     pub client_cert: String,
 
-    /// Path to the client key for Carbide API connections
+    /// Path to the client key for NICo API connections
     pub client_key: String,
 
-    /// Carbide API server endpoint
+    /// NICo API server endpoint
     pub api_url: Url,
 }
 
-impl Default for CarbideApiConnectionConfig {
+impl Default for NicoApiConnectionConfig {
     fn default() -> Self {
         Self {
             root_ca: "/var/run/secrets/spiffe.io/ca.crt".to_string(),
             client_cert: "/var/run/secrets/spiffe.io/tls.crt".to_string(),
             client_key: "/var/run/secrets/spiffe.io/tls.key".to_string(),
-            api_url: Url::parse("https://carbide-api.forge-system.svc.cluster.local:1079").unwrap(),
+            api_url: Url::parse("https://nico-api.nico-system.svc.cluster.local:1079").unwrap(),
         }
     }
 }
@@ -326,9 +326,9 @@ impl Default for CarbideApiConnectionConfig {
 #[serde(default)]
 pub struct HealthReportSinkConfig {
     #[serde(flatten)]
-    pub connection: CarbideApiConnectionConfig,
+    pub connection: NicoApiConnectionConfig,
 
-    /// Number of concurrent workers submitting reports to Carbide API.
+    /// Number of concurrent workers submitting reports to NICo API.
     pub workers: usize,
 
     /// Drop reports that contain no successes and no alerts before submitting them.
@@ -338,7 +338,7 @@ pub struct HealthReportSinkConfig {
 impl Default for HealthReportSinkConfig {
     fn default() -> Self {
         Self {
-            connection: CarbideApiConnectionConfig::default(),
+            connection: NicoApiConnectionConfig::default(),
             workers: 4,
             skip_empty_reports: true,
         }
@@ -349,9 +349,9 @@ impl Default for HealthReportSinkConfig {
 #[serde(default)]
 pub struct RackHealthReportSinkConfig {
     #[serde(flatten)]
-    pub connection: CarbideApiConnectionConfig,
+    pub connection: NicoApiConnectionConfig,
 
-    /// Number of concurrent workers submitting rack-level reports to Carbide API.
+    /// Number of concurrent workers submitting rack-level reports to NICo API.
     pub workers: usize,
 
     /// Drop reports that contain no successes and no alerts before submitting them.
@@ -361,7 +361,7 @@ pub struct RackHealthReportSinkConfig {
 impl Default for RackHealthReportSinkConfig {
     fn default() -> Self {
         Self {
-            connection: CarbideApiConnectionConfig::default(),
+            connection: NicoApiConnectionConfig::default(),
             workers: 2,
             skip_empty_reports: true,
         }
@@ -372,9 +372,9 @@ impl Default for RackHealthReportSinkConfig {
 #[serde(default)]
 pub struct SwitchHealthReportSinkConfig {
     #[serde(flatten)]
-    pub connection: CarbideApiConnectionConfig,
+    pub connection: NicoApiConnectionConfig,
 
-    /// Number of concurrent workers submitting switch-level reports to Carbide API.
+    /// Number of concurrent workers submitting switch-level reports to NICo API.
     pub workers: usize,
 
     /// Drop reports that contain no successes and no alerts before submitting them.
@@ -384,7 +384,7 @@ pub struct SwitchHealthReportSinkConfig {
 impl Default for SwitchHealthReportSinkConfig {
     fn default() -> Self {
         Self {
-            connection: CarbideApiConnectionConfig::default(),
+            connection: NicoApiConnectionConfig::default(),
             workers: 2,
             skip_empty_reports: true,
         }
@@ -395,9 +395,9 @@ impl Default for SwitchHealthReportSinkConfig {
 #[serde(default)]
 pub struct PowerShelfHealthReportSinkConfig {
     #[serde(flatten)]
-    pub connection: CarbideApiConnectionConfig,
+    pub connection: NicoApiConnectionConfig,
 
-    /// Number of concurrent workers submitting power-shelf-level reports to Carbide API.
+    /// Number of concurrent workers submitting power-shelf-level reports to NICo API.
     pub workers: usize,
 
     /// Drop reports that contain no successes and no alerts before submitting them.
@@ -407,7 +407,7 @@ pub struct PowerShelfHealthReportSinkConfig {
 impl Default for PowerShelfHealthReportSinkConfig {
     fn default() -> Self {
         Self {
-            connection: CarbideApiConnectionConfig::default(),
+            connection: NicoApiConnectionConfig::default(),
             workers: 2,
             skip_empty_reports: true,
         }
@@ -891,7 +891,7 @@ impl Default for NvueRestPaths {
 pub struct MetricsConfig {
     /// Metrics listener.
     pub endpoint: String,
-    /// Prefix for all metrics, defaults to carbide_hardware_health
+    /// Prefix for all metrics, defaults to nico_hardware_health
     pub prefix: String,
 }
 
@@ -909,7 +909,7 @@ impl Default for MetricsConfig {
     fn default() -> Self {
         Self {
             endpoint: "0.0.0.0:9009".to_string(),
-            prefix: "carbide_hardware_health".to_string(),
+            prefix: "nico_hardware_health".to_string(),
         }
     }
 }
@@ -923,7 +923,7 @@ impl Config {
             figment = figment.merge(Toml::file(path));
         }
 
-        figment = figment.merge(Env::prefixed("CARBIDE_HEALTH__").split("__"));
+        figment = figment.merge(Env::prefixed("NICO_HEALTH__").split("__"));
 
         let config: Config = figment
             .extract()
@@ -1087,21 +1087,21 @@ mod tests {
             .extract()
             .expect("could not parse config toml file");
 
-        if let Configurable::Enabled(ref carbide_api) = config.endpoint_sources.carbide_api {
-            assert_eq!(carbide_api.root_ca, "/var/run/secrets/spiffe.io/ca.crt");
+        if let Configurable::Enabled(ref nico_api) = config.endpoint_sources.nico_api {
+            assert_eq!(nico_api.root_ca, "/var/run/secrets/spiffe.io/ca.crt");
             assert_eq!(
-                carbide_api.client_cert,
+                nico_api.client_cert,
                 "/var/run/secrets/spiffe.io/tls.crt"
             );
-            assert_eq!(carbide_api.client_key, "/var/run/secrets/spiffe.io/tls.key");
+            assert_eq!(nico_api.client_key, "/var/run/secrets/spiffe.io/tls.key");
             assert!(
-                carbide_api
+                nico_api
                     .api_url
                     .as_str()
-                    .starts_with("https://carbide-api.forge-system.svc.cluster.local:1079"),
+                    .starts_with("https://nico-api.nico-system.svc.cluster.local:1079"),
             );
         } else {
-            panic!("carbide api empty for sources")
+            panic!("nico api empty for sources")
         }
 
         if let Configurable::Enabled(ref health_report) = config.sinks.health_report {
@@ -1204,7 +1204,7 @@ mac = "00:11:22:33:44:55"
 username = "root"
 password = "pass"
 
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [sinks.health_report]
@@ -1219,7 +1219,7 @@ include_sensor_thresholds = false
 
 [metrics]
 endpoint = "127.0.0.1:9009"
-prefix = "carbide_hardware_new_health"
+prefix = "nico_hardware_new_health"
 
 shard = 0
 shards_count = 1
@@ -1231,7 +1231,7 @@ cache_size = 50
             .extract()
             .expect("failed to parse");
 
-        assert!(!config.endpoint_sources.carbide_api.is_enabled());
+        assert!(!config.endpoint_sources.nico_api.is_enabled());
         assert!(!config.sinks.health_report.is_enabled());
 
         assert_eq!(config.endpoint_sources.static_bmc_endpoints.len(), 1);
@@ -1244,7 +1244,7 @@ cache_size = 50
             "00:11:22:33:44:55"
         );
 
-        assert_eq!(config.metrics.prefix, "carbide_hardware_new_health");
+        assert_eq!(config.metrics.prefix, "nico_hardware_new_health");
 
         if let Configurable::Enabled(ref rate_limit) = config.rate_limit {
             assert_eq!(rate_limit.bucket_replenish, Duration::from_millis(30));
@@ -1442,7 +1442,7 @@ skip_empty_reports = false
     #[test]
     fn test_nvue_config_parsing() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [sinks.health_report]
@@ -1483,7 +1483,7 @@ request_timeout = "45s"
     #[test]
     fn test_nvue_config_explicit_disable() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [sinks.health_report]
@@ -1505,7 +1505,7 @@ enabled = false
     #[test]
     fn test_nvue_config_rest_only() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [sinks.health_report]
@@ -1530,7 +1530,7 @@ poll_interval = "1m"
     #[test]
     fn test_nvue_config_selective_endpoints() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [sinks.health_report]
@@ -1569,7 +1569,7 @@ interfaces_enabled = false
     #[test]
     fn test_static_endpoint_with_switch_serial() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [sinks.health_report]
@@ -1742,7 +1742,7 @@ switch = { id = "fsw100htjtiaehv1n5vh67tbmqq4eabcjdng40f7jupsadbedhruh6rag1l0", 
     #[test]
     fn test_static_machine_endpoint_accepts_placement_and_nvlink_metadata() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [[endpoint_sources.static_bmc_endpoints]]
@@ -1775,7 +1775,7 @@ machine = { id = "fm100htjtiaehv1n5vh67tbmqq4eabcjdng40f7jupsadbedhruh6rag1l0", 
     #[test]
     fn test_static_endpoint_rejects_multiple_identity_types() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [sinks.health_report]

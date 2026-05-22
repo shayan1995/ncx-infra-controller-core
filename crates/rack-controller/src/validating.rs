@@ -19,8 +19,8 @@
 
 use std::collections::HashMap;
 
-use carbide_rack_controller::context::RackStateHandlerContextObjects;
-use carbide_uuid::rack::RackId;
+use nico_rack_controller::context::RackStateHandlerContextObjects;
+use nico_uuid::rack::RackId;
 use model::machine::Machine;
 use model::metadata::Metadata;
 use model::rack::{MachineRvLabels, Rack, RackState, RackValidationState};
@@ -28,7 +28,7 @@ use state_controller::state_handler::{
     StateHandlerContext, StateHandlerError, StateHandlerOutcome,
 };
 
-use crate as carbide_rack_controller;
+use crate as nico_rack_controller;
 
 //------------------------------------------------------------------------------
 // Helper types

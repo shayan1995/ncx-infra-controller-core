@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build script for carbide-dpf-api-harness against GLIBC 2.34
-# This script builds carbide-dpf-api-harness using Ubuntu 22.04 (which has GLIBC 2.34)
+# Build script for nico-dpf-api-harness against GLIBC 2.34
+# This script builds nico-dpf-api-harness using Ubuntu 22.04 (which has GLIBC 2.34)
 # Automatically extracts the binary and verifies the build
 
 set -e
@@ -23,13 +23,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 DPF_CRATE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-OUTPUT_BINARY="${DPF_CRATE_DIR}/carbide-dpf-api-harness"
-IMAGE_NAME="carbide-dpf-api-harness:glibc2.34"
-CONTAINER_NAME="carbide-dpf-api-harness-temp-$$"
+OUTPUT_BINARY="${DPF_CRATE_DIR}/nico-dpf-api-harness"
+IMAGE_NAME="nico-dpf-api-harness:glibc2.34"
+CONTAINER_NAME="nico-dpf-api-harness-temp-$$"
 
 cd "${WORKSPACE_ROOT}"
 
-echo "Building carbide-dpf-api-harness against GLIBC 2.34..."
+echo "Building nico-dpf-api-harness against GLIBC 2.34..."
 echo "Workspace root: ${WORKSPACE_ROOT}"
 echo ""
 
@@ -37,7 +37,7 @@ echo ""
 echo "Building Docker image (this may take a while on first run)..."
 docker build \
     --progress=plain \
-    -f crates/dpf/dev/Dockerfile.carbide-dpf-api-harness-glibc2.34 \
+    -f crates/dpf/dev/Dockerfile.nico-dpf-api-harness-glibc2.34 \
     -t "${IMAGE_NAME}" \
     .
 
@@ -48,7 +48,7 @@ echo ""
 # Extract the binary
 echo "Extracting binary..."
 docker create --name "${CONTAINER_NAME}" "${IMAGE_NAME}" > /dev/null
-docker cp "${CONTAINER_NAME}:/usr/local/bin/carbide-dpf-api-harness" "${OUTPUT_BINARY}"
+docker cp "${CONTAINER_NAME}:/usr/local/bin/nico-dpf-api-harness" "${OUTPUT_BINARY}"
 docker rm "${CONTAINER_NAME}" > /dev/null
 
 chmod +x "${OUTPUT_BINARY}"

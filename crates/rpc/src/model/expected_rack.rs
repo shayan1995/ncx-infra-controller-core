@@ -21,9 +21,9 @@ use model::metadata::Metadata;
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
 
-impl From<ExpectedRack> for rpc::forge::ExpectedRack {
+impl From<ExpectedRack> for rpc::nico::ExpectedRack {
     fn from(expected_rack: ExpectedRack) -> Self {
-        rpc::forge::ExpectedRack {
+        rpc::nico::ExpectedRack {
             rack_id: Some(expected_rack.rack_id),
             rack_profile_id: Some(expected_rack.rack_profile_id),
             metadata: Some(expected_rack.metadata.into()),
@@ -31,10 +31,10 @@ impl From<ExpectedRack> for rpc::forge::ExpectedRack {
     }
 }
 
-impl TryFrom<rpc::forge::ExpectedRack> for ExpectedRack {
+impl TryFrom<rpc::nico::ExpectedRack> for ExpectedRack {
     type Error = RpcDataConversionError;
 
-    fn try_from(rpc: rpc::forge::ExpectedRack) -> Result<Self, Self::Error> {
+    fn try_from(rpc: rpc::nico::ExpectedRack) -> Result<Self, Self::Error> {
         let rack_id = rpc
             .rack_id
             .ok_or(RpcDataConversionError::MissingArgument("rack_id"))?;

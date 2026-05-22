@@ -22,9 +22,9 @@ use askama::Template;
 use axum::Json;
 use axum::extract::{Path as AxumPath, State as AxumState};
 use axum::response::{Html, IntoResponse, Response};
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use hyper::http::StatusCode;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 
 use super::state_history::StateHistoryTable;
 use super::{Base, filters};
@@ -115,14 +115,14 @@ struct PowerShelfDetail {
     name: String,
     capacity: String,
     voltage: String,
-    bmc_info: Option<rpc::forge::BmcInfo>,
+    bmc_info: Option<rpc::nico::BmcInfo>,
     metadata_detail: super::MetadataDetail,
     health_detail: super::HealthDetail,
     history: StateHistoryTable,
 }
 
 impl PowerShelfDetail {
-    fn new(shelf: rpc::forge::PowerShelf, history: StateHistoryTable) -> Self {
+    fn new(shelf: rpc::nico::PowerShelf, history: StateHistoryTable) -> Self {
         let id = shelf
             .id
             .as_ref()
@@ -215,14 +215,14 @@ pub async fn detail(
 async fn fetch_power_shelf(
     api: &Api,
     power_shelf_id: &str,
-) -> Result<Option<rpc::forge::PowerShelf>, Response> {
+) -> Result<Option<rpc::nico::PowerShelf>, Response> {
     let power_shelf_id_parsed = match PowerShelfId::from_str(power_shelf_id) {
         Ok(id) => id,
         Err(_) => return Err((StatusCode::BAD_REQUEST, "Invalid power shelf ID").into_response()),
     };
 
     let response = match api
-        .find_power_shelves(tonic::Request::new(rpc::forge::PowerShelfQuery {
+        .find_power_shelves(tonic::Request::new(rpc::nico::PowerShelfQuery {
             name: None,
             power_shelf_id: Some(power_shelf_id_parsed),
         }))
@@ -239,12 +239,12 @@ async fn fetch_power_shelf(
     Ok(response.power_shelves.into_iter().next())
 }
 
-async fn fetch_power_shelves(api: &Api) -> Result<rpc::forge::PowerShelfList, tonic::Status> {
+async fn fetch_power_shelves(api: &Api) -> Result<rpc::nico::PowerShelfList, tonic::Status> {
     // Use find_power_shelf_ids (which respects DeletedFilter::Exclude by default)
     // followed by find_power_shelves_by_ids (which also fetches BMC info).
     let power_shelf_ids = api
         .find_power_shelf_ids(tonic::Request::new(
-            rpc::forge::PowerShelfSearchFilter::default(),
+            rpc::nico::PowerShelfSearchFilter::default(),
         ))
         .await?
         .into_inner()
@@ -261,7 +261,7 @@ async fn fetch_power_shelves(api: &Api) -> Result<rpc::forge::PowerShelfList, to
         let page_size = PAGE_SIZE.min(power_shelf_ids.len() - offset);
         let next_ids = &power_shelf_ids[offset..offset + page_size];
         let page = api
-            .find_power_shelves_by_ids(tonic::Request::new(rpc::forge::PowerShelvesByIdsRequest {
+            .find_power_shelves_by_ids(tonic::Request::new(rpc::nico::PowerShelvesByIdsRequest {
                 power_shelf_ids: next_ids.to_vec(),
             }))
             .await?
@@ -270,7 +270,7 @@ async fn fetch_power_shelves(api: &Api) -> Result<rpc::forge::PowerShelfList, to
         power_shelves.extend(page.power_shelves);
         offset += page_size;
     }
-    Ok(rpc::forge::PowerShelfList { power_shelves })
+    Ok(rpc::nico::PowerShelfList { power_shelves })
 }
 
 impl super::Base for PowerShelfShow {}

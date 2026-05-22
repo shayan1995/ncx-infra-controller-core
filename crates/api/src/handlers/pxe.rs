@@ -17,18 +17,18 @@
 
 use std::net::IpAddr;
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use db;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 use crate::handlers::client_resolution::{
     resolve_cloud_init_instructions, resolve_machine_interface,
 };
 use crate::ipxe::{PxeInstructionRequest, PxeInstructions, PxeInstructionsInput};
 
-// The carbide pxe server makes this RPC call
+// The nico pxe server makes this RPC call
 pub(crate) async fn get_pxe_instructions(
     api: &Api,
     request: Request<rpc::PxeInstructionRequest>,
@@ -39,7 +39,7 @@ pub(crate) async fn get_pxe_instructions(
 
     let pxe_request: PxeInstructionRequest = request.into_inner().try_into()?;
 
-    // Resolve the client_ip carbide-pxe observed (XFF or TCP peer) to
+    // Resolve the client_ip nico-pxe observed (XFF or TCP peer) to
     // a host machine_interface, either via direct machine_interface_addresses
     // lookup or via instance_address for tenant-allocated machines.
     let iface = resolve_machine_interface(txn.as_pgconn(), pxe_request.client_ip).await?;
@@ -54,7 +54,7 @@ pub(crate) async fn get_pxe_instructions(
     // For interfaces on the static-assignments segment, include
     // URL overrides so external hosts can reach services via an
     // alternate hostname or IP they can resolve and/or connect
-    // to for carbide-pxe and carbide-api.
+    // to for nico-pxe and nico-api.
     let (api_url_override, pxe_url_override, static_pxe_url_override) = {
         let is_external = iface.segment_id
             == db::network_segment::static_assignments(txn.as_pgconn())
@@ -95,7 +95,7 @@ pub(crate) async fn get_cloud_init_instructions(
     let ip_str = &request.into_inner().ip;
     let ip: IpAddr = ip_str
         .parse()
-        .map_err(|e| CarbideError::InvalidArgument(format!("Failed parsing IP '{ip_str}': {e}")))?;
+        .map_err(|e| NicoError::InvalidArgument(format!("Failed parsing IP '{ip_str}': {e}")))?;
 
     // Note that this code path supports IPv6 at the *API layer*, but won't be
     // able to be exercised until DHCPv6 is working, which is a whole other thing
@@ -105,7 +105,7 @@ pub(crate) async fn get_cloud_init_instructions(
     // dual stacking interfaces, none of that means much until DHCPv6 is working
     // to actually hand those addresses out.
     let mut conn = api.database_connection.acquire().await.map_err(|e| {
-        CarbideError::internal(format!("Failed to acquire database connection: {e}"))
+        NicoError::internal(format!("Failed to acquire database connection: {e}"))
     })?;
     let instructions = resolve_cloud_init_instructions(api, &mut conn, ip).await?;
 

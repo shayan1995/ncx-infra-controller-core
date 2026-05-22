@@ -19,9 +19,9 @@ use model::resource_pool::ResourcePoolSnapshot;
 
 use crate as rpc;
 
-impl From<ResourcePoolSnapshot> for rpc::forge::ResourcePool {
+impl From<ResourcePoolSnapshot> for rpc::nico::ResourcePool {
     fn from(rp: ResourcePoolSnapshot) -> Self {
-        rpc::forge::ResourcePool {
+        rpc::nico::ResourcePool {
             name: rp.name,
             min: rp.min,
             max: rp.max,

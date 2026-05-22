@@ -17,28 +17,28 @@
 
 //! Handler for RackState::Maintenance.
 
-use carbide_rack::firmware_object::{
+use nico_rack::firmware_object::{
     ANY_RACK_HARDWARE_TYPE, profile_hardware_type_wire_value, rack_maintenance_access_token_key,
 };
-use carbide_rack::firmware_update::{
+use nico_rack::firmware_update::{
     RackFirmwareInventory, RackSwitchFirmwareInventory, build_new_node_info,
     firmware_type_for_profile, load_rack_firmware_inventory, load_rack_switch_firmware_inventory,
 };
-use carbide_rack::rack_manager_error;
-use carbide_rack::rms_client::SwitchSystemImageRmsClient;
-use carbide_rack_controller::config::RmsConfig;
-use carbide_rack_controller::context::RackStateHandlerContextObjects;
-use carbide_rack_controller::fabric_manager::{
+use nico_rack::rack_manager_error;
+use nico_rack::rms_client::SwitchSystemImageRmsClient;
+use nico_rack_controller::config::RmsConfig;
+use nico_rack_controller::context::RackStateHandlerContextObjects;
+use nico_rack_controller::fabric_manager::{
     get_scale_up_fabric_services_status, persist_fabric_manager_statuses, persist_primary_switch,
     select_primary_switch, validate_switch_inventory_for_nmx_cluster,
 };
-use carbide_rack_controller::validating::strip_rv_labels;
-use carbide_uuid::rack::{RackId, RackProfileId};
+use nico_rack_controller::validating::strip_rv_labels;
+use nico_uuid::rack::{RackId, RackProfileId};
 use db::{
     host_machine_update as db_host_machine_update, machine as db_machine,
     machine_topology as db_machine_topology, rack as db_rack, switch as db_switch,
 };
-use forge_secrets::credentials::{CredentialManager, Credentials};
+use nico_secrets::credentials::{CredentialManager, Credentials};
 use librms::protos::rack_manager as rms;
 use model::rack::{
     ConfigureNmxClusterState, FirmwareUpgradeDeviceInfo, FirmwareUpgradeDeviceStatus,
@@ -52,7 +52,7 @@ use state_controller::state_handler::{
     StateHandlerContext, StateHandlerError, StateHandlerOutcome,
 };
 
-use crate as carbide_rack_controller;
+use crate as nico_rack_controller;
 
 /// Strips all `rv.*` metadata labels from every machine in the rack.
 ///
@@ -84,8 +84,8 @@ async fn clear_rv_labels(
 async fn trigger_rack_firmware_reprovisioning_requests(
     txn: &mut sqlx::PgConnection,
     rack_id: &RackId,
-    machine_ids: &[carbide_uuid::machine::MachineId],
-    switch_ids: &[carbide_uuid::switch::SwitchId],
+    machine_ids: &[nico_uuid::machine::MachineId],
+    switch_ids: &[nico_uuid::switch::SwitchId],
     continue_after_firmware_upgrade: bool,
 ) -> Result<(), StateHandlerError> {
     for machine_id in machine_ids {
@@ -110,8 +110,8 @@ async fn trigger_rack_firmware_reprovisioning_requests(
 
 async fn clear_rack_firmware_device_statuses(
     txn: &mut sqlx::PgConnection,
-    machine_ids: &[carbide_uuid::machine::MachineId],
-    switch_ids: &[carbide_uuid::switch::SwitchId],
+    machine_ids: &[nico_uuid::machine::MachineId],
+    switch_ids: &[nico_uuid::switch::SwitchId],
 ) -> Result<(), StateHandlerError> {
     for machine_id in machine_ids {
         db_machine::update_rack_fw_details(txn, machine_id, None).await?;
@@ -124,7 +124,7 @@ async fn clear_rack_firmware_device_statuses(
 
 async fn clear_nvos_update_statuses(
     txn: &mut sqlx::PgConnection,
-    switch_ids: &[carbide_uuid::switch::SwitchId],
+    switch_ids: &[nico_uuid::switch::SwitchId],
 ) -> Result<(), StateHandlerError> {
     for switch_id in switch_ids {
         db_switch::update_nvos_update_status(txn, *switch_id, None).await?;
@@ -369,7 +369,7 @@ fn filter_inventory_by_scope(
         let allowed: std::collections::HashSet<_> = scope.machine_ids.iter().collect();
         inventory.machine_ids.retain(|id| allowed.contains(id));
         inventory.machines.retain(|d| {
-            match d.node_id.parse::<carbide_uuid::machine::MachineId>() {
+            match d.node_id.parse::<nico_uuid::machine::MachineId>() {
                 Ok(ref id) => allowed.contains(id),
                 Err(_) => false,
             }
@@ -383,7 +383,7 @@ fn filter_inventory_by_scope(
         let allowed: std::collections::HashSet<_> = scope.switch_ids.iter().collect();
         inventory.switch_ids.retain(|id| allowed.contains(id));
         inventory.switches.retain(
-            |d| match d.node_id.parse::<carbide_uuid::switch::SwitchId>() {
+            |d| match d.node_id.parse::<nico_uuid::switch::SwitchId>() {
                 Ok(ref id) => allowed.contains(id),
                 Err(_) => false,
             },
@@ -408,7 +408,7 @@ fn filter_switch_inventory_by_scope(
         let allowed: std::collections::HashSet<_> = scope.switch_ids.iter().collect();
         inventory.switch_ids.retain(|id| allowed.contains(id));
         inventory.switches.retain(
-            |d| match d.node_id.parse::<carbide_uuid::switch::SwitchId>() {
+            |d| match d.node_id.parse::<nico_uuid::switch::SwitchId>() {
                 Ok(ref id) => allowed.contains(id),
                 Err(_) => false,
             },
@@ -1348,7 +1348,7 @@ pub async fn handle_maintenance(
                     let machine_id = if !device.node_id.is_empty() {
                         device
                             .node_id
-                            .parse::<carbide_uuid::machine::MachineId>()
+                            .parse::<nico_uuid::machine::MachineId>()
                             .ok()
                     } else {
                         let mac: mac_address::MacAddress = match device.mac.parse() {
@@ -1372,7 +1372,7 @@ pub async fn handle_maintenance(
                     let switch_id = if !device.node_id.is_empty() {
                         device
                             .node_id
-                            .parse::<carbide_uuid::switch::SwitchId>()
+                            .parse::<nico_uuid::switch::SwitchId>()
                             .ok()
                     } else {
                         let mac: mac_address::MacAddress = match device.mac.parse() {
@@ -1651,7 +1651,7 @@ pub async fn handle_maintenance(
                     let switch_id = if !switch.node_id.is_empty() {
                         switch
                             .node_id
-                            .parse::<carbide_uuid::switch::SwitchId>()
+                            .parse::<nico_uuid::switch::SwitchId>()
                             .ok()
                     } else {
                         let mac: mac_address::MacAddress = match switch.mac.parse() {
@@ -2169,9 +2169,9 @@ pub async fn handle_maintenance(
 
 #[cfg(test)]
 mod tests {
-    use carbide_rack::firmware_update::RackFirmwareInventory;
-    use carbide_uuid::machine::{MachineId, MachineIdSource, MachineType};
-    use carbide_uuid::switch::{SwitchId, SwitchIdSource, SwitchType};
+    use nico_rack::firmware_update::RackFirmwareInventory;
+    use nico_uuid::machine::{MachineId, MachineIdSource, MachineType};
+    use nico_uuid::switch::{SwitchId, SwitchIdSource, SwitchType};
     use model::rack::{
         ConfigureNmxClusterState, FirmwareUpgradeDeviceInfo, FirmwareUpgradeState,
         MaintenanceActivity, MaintenanceScope, NvosUpdateState, RackMaintenanceState,

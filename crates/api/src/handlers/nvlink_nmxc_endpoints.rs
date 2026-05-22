@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 
 pub(crate) async fn list_nvlink_nmxc_endpoints(
@@ -49,7 +49,7 @@ pub(crate) async fn create_nvlink_nmxc_endpoint(
     let mut txn = api.txn_begin().await?;
     let row = db::nvlink_nmxc_endpoints::create(&mut txn, &inner.chassis_serial, &inner.endpoint)
         .await
-        .map_err(CarbideError::from)?;
+        .map_err(NicoError::from)?;
     txn.commit().await?;
     Ok(Response::new(row.into()))
 }

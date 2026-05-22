@@ -17,10 +17,10 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::{RackId, RackProfileId};
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::{RackId, RackProfileId};
+use nico_uuid::switch::SwitchId;
 use chrono::{DateTime, Utc};
 use config_version::{ConfigVersion, Versioned};
 use serde::{Deserialize, Serialize};
@@ -363,7 +363,7 @@ impl<'r> FromRow<'r, PgRow> for Rack {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum RackState {
-    /// Rack has been created in Carbide.
+    /// Rack has been created in NICo.
     /// Created when ExpectedMachine/Switch/PS references this rack.
     #[default]
     #[serde(alias = "expected", alias = "unknown")]
@@ -378,7 +378,7 @@ pub enum RackState {
     ///
     /// The active RVS run ID is stored inside each non-`Pending` substate of
     /// `rack_validation`. It is set on the `Pending -> InProgress` transition
-    /// when Carbide first observes an `rv.run-id` label on a rack machine.
+    /// when NICo first observes an `rv.run-id` label on a rack machine.
     #[serde(alias = "validation")]
     Validating {
         #[serde(alias = "rack_validation")]
@@ -821,9 +821,9 @@ pub fn state_sla(state: &RackState, state_version: &ConfigVersion) -> StateSla {
 
 #[cfg(test)]
 mod tests {
-    use carbide_uuid::machine::{MachineIdSource, MachineType};
-    use carbide_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
-    use carbide_uuid::switch::{SwitchIdSource, SwitchType};
+    use nico_uuid::machine::{MachineIdSource, MachineType};
+    use nico_uuid::power_shelf::{PowerShelfIdSource, PowerShelfType};
+    use nico_uuid::switch::{SwitchIdSource, SwitchType};
 
     use super::*;
 

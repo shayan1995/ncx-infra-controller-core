@@ -26,16 +26,16 @@ pub use args::Cmd;
 use crate::cfg::dispatch::Dispatch;
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 impl Run for Cmd {
-    async fn run(self, _ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, _ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         cmds::generate(self.shell)
     }
 }
 
 impl Dispatch for Cmd {
-    async fn dispatch(self, mut ctx: RuntimeContext) -> CarbideCliResult<()> {
+    async fn dispatch(self, mut ctx: RuntimeContext) -> NicoCliResult<()> {
         self.run(&mut ctx).await
     }
 }

@@ -1,4 +1,4 @@
-use carbide_uuid::rack::RackId;
+use nico_uuid::rack::RackId;
 
 use crate::client::TrayData;
 

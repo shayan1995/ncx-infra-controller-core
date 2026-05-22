@@ -1,4 +1,4 @@
-use carbide_uuid::machine::MachineIdParseError;
+use nico_uuid::machine::MachineIdParseError;
 use thiserror::Error;
 
 /// Top-level RVS error type.

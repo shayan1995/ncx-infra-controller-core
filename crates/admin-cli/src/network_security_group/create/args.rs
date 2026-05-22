@@ -16,11 +16,11 @@
  */
 
 use clap::Parser;
-use rpc::forge::{
-    self as forgerpc, CreateNetworkSecurityGroupRequest, NetworkSecurityGroupAttributes,
+use rpc::nico::{
+    self as nicorpc, CreateNetworkSecurityGroupRequest, NetworkSecurityGroupAttributes,
 };
 
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
 #[derive(Parser, Debug, Clone)]
 pub struct Args {
@@ -67,16 +67,16 @@ pub struct Args {
 }
 
 impl TryFrom<Args> for CreateNetworkSecurityGroupRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
 
-    fn try_from(args: Args) -> CarbideCliResult<Self> {
+    fn try_from(args: Args) -> NicoCliResult<Self> {
         let labels = if let Some(l) = args.labels {
             serde_json::from_str(&l)?
         } else {
             vec![]
         };
 
-        let metadata = forgerpc::Metadata {
+        let metadata = nicorpc::Metadata {
             name: args.name.unwrap_or_default(),
             description: args.description.unwrap_or_default(),
             labels,

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-/// A hyper / TCP server that pretends to be carbide-api, for unit testing.
+/// A hyper / TCP server that pretends to be nico-api, for unit testing.
 /// It responds to DHCP_DISCOVERY messages with a DHCP_OFFER of 172.20.0.{x}/32, where x is the
 /// last byte of the MAC address sent in the DISCOVERY packet.
 ///
@@ -28,7 +28,7 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use http_body_util::BodyExt;
 use hyper::body::{Body as HttpBody, Bytes, Frame, Incoming};
 use hyper::server::conn::http2;
@@ -42,11 +42,11 @@ use tokio::task::JoinHandle;
 
 use crate::machine::Machine;
 
-pub const ENDPOINT_DISCOVER_DHCP: &str = "/forge.Forge/DiscoverDhcp";
-pub const ENDPOINT_EXPIRE_DHCP_LEASE: &str = "/forge.Forge/ExpireDhcpLease";
+pub const ENDPOINT_DISCOVER_DHCP: &str = "/nico.NICo/DiscoverDhcp";
+pub const ENDPOINT_EXPIRE_DHCP_LEASE: &str = "/nico.NICo/ExpireDhcpLease";
 
 // Contents of the response
-const DHCP_RESPONSE_FQDN: &str = "december-nitrogen.forge.local";
+const DHCP_RESPONSE_FQDN: &str = "december-nitrogen.nico.local";
 const DHCP_RESPONSE_ADDR_PREFIX: &str = "172.20.0";
 
 pub fn base_dhcp_response(mac_address: MacAddress) -> rpc::DhcpRecord {
@@ -93,7 +93,7 @@ pub fn dhcp_response_with_override(
     match mac_address.bytes() {
         [_, _, _, _, _, 0xaa] => {
             r.booturl =
-                "https://api-specified-ipxe-url.forge/public/blobs/internal/x86_64/ipxe.efi"
+                "https://api-specified-ipxe-url.nico/public/blobs/internal/x86_64/ipxe.efi"
                     .to_string()
                     .into();
         }
@@ -267,10 +267,10 @@ impl MockAPIServer {
                     status: rpc::ExpireDhcpLeaseStatus::Released.into(),
                 })
             }
-            "/forge.Forge/Echo" => respond(rpc::EchoResponse {
+            "/nico.NICo/Echo" => respond(rpc::EchoResponse {
                 message: "dhcp_echo".into(),
             }),
-            "/forge.Forge/Version" => respond(rpc::BuildInfo::default()),
+            "/nico.NICo/Version" => respond(rpc::BuildInfo::default()),
             _ => panic!("DHCP -> API wrong uri: {}", req.uri().path()),
         }
     }
@@ -352,7 +352,7 @@ fn grpc_response(body: Vec<u8>) -> Response<GrpcBody> {
         .unwrap()
 }
 
-/// Takes an rpc object (built from rpc/proto/forge.proto) and turns into into a gRPC response
+/// Takes an rpc object (built from rpc/proto/nico.proto) and turns into into a gRPC response
 fn respond(out: impl prost::Message) -> Result<Response<GrpcBody>, MockAPIServerError> {
     let msg_len = out.encoded_len() as u32;
     let mut body = Vec::with_capacity(1 + 4 + msg_len as usize);

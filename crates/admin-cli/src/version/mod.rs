@@ -29,10 +29,10 @@ pub use args::Opts;
 
 use crate::cfg::dispatch::Dispatch;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 
 impl Dispatch for Opts {
-    async fn dispatch(self, ctx: RuntimeContext) -> CarbideCliResult<()> {
+    async fn dispatch(self, ctx: RuntimeContext) -> NicoCliResult<()> {
         cmds::handle_show_version(&self, &ctx.api_client, ctx.config.format).await
     }
 }

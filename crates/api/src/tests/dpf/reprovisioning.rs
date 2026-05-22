@@ -25,10 +25,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use carbide_dpf::DpuPhase;
-use carbide_dpf::types::{DpuDeviceSummary, DpuNodeSummary, HostDpfSnapshot};
-use carbide_machine_controller::dpf::{DpfOperations, MockDpfOperations};
-use carbide_uuid::machine::MachineId;
+use nico_dpf::DpuPhase;
+use nico_dpf::types::{DpuDeviceSummary, DpuNodeSummary, HostDpfSnapshot};
+use nico_machine_controller::dpf::{DpfOperations, MockDpfOperations};
+use nico_uuid::machine::MachineId;
 use model::machine::{
     DpfState, DpuReprovisionStates, InstanceState, ManagedHostState, ReprovisionState,
 };

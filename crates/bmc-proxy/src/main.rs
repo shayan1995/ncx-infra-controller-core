@@ -31,7 +31,7 @@ use tokio::task::JoinSet;
 use tokio_util::sync::CancellationToken;
 
 #[derive(Parser)]
-#[clap(name = "carbide-bmc-proxy")]
+#[clap(name = "nico-bmc-proxy")]
 pub struct Args {
     #[clap(long, default_value = "false", help = "Print version number and exit")]
     pub version: bool,
@@ -65,7 +65,7 @@ impl From<ConfigError> for Error {
 async fn main() -> Result<(), Error> {
     let args = Args::parse();
     if args.version {
-        println!("{}", carbide_version::version!());
+        println!("{}", nico_version::version!());
         return Ok(());
     }
 

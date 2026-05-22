@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use db::power_shelf as db_power_shelf;
 use model::DeletedFilter;
 use model::power_shelf::{
@@ -23,8 +23,8 @@ use model::power_shelf::{
     PowerShelfMaintenanceOperation as ModelPowerShelfMaintenanceOperation, PowerShelfSearchFilter,
     PowerShelfStatus,
 };
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{
     AdminForceDeletePowerShelfRequest, PowerShelfDeletionRequest,
     PowerShelfMaintenanceOperation as RpcPowerShelfMaintenanceOperation,
     PowerShelfMaintenanceRequest, PowerShelfQuery,
@@ -449,7 +449,7 @@ async fn test_power_shelf_conversion_roundtrip(
     db_power_shelf::update(&power_shelf, &mut txn).await?;
 
     // Test conversion to RPC format
-    let rpc_power_shelf = rpc::forge::PowerShelf::try_from(power_shelf.clone())?;
+    let rpc_power_shelf = rpc::nico::PowerShelf::try_from(power_shelf.clone())?;
 
     assert_eq!(
         rpc_power_shelf.id.unwrap().to_string(),

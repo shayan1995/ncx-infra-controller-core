@@ -17,10 +17,10 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::instance_type::InstanceTypeId;
-use carbide_uuid::machine::MachineId;
-use carbide_uuid::network_security_group::NetworkSecurityGroupId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::instance_type::InstanceTypeId;
+use nico_uuid::machine::MachineId;
+use nico_uuid::network_security_group::NetworkSecurityGroupId;
 use chrono::{DateTime, Utc};
 use config_version::ConfigVersion;
 use serde::{Deserialize, Serialize};
@@ -41,7 +41,7 @@ use crate::tenant::TenantOrganizationId;
 /// Represents a snapshot view of an `Instance`
 ///
 /// This snapshot is a state-in-time representation of everything that
-/// carbide knows about an instance.
+/// nico knows about an instance.
 /// In order to provide a tenant accurate state of an instance, the state of the
 /// host that is hosting the instance also needs to be known.
 #[derive(Debug, Clone)]

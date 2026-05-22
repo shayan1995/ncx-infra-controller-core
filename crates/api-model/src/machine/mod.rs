@@ -19,14 +19,14 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use std::net::{IpAddr, SocketAddr};
 
-use carbide_uuid::domain::DomainId;
-use carbide_uuid::instance_type::InstanceTypeId;
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
-use carbide_uuid::machine_validation::MachineValidationId;
-use carbide_uuid::network::NetworkSegmentId;
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::domain::DomainId;
+use nico_uuid::instance_type::InstanceTypeId;
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
+use nico_uuid::machine_validation::MachineValidationId;
+use nico_uuid::network::NetworkSegmentId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
 use chrono::{DateTime, Duration, Utc};
 use config_version::{ConfigVersion, Versioned};
 use duration_str::deserialize_duration_chrono;
@@ -469,7 +469,7 @@ impl ManagedHostStateSnapshot {
                 output.merge(&health_report);
             }
 
-            merge_or_timeout(&mut output, &health_report, "forge-dpu-agent".to_string());
+            merge_or_timeout(&mut output, &health_report, "nico-dpu-agent".to_string());
 
             for (source, over) in snapshot
                 .health_reports
@@ -658,7 +658,7 @@ impl Default for MachineLastRebootRequested {
 #[derive(Debug, Clone)]
 pub struct Machine {
     /// The ID of the machine, this is an internal identifier in the database that's unique for
-    /// all machines managed by this instance of carbide.
+    /// all machines managed by this instance of nico.
     pub id: MachineId,
 
     /// The current state of the machine.
@@ -668,7 +668,7 @@ pub struct Machine {
     /// configuration. The latter will be tracked as part of the InstanceNetworkConfig.
     pub network_config: Versioned<ManagedHostNetworkConfig>,
 
-    /// The most recent status forge-dpu-agent observed. Tells us if network_config has been
+    /// The most recent status nico-dpu-agent observed. Tells us if network_config has been
     /// applied yet, and other useful things.
     pub network_status_observation: Option<MachineNetworkStatusObservation>,
 
@@ -711,7 +711,7 @@ pub struct Machine {
     /// Last time when host reprovision requested
     pub host_reprovision_requested: Option<HostReprovisionRequest>,
 
-    /// Does the forge-dpu-agent on this DPU need upgrading?
+    /// Does the nico-dpu-agent on this DPU need upgrading?
     pub dpu_agent_upgrade_requested: Option<UpgradeDecision>,
 
     /// All health report sources
@@ -868,7 +868,7 @@ impl Machine {
         }
     }
 
-    /// Does the forge-dpu-agent on this DPU need upgrading?
+    /// Does the nico-dpu-agent on this DPU need upgrading?
     pub fn needs_agent_upgrade(&self) -> bool {
         self.dpu_agent_upgrade_requested
             .as_ref()
@@ -886,7 +886,7 @@ impl Machine {
         self.state.version
     }
 
-    /// Latest health report received from forge-dpu-agent.
+    /// Latest health report received from nico-dpu-agent.
     pub fn dpu_agent_health_report(&self) -> Option<&HealthReport> {
         self.health_reports
             .merges
@@ -958,7 +958,7 @@ impl Machine {
     /// If this machine is a DPU, returns whether the version of the
     /// given ManagedHostNetworkConfig (which is a host-level versioned
     /// config that is kept in sync across all DPUs on a host) has been
-    /// applied + reported back as same by the carbide-dpu-agent.
+    /// applied + reported back as same by the nico-dpu-agent.
     pub fn managed_host_network_config_version_synced(&self, host_version: ConfigVersion) -> bool {
         let dpu_observation = self.network_status_observation.as_ref();
 
@@ -1374,9 +1374,9 @@ pub enum NetworkConfigUpdateState {
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum HostReprovisionState {
-    // deprecated, kept for backwards compatibility with existing database entries: FORGE-7975
+    // deprecated, kept for backwards compatibility with existing database entries: NICO-7975
     CheckingFirmware,
-    // deprecated, kept for backwards compatibility with existing database entries: FORGE-7975
+    // deprecated, kept for backwards compatibility with existing database entries: NICO-7975
     CheckingFirmwareRepeat,
     CheckingFirmwareV2 {
         firmware_type: Option<FirmwareComponentType>,
@@ -1617,7 +1617,7 @@ pub enum DpuInitState {
 
 /// DPF operator integration states.
 ///
-/// The DPF operator manages all internal provisioning logic. Carbide only
+/// The DPF operator manages all internal provisioning logic. NICo only
 /// declares the setup, waits for completion, and handles cleanup.
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord)]
 #[serde(tag = "dpfstate", rename_all = "lowercase")]
@@ -1628,11 +1628,11 @@ pub enum DpfState {
     /// Watcher callbacks drive transitions (DPU ready, reboot required).
     WaitingForReady {
         /// Current DPU phase detail from DPF SDK while Provisioning (for debugging/observability only).
-        /// Carbide should not care about non actionable DPF internal phases.
+        /// NICo should not care about non actionable DPF internal phases.
         #[serde(default)]
         phase_detail: Option<String>,
     },
-    /// DPU device reported ready by the DPF operator. Carbide
+    /// DPU device reported ready by the DPF operator. NICo
     /// waits for all DPUs to reach this state before proceeding.
     DeviceReady,
     /// Triggering reprovisioning via DPF operator.
@@ -1986,7 +1986,7 @@ pub struct HostReprovisionRequest {
 
 pub use crate::rack::RackFirmwareUpgradeStatus;
 
-/// Should a forge-dpu-agent upgrade itself?
+/// Should a nico-dpu-agent upgrade itself?
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpgradeDecision {
     pub should_upgrade: bool,

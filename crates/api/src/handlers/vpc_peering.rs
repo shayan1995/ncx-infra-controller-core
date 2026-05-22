@@ -16,13 +16,13 @@
  */
 
 use ::db::{ObjectColumnFilter, vpc, vpc_peering as db};
-use ::rpc::forge as rpc;
-use carbide_uuid::vpc_peering::VpcPeeringId;
+use ::rpc::nico as rpc;
+use nico_uuid::vpc_peering::VpcPeeringId;
 use model::vpc::VpcVirtualizationTypeCapabilities;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 use crate::cfg::file::VpcPeeringPolicy;
 
@@ -43,22 +43,22 @@ pub async fn create(
         Some(id) => id,
     };
 
-    let vpc_id = vpc_id.ok_or_else(|| CarbideError::MissingArgument("vpc_id cannot be null"))?;
+    let vpc_id = vpc_id.ok_or_else(|| NicoError::MissingArgument("vpc_id cannot be null"))?;
 
     let peer_vpc_id =
-        peer_vpc_id.ok_or_else(|| CarbideError::MissingArgument("peer_vpc_id cannot be null"))?;
+        peer_vpc_id.ok_or_else(|| NicoError::MissingArgument("peer_vpc_id cannot be null"))?;
 
     let mut txn = api.txn_begin().await?;
 
     // Check this VPC peering is permitted under current site vpc_peering_policy
     match api.runtime_config.vpc_peering_policy {
         None | Some(VpcPeeringPolicy::None) => {
-            return Err(CarbideError::internal("VPC Peering feature disabled.".to_string()).into());
+            return Err(NicoError::internal("VPC Peering feature disabled.".to_string()).into());
         }
         Some(VpcPeeringPolicy::Exclusive) => {
             let vpcs1 =
                 vpc::find_by(&mut txn, ObjectColumnFilter::One(vpc::IdColumn, &vpc_id)).await?;
-            let vpc1 = vpcs1.first().ok_or_else(|| CarbideError::NotFoundError {
+            let vpc1 = vpcs1.first().ok_or_else(|| NicoError::NotFoundError {
                 kind: "VPC",
                 id: vpc_id.to_string(),
             })?;
@@ -67,7 +67,7 @@ pub async fn create(
                 ObjectColumnFilter::One(vpc::IdColumn, &peer_vpc_id),
             )
             .await?;
-            let vpc2 = vpcs2.first().ok_or_else(|| CarbideError::NotFoundError {
+            let vpc2 = vpcs2.first().ok_or_else(|| NicoError::NotFoundError {
                 kind: "VPC",
                 id: peer_vpc_id.to_string(),
             })?;
@@ -77,7 +77,7 @@ pub async fn create(
             // if they are allowed or not.
             vpc1.network_virtualization_type
                 .ensure_can_peer_with(vpc2.network_virtualization_type)
-                .map_err(CarbideError::from)?;
+                .map_err(NicoError::from)?;
         }
         Some(VpcPeeringPolicy::Mixed) => {
             // Any combination of network virtualization types allowed
@@ -137,7 +137,7 @@ pub async fn delete(
 
     let rpc::VpcPeeringDeletionRequest { id } = request.into_inner();
 
-    let id = id.ok_or_else(|| CarbideError::MissingArgument("id cannot be null"))?;
+    let id = id.ok_or_else(|| NicoError::MissingArgument("id cannot be null"))?;
 
     let mut txn = api.txn_begin().await?;
 

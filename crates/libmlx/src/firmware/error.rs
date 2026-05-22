@@ -36,7 +36,7 @@ pub enum FirmwareError {
     HttpError(String),
 
     #[error("SSH transfer failed: {0}")]
-    SshError(#[from] forge_ssh::SshError),
+    SshError(#[from] nico_ssh::SshError),
 
     #[error("Flint error: {0}")]
     FlintError(#[from] crate::lockdown::error::MlxError),

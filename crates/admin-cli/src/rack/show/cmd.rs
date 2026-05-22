@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use carbide_uuid::rack::RackId;
+use nico_uuid::rack::RackId;
 use color_eyre::Result;
 use prettytable::{Table, row};
 use rpc::admin_cli::OutputFormat;
-use rpc::forge::{MachineSearchConfig, PowerShelfSearchFilter, Rack, SwitchSearchFilter};
+use rpc::nico::{MachineSearchConfig, PowerShelfSearchFilter, Rack, SwitchSearchFilter};
 use serde::Serialize;
 
 use super::args::Args;
@@ -264,7 +264,7 @@ fn show_table_csv(outputs: &[RackOutput]) {
 mod tests {
 
     use rpc::admin_cli::OutputFormat;
-    use rpc::forge::{Metadata, Rack};
+    use rpc::nico::{Metadata, Rack};
 
     use super::*;
 

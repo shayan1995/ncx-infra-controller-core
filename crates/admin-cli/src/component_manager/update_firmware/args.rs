@@ -23,7 +23,7 @@ use crate::component_manager::common::{
     ComputeTrayComponentArg, MachineTargetArgs, NvSwitchComponentArg, PowerShelfComponentArg,
     PowerShelfTargetArgs, RackTargetArgs, SwitchTargetArgs,
 };
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -142,26 +142,26 @@ pub struct FirmwareSourceArgs {
 
 fn resolve_firmware_source(
     source: FirmwareSourceArgs,
-) -> CarbideCliResult<(String, Option<String>)> {
+) -> NicoCliResult<(String, Option<String>)> {
     match (
         source.target_version,
         source.sot_json_file,
         source.access_token,
     ) {
-        (Some(_), Some(_), _) => Err(CarbideCliError::ChooseOneError(
+        (Some(_), Some(_), _) => Err(NicoCliError::ChooseOneError(
             "--target-version",
             "--sot-json-file",
         )),
-        (None, None, _) => Err(CarbideCliError::RequireOneError(
+        (None, None, _) => Err(NicoCliError::RequireOneError(
             "--target-version",
             "--sot-json-file",
         )),
-        (Some(_), None, Some(_)) => Err(CarbideCliError::GenericError(
+        (Some(_), None, Some(_)) => Err(NicoCliError::GenericError(
             "--access-token requires --sot-json-file".to_string(),
         )),
         (Some(target_version), None, None) => {
             if target_version.trim().is_empty() {
-                Err(CarbideCliError::GenericError(
+                Err(NicoCliError::GenericError(
                     "--target-version must not be empty".to_string(),
                 ))
             } else {
@@ -170,12 +170,12 @@ fn resolve_firmware_source(
         }
         (None, Some(sot_json_file), access_token) => {
             let token = access_token.ok_or_else(|| {
-                CarbideCliError::GenericError(
+                NicoCliError::GenericError(
                     "--access-token is required with --sot-json-file".to_string(),
                 )
             })?;
             if token.trim().is_empty() {
-                return Err(CarbideCliError::GenericError(
+                return Err(NicoCliError::GenericError(
                     "--access-token must not be empty".to_string(),
                 ));
             }
@@ -187,10 +187,10 @@ fn resolve_firmware_source(
     }
 }
 
-impl TryFrom<Args> for rpc::forge::UpdateComponentFirmwareRequest {
-    type Error = CarbideCliError;
+impl TryFrom<Args> for rpc::nico::UpdateComponentFirmwareRequest {
+    type Error = NicoCliError;
 
-    fn try_from(args: Args) -> CarbideCliResult<Self> {
+    fn try_from(args: Args) -> NicoCliResult<Self> {
         match args.target {
             Target::Switch(target) => {
                 let (target_version, access_token) =
@@ -200,14 +200,14 @@ impl TryFrom<Args> for rpc::forge::UpdateComponentFirmwareRequest {
                     access_token,
                     force_update: target.force_update,
                     target: Some(
-                        rpc::forge::update_component_firmware_request::Target::Switches(
-                            rpc::forge::UpdateSwitchFirmwareTarget {
+                        rpc::nico::update_component_firmware_request::Target::Switches(
+                            rpc::nico::UpdateSwitchFirmwareTarget {
                                 switch_ids: Some(target.ids.into()),
                                 components: target
                                     .components
                                     .into_iter()
                                     .map(|component| {
-                                        rpc::forge::NvSwitchComponent::from(component) as i32
+                                        rpc::nico::NvSwitchComponent::from(component) as i32
                                     })
                                     .collect(),
                             },
@@ -220,14 +220,14 @@ impl TryFrom<Args> for rpc::forge::UpdateComponentFirmwareRequest {
                 access_token: None,
                 force_update: target.force_update,
                 target: Some(
-                    rpc::forge::update_component_firmware_request::Target::PowerShelves(
-                        rpc::forge::UpdatePowerShelfFirmwareTarget {
+                    rpc::nico::update_component_firmware_request::Target::PowerShelves(
+                        rpc::nico::UpdatePowerShelfFirmwareTarget {
                             power_shelf_ids: Some(target.ids.into()),
                             components: target
                                 .components
                                 .into_iter()
                                 .map(|component| {
-                                    rpc::forge::PowerShelfComponent::from(component) as i32
+                                    rpc::nico::PowerShelfComponent::from(component) as i32
                                 })
                                 .collect(),
                         },
@@ -242,14 +242,14 @@ impl TryFrom<Args> for rpc::forge::UpdateComponentFirmwareRequest {
                     access_token,
                     force_update: target.force_update,
                     target: Some(
-                        rpc::forge::update_component_firmware_request::Target::ComputeTrays(
-                            rpc::forge::UpdateComputeTrayFirmwareTarget {
+                        rpc::nico::update_component_firmware_request::Target::ComputeTrays(
+                            rpc::nico::UpdateComputeTrayFirmwareTarget {
                                 machine_ids: Some(target.ids.into()),
                                 components: target
                                     .components
                                     .into_iter()
                                     .map(|component| {
-                                        rpc::forge::ComputeTrayComponent::from(component) as i32
+                                        rpc::nico::ComputeTrayComponent::from(component) as i32
                                     })
                                     .collect(),
                             },
@@ -265,8 +265,8 @@ impl TryFrom<Args> for rpc::forge::UpdateComponentFirmwareRequest {
                     access_token,
                     force_update: target.force_update,
                     target: Some(
-                        rpc::forge::update_component_firmware_request::Target::Racks(
-                            rpc::forge::UpdateFirmwareObjectTarget {
+                        rpc::nico::update_component_firmware_request::Target::Racks(
+                            rpc::nico::UpdateFirmwareObjectTarget {
                                 rack_ids: Some(target.ids.into()),
                             },
                         ),
@@ -346,7 +346,7 @@ mod tests {
         })
         .expect_err("invalid SOT JSON should fail");
 
-        assert!(matches!(err, CarbideCliError::JsonError(_)));
+        assert!(matches!(err, NicoCliError::JsonError(_)));
         let _ = std::fs::remove_file(path);
     }
 }

@@ -23,7 +23,7 @@ use axum::http::header::HeaderMap;
 use axum::http::{StatusCode, Uri};
 use axum::response::Response;
 use axum::routing::{get, post};
-use forge_dpu_fmds_shared::machine_identity;
+use nico_dpu_fmds_shared::machine_identity;
 
 use crate::state::FmdsState;
 
@@ -360,7 +360,7 @@ mod tests {
     use std::net::SocketAddr;
 
     use axum::http;
-    use forge_dpu_fmds_shared::machine_identity::MachineIdentityParams;
+    use nico_dpu_fmds_shared::machine_identity::MachineIdentityParams;
     use http_body_util::{BodyExt, Full};
     use hyper::body::Bytes;
     use hyper_util::rt::TokioExecutor;

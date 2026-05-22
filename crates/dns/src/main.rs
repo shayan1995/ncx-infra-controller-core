@@ -17,8 +17,8 @@
 use std::net::AddrParseError;
 use std::path::PathBuf;
 
-use carbide_dns::DnsServer;
-use carbide_dns::config::{Config, ConfigError};
+use nico_dns::DnsServer;
+use nico_dns::config::{Config, ConfigError};
 use clap::{CommandFactory, Parser};
 use eyre::WrapErr;
 use opentelemetry::trace::TracerProvider;
@@ -34,7 +34,7 @@ async fn main() -> Result<(), eyre::Report> {
     let options = Options::parse();
 
     if options.version {
-        println!("{}", carbide_version::version!());
+        println!("{}", nico_version::version!());
         return Ok(());
     }
     let cmd = match options.command {
@@ -56,7 +56,7 @@ async fn main() -> Result<(), eyre::Report> {
         .add_directive("opentelemetry_otlp=info".parse()?)
         .add_directive("hickory_proto=info".parse()?)
         .add_directive("hickory_resolver=info".parse()?)
-        .add_directive("carbide_dns=info".parse()?)
+        .add_directive("nico_dns=info".parse()?)
         .add_directive("rpc=info".parse()?);
 
     match cmd {
@@ -79,14 +79,14 @@ async fn main() -> Result<(), eyre::Report> {
                     opentelemetry_sdk::Resource::builder()
                         .with_attributes([opentelemetry::KeyValue::new(
                             "service.name",
-                            "carbide-dns",
+                            "nico-dns",
                         )])
                         .build(),
                 )
                 .build();
 
             let otel_layer =
-                tracing_opentelemetry::layer().with_tracer(tracer_provider.tracer("carbide-dns"));
+                tracing_opentelemetry::layer().with_tracer(tracer_provider.tracer("nico-dns"));
 
             tracing_subscriber::registry()
                 .with(fmt::layer().json())
@@ -157,7 +157,7 @@ pub struct RunCommand {
         long,
         help = "DEPRECATED: Use --api-uri instead. Will be removed in future releases."
     )]
-    pub carbide_url: Option<String>,
+    pub nico_url: Option<String>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -202,22 +202,22 @@ impl TryInto<Config> for RunCommand {
                     })?
         }
 
-        if let Some(carbide_uri) = self.api_uri {
-            config.api_uri = carbide_uri
+        if let Some(nico_uri) = self.api_uri {
+            config.api_uri = nico_uri
                 .parse()
                 .map_err(|error| CommandError::InvalidUri {
-                    uri: carbide_uri,
+                    uri: nico_uri,
                     error,
                 })?
         }
 
-        // Backward compatibility for carbide_url
-        if let Some(carbide_url) = self.carbide_url {
-            tracing::warn!("--carbide-url is deprecated; use --api-uri instead");
-            config.api_uri = carbide_url
+        // Backward compatibility for nico_url
+        if let Some(nico_url) = self.nico_url {
+            tracing::warn!("--nico-url is deprecated; use --api-uri instead");
+            config.api_uri = nico_url
                 .parse()
                 .map_err(|error| CommandError::InvalidUri {
-                    uri: carbide_url,
+                    uri: nico_url,
                     error,
                 })?
         }

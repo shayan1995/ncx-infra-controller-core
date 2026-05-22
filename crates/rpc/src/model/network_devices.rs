@@ -20,14 +20,14 @@ use model::network_devices::{DpuToNetworkDeviceMap, NetworkDevice, NetworkTopolo
 
 use crate as rpc;
 
-impl From<NetworkTopologyData> for rpc::forge::NetworkTopologyData {
+impl From<NetworkTopologyData> for rpc::nico::NetworkTopologyData {
     fn from(value: NetworkTopologyData) -> Self {
         let mut network_devices = vec![];
 
         for network_device in value.network_devices {
             let devices = network_device.dpus.into_iter().map_into().collect_vec();
 
-            network_devices.push(rpc::forge::NetworkDevice {
+            network_devices.push(rpc::nico::NetworkDevice {
                 id: network_device.id,
                 name: network_device.name,
                 description: network_device.description,
@@ -42,11 +42,11 @@ impl From<NetworkTopologyData> for rpc::forge::NetworkTopologyData {
             });
         }
 
-        rpc::forge::NetworkTopologyData { network_devices }
+        rpc::nico::NetworkTopologyData { network_devices }
     }
 }
 
-impl From<DpuToNetworkDeviceMap> for rpc::forge::ConnectedDevice {
+impl From<DpuToNetworkDeviceMap> for rpc::nico::ConnectedDevice {
     fn from(value: DpuToNetworkDeviceMap) -> Self {
         Self {
             id: value.dpu_id.into(),
@@ -57,7 +57,7 @@ impl From<DpuToNetworkDeviceMap> for rpc::forge::ConnectedDevice {
     }
 }
 
-impl From<NetworkDevice> for rpc::forge::NetworkDevice {
+impl From<NetworkDevice> for rpc::nico::NetworkDevice {
     fn from(value: NetworkDevice) -> Self {
         Self {
             id: value.id.clone(),

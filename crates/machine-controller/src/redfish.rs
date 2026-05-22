@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_redfish::libredfish::conv::machine_last_reboot_requested_mode;
+use nico_redfish::libredfish::conv::machine_last_reboot_requested_mode;
 use chrono::Utc;
 use libredfish::model::BootProgress;
 use libredfish::{PowerState, Redfish, RedfishError, SystemPowerControl};
@@ -54,7 +54,7 @@ pub async fn host_power_control_with_location(
     } else {
         action
     };
-    // Always log to ensure we can see that carbide is doing the power controlling
+    // Always log to ensure we can see that nico is doing the power controlling
     tracing::info!(
         machine_id = machine.id.to_string(),
         action = action.to_string(),

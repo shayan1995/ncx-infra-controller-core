@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
 use db::{machine as db_machine, machine_topology as db_machine_topology, switch as db_switch};
 use eyre::{Result, eyre};
-use forge_secrets::credentials::{
+use nico_secrets::credentials::{
     BmcCredentialType, CredentialKey, CredentialManager, Credentials,
 };
 use librms::protos::rack_manager as rms;
@@ -30,7 +30,7 @@ use sqlx::PgPool;
 
 #[derive(Debug, Clone)]
 pub struct RackFirmwareInventory {
-    pub machine_ids: Vec<carbide_uuid::machine::MachineId>,
+    pub machine_ids: Vec<nico_uuid::machine::MachineId>,
     pub machines: Vec<FirmwareUpgradeDeviceInfo>,
     pub switch_ids: Vec<SwitchId>,
     pub switches: Vec<FirmwareUpgradeDeviceInfo>,

@@ -17,7 +17,7 @@
 
 //! Handler for PowerShelfControllerState::FetchingData.
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use model::power_shelf::{PowerShelf, PowerShelfControllerState};
 use state_controller::state_handler::{
     StateHandlerContext, StateHandlerError, StateHandlerOutcome,

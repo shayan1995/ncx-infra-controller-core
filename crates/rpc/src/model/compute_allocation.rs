@@ -18,7 +18,7 @@
 use model::compute_allocation::ComputeAllocation;
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<ComputeAllocation> for rpc::ComputeAllocation {
     type Error = RpcDataConversionError;
@@ -70,7 +70,7 @@ mod tests {
     use model::metadata::Metadata;
 
     use super::*;
-    use crate::forge as rpc;
+    use crate::nico as rpc;
 
     #[test]
     fn test_model_compute_allocation_to_rpc_conversion() {

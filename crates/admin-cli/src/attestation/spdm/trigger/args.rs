@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -24,7 +24,7 @@ pub struct Args {
     pub machine_id: MachineId,
     #[clap(
         long,
-        help = "Timeout in seconds for Redfish operations while triggering attestation (passed to carbide-api)"
+        help = "Timeout in seconds for Redfish operations while triggering attestation (passed to nico-api)"
     )]
     pub redfish_timeout_secs: u32,
 }

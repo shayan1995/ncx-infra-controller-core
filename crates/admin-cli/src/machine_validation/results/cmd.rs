@@ -19,11 +19,11 @@ use std::borrow::Cow;
 use std::fmt::Write;
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 use prettytable::{Table, row};
 
 use super::args::ShowResultsOptions;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn handle_results_show(
@@ -32,7 +32,7 @@ pub async fn handle_results_show(
     api_client: &ApiClient,
     _page_size: usize,
     extended: bool,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
     if extended {
         show_results_details(is_json, api_client, args).await?;
@@ -47,7 +47,7 @@ async fn show_results(
     json: bool,
     api_client: &ApiClient,
     args: ShowResultsOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let mut results = match api_client
         .get_machine_validation_results(args.machine, args.history, args.validation_id)
         .await
@@ -71,7 +71,7 @@ async fn show_results_details(
     json: bool,
     api_client: &ApiClient,
     args: ShowResultsOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let mut results = match api_client
         .get_machine_validation_results(args.machine, args.history, args.validation_id)
         .await
@@ -94,7 +94,7 @@ async fn show_results_details(
     Ok(())
 }
 
-fn convert_results_to_nice_table(results: forgerpc::MachineValidationResultList) -> Box<Table> {
+fn convert_results_to_nice_table(results: nicorpc::MachineValidationResultList) -> Box<Table> {
     let mut table = Table::new();
 
     table.set_titles(row![
@@ -121,8 +121,8 @@ fn convert_results_to_nice_table(results: forgerpc::MachineValidationResultList)
 }
 
 fn convert_to_nice_format(
-    results: forgerpc::MachineValidationResultList,
-) -> CarbideCliResult<String> {
+    results: nicorpc::MachineValidationResultList,
+) -> NicoCliResult<String> {
     let width = 14;
     let mut lines = String::new();
     if results.results.is_empty() {

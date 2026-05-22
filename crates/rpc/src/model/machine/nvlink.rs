@@ -19,21 +19,21 @@ use model::machine::nvlink::{MachineNvLinkGpuStatusObservation, MachineNvLinkSta
 
 use crate as rpc;
 
-impl From<MachineNvLinkStatusObservation> for rpc::forge::MachineNvLinkStatusObservation {
+impl From<MachineNvLinkStatusObservation> for rpc::nico::MachineNvLinkStatusObservation {
     fn from(value: MachineNvLinkStatusObservation) -> Self {
-        rpc::forge::MachineNvLinkStatusObservation {
+        rpc::nico::MachineNvLinkStatusObservation {
             gpu_status: value
                 .nvlink_gpus
                 .into_iter()
-                .map(rpc::forge::MachineNvLinkGpuStatusObservation::from)
+                .map(rpc::nico::MachineNvLinkGpuStatusObservation::from)
                 .collect(),
         }
     }
 }
 
-impl From<MachineNvLinkGpuStatusObservation> for rpc::forge::MachineNvLinkGpuStatusObservation {
+impl From<MachineNvLinkGpuStatusObservation> for rpc::nico::MachineNvLinkGpuStatusObservation {
     fn from(value: MachineNvLinkGpuStatusObservation) -> Self {
-        rpc::forge::MachineNvLinkGpuStatusObservation {
+        rpc::nico::MachineNvLinkGpuStatusObservation {
             gpu_id: value.gpu_id,
             partition_id: value.partition_id,
             logical_partition_id: value.logical_partition_id,

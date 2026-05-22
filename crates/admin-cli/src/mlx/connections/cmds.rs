@@ -25,14 +25,14 @@ use prettytable::{Cell, Row, Table};
 use rpc::admin_cli::OutputFormat;
 
 use super::args::{ConnectionsCommand, ConnectionsDisconnectCommand, ConnectionsShowCommand};
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::mlx::CliContext;
 
 // dispatch routes connections subcommands to their handlers.
 pub async fn dispatch(
     command: ConnectionsCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match command {
         ConnectionsCommand::Show(cmd) => handle_show(cmd, ctxt).await,
         ConnectionsCommand::Disconnect(cmd) => handle_disconnect(cmd, ctxt).await,
@@ -43,7 +43,7 @@ pub async fn dispatch(
 async fn handle_show(
     _cmd: ConnectionsShowCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let response = ctxt.grpc_conn.0.scout_stream_show_connections().await?;
 
     let mut connections = response.scout_stream_connections;
@@ -96,8 +96,8 @@ async fn handle_show(
 async fn handle_disconnect(
     cmd: ConnectionsDisconnectCommand,
     ctxt: &mut CliContext<'_, '_>,
-) -> CarbideCliResult<()> {
-    let request: ::rpc::forge::ScoutStreamDisconnectRequest = cmd.into();
+) -> NicoCliResult<()> {
+    let request: ::rpc::nico::ScoutStreamDisconnectRequest = cmd.into();
     let response = ctxt.grpc_conn.0.scout_stream_disconnect(request).await?;
     let machine_id = match response.machine_id.as_ref() {
         Some(id) => id.to_string(),
@@ -117,7 +117,7 @@ async fn handle_disconnect(
 }
 
 // print_connections_table displays connections in an ASCII table format.
-fn print_connections_table(connections: &[rpc::forge::ScoutStreamConnectionInfo]) {
+fn print_connections_table(connections: &[rpc::nico::ScoutStreamConnectionInfo]) {
     let mut table = Table::new();
 
     table.add_row(Row::new(vec![

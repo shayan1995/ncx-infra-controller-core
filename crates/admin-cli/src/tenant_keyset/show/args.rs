@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 use clap::Parser;
 
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -32,8 +32,8 @@ pub struct Args {
     pub tenant_org_id: Option<String>,
 }
 
-impl TryFrom<&Args> for Option<forgerpc::TenantKeysetIdentifier> {
-    type Error = CarbideCliError;
+impl TryFrom<&Args> for Option<nicorpc::TenantKeysetIdentifier> {
+    type Error = NicoCliError;
 
     fn try_from(args: &Args) -> Result<Self, Self::Error> {
         if args.id.is_empty() {
@@ -42,12 +42,12 @@ impl TryFrom<&Args> for Option<forgerpc::TenantKeysetIdentifier> {
 
         let split_id = args.id.split('/').collect::<Vec<&str>>();
         if split_id.len() != 2 {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "Invalid format for Tenant KeySet ID".to_string(),
             ));
         }
 
-        Ok(Some(forgerpc::TenantKeysetIdentifier {
+        Ok(Some(nicorpc::TenantKeysetIdentifier {
             organization_id: split_id[0].to_string(),
             keyset_id: split_id[1].to_string(),
         }))

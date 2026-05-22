@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn find(api_client: &ApiClient) -> CarbideCliResult<()> {
-    // construct a message to carbide api and print the result
+pub async fn find(api_client: &ApiClient) -> NicoCliResult<()> {
+    // construct a message to nico api and print the result
     let machines = api_client.0.find_machine_ids_under_attestation().await?;
 
     for i in 0..machines.machine_ids.len() {

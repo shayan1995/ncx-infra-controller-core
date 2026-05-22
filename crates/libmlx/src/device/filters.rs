@@ -18,7 +18,7 @@
 use std::fmt::Display;
 use std::str::FromStr;
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
 use clap::ValueEnum;
 use regex;
 use serde::{Deserialize, Serialize};

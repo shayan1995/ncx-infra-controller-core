@@ -20,11 +20,11 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use carbide_machine_controller::handler::MachineStateHandlerBuilder;
-use carbide_site_explorer::MachineCreator;
-use carbide_site_explorer::config::SiteExplorerConfig;
-use carbide_utils::arch::CpuArchitecture;
-use carbide_uuid::machine::MachineId;
+use nico_machine_controller::handler::MachineStateHandlerBuilder;
+use nico_site_explorer::MachineCreator;
+use nico_site_explorer::config::SiteExplorerConfig;
+use nico_utils::arch::CpuArchitecture;
+use nico_uuid::machine::MachineId;
 use itertools::Itertools;
 use mac_address::MacAddress;
 use model::expected_machine::{ExpectedMachine, ExpectedMachineData};
@@ -34,7 +34,7 @@ use model::machine::{
 };
 use model::resource_pool::ResourcePoolStats;
 use model::site_explorer::{EndpointExplorationReport, ExploredDpu, ExploredManagedHost};
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 use rpc::{BlockDevice, DiscoveryData, DiscoveryInfo, MachineDiscoveryInfo};
 use tonic::Request;
 
@@ -142,7 +142,7 @@ async fn test_site_explorer_creates_managed_host(
     let interface_id = response.machine_interface_id;
     let mut ifaces = env
         .api
-        .find_interfaces(tonic::Request::new(rpc::forge::InterfaceSearchQuery {
+        .find_interfaces(tonic::Request::new(rpc::nico::InterfaceSearchQuery {
             id: Some(interface_id.unwrap()),
             ip: None,
         }))
@@ -618,7 +618,7 @@ async fn test_site_explorer_creates_multi_dpu_managed_host(
     let interface_id = response.machine_interface_id;
     let mut ifaces = env
         .api
-        .find_interfaces(tonic::Request::new(rpc::forge::InterfaceSearchQuery {
+        .find_interfaces(tonic::Request::new(rpc::nico::InterfaceSearchQuery {
             id: Some(interface_id.unwrap()),
             ip: None,
         }))
@@ -706,7 +706,7 @@ async fn test_site_explorer_creates_multi_dpu_managed_host(
         let network_config_response = env
             .api
             .get_managed_host_network_config(Request::new(
-                rpc::forge::ManagedHostNetworkConfigRequest {
+                rpc::nico::ManagedHostNetworkConfigRequest {
                     dpu_machine_id: Some(dpu_machine.id),
                 },
             ))
@@ -879,7 +879,7 @@ async fn test_mi_attach_dpu_if_mi_exists_during_machine_creation(
     let interface_id = response.machine_interface_id;
     let mut ifaces = env
         .api
-        .find_interfaces(tonic::Request::new(rpc::forge::InterfaceSearchQuery {
+        .find_interfaces(tonic::Request::new(rpc::nico::InterfaceSearchQuery {
             id: Some(interface_id.unwrap()),
             ip: None,
         }))
@@ -989,7 +989,7 @@ async fn test_mi_attach_dpu_if_mi_created_after_machine_creation(
     let interface_id = response.machine_interface_id;
     let mut ifaces = env
         .api
-        .find_interfaces(tonic::Request::new(rpc::forge::InterfaceSearchQuery {
+        .find_interfaces(tonic::Request::new(rpc::nico::InterfaceSearchQuery {
             id: Some(interface_id.unwrap()),
             ip: None,
         }))
@@ -1190,7 +1190,7 @@ async fn test_site_explorer_creates_managed_host_with_dpf_disable(
     let interface_id = response.machine_interface_id;
     let mut ifaces = env
         .api
-        .find_interfaces(tonic::Request::new(rpc::forge::InterfaceSearchQuery {
+        .find_interfaces(tonic::Request::new(rpc::nico::InterfaceSearchQuery {
             id: Some(interface_id.unwrap()),
             ip: None,
         }))
@@ -1339,7 +1339,7 @@ async fn test_site_explorer_creates_managed_host_with_dpf_enabled(
     let interface_id = response.machine_interface_id;
     let mut ifaces = env
         .api
-        .find_interfaces(tonic::Request::new(rpc::forge::InterfaceSearchQuery {
+        .find_interfaces(tonic::Request::new(rpc::nico::InterfaceSearchQuery {
             id: Some(interface_id.unwrap()),
             ip: None,
         }))

@@ -33,7 +33,7 @@ fn merging_config() -> eyre::Result<()> {
 
     [[components.uefi.known_firmware]]
     version = "1.13.2"
-    url = "https://urm.nvidia.com/artifactory/sw-ngc-forge-cargo-local/misc/BIOS_T3H20_WN64_1.13.2.EXE"
+    url = "https://urm.nvidia.com/artifactory/sw-ngc-nico-cargo-local/misc/BIOS_T3H20_WN64_1.13.2.EXE"
     default = true
 "#;
     let cfg2 = r#"
@@ -46,7 +46,7 @@ preingest_upgrade_when_below = "1.13.3"
 
 [[components.uefi.known_firmware]]
 version = "1.13.3"
-url = "https://urm.nvidia.com/artifactory/sw-ngc-forge-cargo-local/misc/BIOS_T3H20_WN64_1.13.2.EXE"
+url = "https://urm.nvidia.com/artifactory/sw-ngc-nico-cargo-local/misc/BIOS_T3H20_WN64_1.13.2.EXE"
 default = true
 
 [components.bmc]
@@ -54,7 +54,7 @@ current_version_reported_as = "^Installed-.*__iDRAC."
 
 [[components.bmc.known_firmware]]
 version = "7.10.30.00"
-filenames = ["/opt/carbide/iDRAC-with-Lifecycle-Controller_Firmware_HV310_WN64_7.10.30.00_A00.EXE", "/opt/carbide/iDRAC-with-Lifecycle-Controller_Firmware_HV310_WN64_7.10.30.00_A01.EXE"]
+filenames = ["/opt/nico/iDRAC-with-Lifecycle-Controller_Firmware_HV310_WN64_7.10.30.00_A00.EXE", "/opt/nico/iDRAC-with-Lifecycle-Controller_Firmware_HV310_WN64_7.10.30.00_A01.EXE"]
 default = true
     "#;
     let mut config: FirmwareConfig = Default::default();
@@ -119,13 +119,13 @@ current_version_reported_as = "^CX7_[0-9]+$"
 
 [[components.cx7.known_firmware]]
 version = "28.47.2682"
-filename = "/opt/carbide/firmware/nvidia-dgxh100-cx7-28.47.2682/cx7.bin"
-filenames = ["/opt/carbide/firmware/nvidia-dgxh100-cx7-28.47.2682/cx7.bin"]
+filename = "/opt/nico/firmware/nvidia-dgxh100-cx7-28.47.2682/cx7.bin"
+filenames = ["/opt/nico/firmware/nvidia-dgxh100-cx7-28.47.2682/cx7.bin"]
 default = true
 power_drains_needed = 1
 
 [[components.cx7.known_firmware.files]]
-filename = "/opt/carbide/firmware/nvidia-dgxh100-cx7-28.47.2682/cx7.bin"
+filename = "/opt/nico/firmware/nvidia-dgxh100-cx7-28.47.2682/cx7.bin"
 sha256 = "abc123"
 
 [components.cx7.known_firmware.scout]
@@ -133,7 +133,7 @@ execution_timeout_seconds = 1800
 artifact_download_timeout_seconds = 600
 
 [components.cx7.known_firmware.scout.script]
-filename = "/opt/carbide/firmware/nvidia-dgxh100-cx7-28.47.2682/scripts/cx7_upgrade.sh"
+filename = "/opt/nico/firmware/nvidia-dgxh100-cx7-28.47.2682/scripts/cx7_upgrade.sh"
 sha256 = "def456"
 "#;
     let mut config: FirmwareConfig = Default::default();
@@ -158,7 +158,7 @@ sha256 = "def456"
     assert_eq!(scout.artifact_download_timeout_seconds, 600);
     assert_eq!(
         scout.script.filename,
-        "/opt/carbide/firmware/nvidia-dgxh100-cx7-28.47.2682/scripts/cx7_upgrade.sh"
+        "/opt/nico/firmware/nvidia-dgxh100-cx7-28.47.2682/scripts/cx7_upgrade.sh"
     );
     Ok(())
 }

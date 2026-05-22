@@ -28,8 +28,8 @@ use model::machine_validation::{
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
 
-impl From<rpc::forge::MachineValidationTestAddRequest> for MachineValidationTestAddRequest {
-    fn from(req: rpc::forge::MachineValidationTestAddRequest) -> Self {
+impl From<rpc::nico::MachineValidationTestAddRequest> for MachineValidationTestAddRequest {
+    fn from(req: rpc::nico::MachineValidationTestAddRequest) -> Self {
         MachineValidationTestAddRequest {
             name: req.name,
             description: req.description,
@@ -53,10 +53,10 @@ impl From<rpc::forge::MachineValidationTestAddRequest> for MachineValidationTest
     }
 }
 
-impl From<rpc::forge::machine_validation_test_update_request::Payload>
+impl From<rpc::nico::machine_validation_test_update_request::Payload>
     for MachineValidationTestUpdatePayload
 {
-    fn from(p: rpc::forge::machine_validation_test_update_request::Payload) -> Self {
+    fn from(p: rpc::nico::machine_validation_test_update_request::Payload) -> Self {
         MachineValidationTestUpdatePayload {
             name: p.name,
             description: p.description,
@@ -80,8 +80,8 @@ impl From<rpc::forge::machine_validation_test_update_request::Payload>
     }
 }
 
-impl From<rpc::forge::MachineValidationTestUpdateRequest> for MachineValidationTestUpdateRequest {
-    fn from(req: rpc::forge::MachineValidationTestUpdateRequest) -> Self {
+impl From<rpc::nico::MachineValidationTestUpdateRequest> for MachineValidationTestUpdateRequest {
+    fn from(req: rpc::nico::MachineValidationTestUpdateRequest) -> Self {
         MachineValidationTestUpdateRequest {
             test_id: req.test_id,
             version: req.version,
@@ -90,8 +90,8 @@ impl From<rpc::forge::MachineValidationTestUpdateRequest> for MachineValidationT
     }
 }
 
-impl From<rpc::forge::MachineValidationTestsGetRequest> for MachineValidationTestsGetRequest {
-    fn from(req: rpc::forge::MachineValidationTestsGetRequest) -> Self {
+impl From<rpc::nico::MachineValidationTestsGetRequest> for MachineValidationTestsGetRequest {
+    fn from(req: rpc::nico::MachineValidationTestsGetRequest) -> Self {
         MachineValidationTestsGetRequest {
             supported_platforms: req.supported_platforms,
             contexts: req.contexts,
@@ -107,38 +107,38 @@ impl From<rpc::forge::MachineValidationTestsGetRequest> for MachineValidationTes
 
 pub fn machine_validation_from_state(
     state: MachineValidationState,
-) -> rpc::forge::machine_validation_status::MachineValidationState {
+) -> rpc::nico::machine_validation_status::MachineValidationState {
     match state {
         MachineValidationState::Started => {
-            rpc::forge::machine_validation_status::MachineValidationState::Started(
-                rpc::forge::machine_validation_status::MachineValidationStarted::Started.into(),
+            rpc::nico::machine_validation_status::MachineValidationState::Started(
+                rpc::nico::machine_validation_status::MachineValidationStarted::Started.into(),
             )
         }
         MachineValidationState::InProgress => {
-            rpc::forge::machine_validation_status::MachineValidationState::InProgress(
-                rpc::forge::machine_validation_status::MachineValidationInProgress::InProgress
+            rpc::nico::machine_validation_status::MachineValidationState::InProgress(
+                rpc::nico::machine_validation_status::MachineValidationInProgress::InProgress
                     .into(),
             )
         }
         MachineValidationState::Success => {
-            rpc::forge::machine_validation_status::MachineValidationState::Completed(
-                rpc::forge::machine_validation_status::MachineValidationCompleted::Success.into(),
+            rpc::nico::machine_validation_status::MachineValidationState::Completed(
+                rpc::nico::machine_validation_status::MachineValidationCompleted::Success.into(),
             )
         }
         MachineValidationState::Skipped => {
-            rpc::forge::machine_validation_status::MachineValidationState::Completed(
-                rpc::forge::machine_validation_status::MachineValidationCompleted::Skipped.into(),
+            rpc::nico::machine_validation_status::MachineValidationState::Completed(
+                rpc::nico::machine_validation_status::MachineValidationCompleted::Skipped.into(),
             )
         }
         MachineValidationState::Failed => {
-            rpc::forge::machine_validation_status::MachineValidationState::Completed(
-                rpc::forge::machine_validation_status::MachineValidationCompleted::Failed.into(),
+            rpc::nico::machine_validation_status::MachineValidationState::Completed(
+                rpc::nico::machine_validation_status::MachineValidationCompleted::Failed.into(),
             )
         }
     }
 }
 
-impl From<MachineValidation> for rpc::forge::MachineValidationRun {
+impl From<MachineValidation> for rpc::nico::MachineValidationRun {
     fn from(value: MachineValidation) -> Self {
         let mut end_time = None;
         if value.end_time.is_some() {
@@ -146,14 +146,14 @@ impl From<MachineValidation> for rpc::forge::MachineValidationRun {
         }
         let status = value.status.unwrap_or_default();
         let start_time = Some(value.start_time.unwrap_or_default().into());
-        rpc::forge::MachineValidationRun {
+        rpc::nico::MachineValidationRun {
             validation_id: Some(value.id),
             name: value.name,
             start_time,
             end_time,
             context: value.context,
             machine_id: Some(value.machine_id),
-            status: Some(rpc::forge::MachineValidationStatus {
+            status: Some(rpc::nico::MachineValidationStatus {
                 machine_validation_state: machine_validation_from_state(status.state).into(),
                 total: status.total.try_into().unwrap_or(0),
                 completed_tests: status.completed.try_into().unwrap_or(0),
@@ -165,9 +165,9 @@ impl From<MachineValidation> for rpc::forge::MachineValidationRun {
     }
 }
 
-impl From<MachineValidationExternalConfig> for rpc::forge::MachineValidationExternalConfig {
+impl From<MachineValidationExternalConfig> for rpc::nico::MachineValidationExternalConfig {
     fn from(value: MachineValidationExternalConfig) -> Self {
-        rpc::forge::MachineValidationExternalConfig {
+        rpc::nico::MachineValidationExternalConfig {
             name: value.name,
             config: value.config,
             description: Some(value.description),
@@ -177,9 +177,9 @@ impl From<MachineValidationExternalConfig> for rpc::forge::MachineValidationExte
     }
 }
 
-impl TryFrom<rpc::forge::MachineValidationExternalConfig> for MachineValidationExternalConfig {
+impl TryFrom<rpc::nico::MachineValidationExternalConfig> for MachineValidationExternalConfig {
     type Error = RpcDataConversionError;
-    fn try_from(value: rpc::forge::MachineValidationExternalConfig) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineValidationExternalConfig) -> Result<Self, Self::Error> {
         Ok(MachineValidationExternalConfig {
             name: value.name,
             description: value.description.unwrap_or_default(),
@@ -190,9 +190,9 @@ impl TryFrom<rpc::forge::MachineValidationExternalConfig> for MachineValidationE
     }
 }
 
-impl From<MachineValidationTest> for rpc::forge::MachineValidationTest {
+impl From<MachineValidationTest> for rpc::nico::MachineValidationTest {
     fn from(value: MachineValidationTest) -> Self {
-        rpc::forge::MachineValidationTest {
+        rpc::nico::MachineValidationTest {
             test_id: value.test_id,
             name: value.name,
             description: value.description,
@@ -220,9 +220,9 @@ impl From<MachineValidationTest> for rpc::forge::MachineValidationTest {
     }
 }
 
-impl TryFrom<rpc::forge::MachineValidationTest> for MachineValidationTest {
+impl TryFrom<rpc::nico::MachineValidationTest> for MachineValidationTest {
     type Error = RpcDataConversionError;
-    fn try_from(value: rpc::forge::MachineValidationTest) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineValidationTest) -> Result<Self, Self::Error> {
         Ok(MachineValidationTest {
             test_id: value.test_id,
             name: value.name,
@@ -256,9 +256,9 @@ impl TryFrom<rpc::forge::MachineValidationTest> for MachineValidationTest {
     }
 }
 
-impl From<MachineValidationResult> for rpc::forge::MachineValidationResult {
+impl From<MachineValidationResult> for rpc::nico::MachineValidationResult {
     fn from(value: MachineValidationResult) -> Self {
-        rpc::forge::MachineValidationResult {
+        rpc::nico::MachineValidationResult {
             validation_id: Some(value.validation_id),
             command: value.command,
             args: value.args,
@@ -275,9 +275,9 @@ impl From<MachineValidationResult> for rpc::forge::MachineValidationResult {
     }
 }
 
-impl TryFrom<rpc::forge::MachineValidationResult> for MachineValidationResult {
+impl TryFrom<rpc::nico::MachineValidationResult> for MachineValidationResult {
     type Error = RpcDataConversionError;
-    fn try_from(value: rpc::forge::MachineValidationResult) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::MachineValidationResult) -> Result<Self, Self::Error> {
         let val_id = value
             .validation_id
             .ok_or(RpcDataConversionError::MissingArgument("validation_id"))?;
@@ -316,14 +316,14 @@ mod tests {
 
     #[test]
     fn tests_get_request_from_rpc() {
-        let rpc_req = rpc::forge::MachineValidationTestsGetRequest {
-            test_id: Some("forge_mytest".to_string()),
+        let rpc_req = rpc::nico::MachineValidationTestsGetRequest {
+            test_id: Some("nico_mytest".to_string()),
             is_enabled: Some(true),
             verified: Some(false),
             ..Default::default()
         };
         let req = MachineValidationTestsGetRequest::from(rpc_req);
-        assert_eq!(req.test_id, Some("forge_mytest".to_string()));
+        assert_eq!(req.test_id, Some("nico_mytest".to_string()));
         assert_eq!(req.is_enabled, Some(true));
         assert_eq!(req.verified, Some(false));
         assert!(req.version.is_none());
@@ -331,7 +331,7 @@ mod tests {
 
     #[test]
     fn test_add_request_from_rpc() {
-        let rpc_req = rpc::forge::MachineValidationTestAddRequest {
+        let rpc_req = rpc::nico::MachineValidationTestAddRequest {
             name: "my_test".to_string(),
             command: "/bin/test".to_string(),
             args: "--verbose".to_string(),
@@ -346,11 +346,11 @@ mod tests {
 
     #[test]
     fn test_update_request_from_rpc_with_payload() {
-        let rpc_req = rpc::forge::MachineValidationTestUpdateRequest {
-            test_id: "forge_mytest".to_string(),
+        let rpc_req = rpc::nico::MachineValidationTestUpdateRequest {
+            test_id: "nico_mytest".to_string(),
             version: "1".to_string(),
             payload: Some(
-                rpc::forge::machine_validation_test_update_request::Payload {
+                rpc::nico::machine_validation_test_update_request::Payload {
                     verified: Some(true),
                     is_enabled: Some(false),
                     ..Default::default()
@@ -358,7 +358,7 @@ mod tests {
             ),
         };
         let req = MachineValidationTestUpdateRequest::from(rpc_req);
-        assert_eq!(req.test_id, "forge_mytest");
+        assert_eq!(req.test_id, "nico_mytest");
         assert_eq!(req.version, "1");
         let payload = req.payload.unwrap();
         assert_eq!(payload.verified, Some(true));

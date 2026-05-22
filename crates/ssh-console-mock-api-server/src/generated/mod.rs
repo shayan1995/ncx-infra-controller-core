@@ -25,16 +25,16 @@ pub mod dns;
 pub mod core;
 
 // Backward-compat alias module. See crates/rpc/src/protos/mod.rs for rationale —
-// proto file was renamed forge.proto → core.proto with `package forge → package
-// core` and `service Forge → service Core`. This alias keeps existing
-// `crate::generated::forge::*` callsites compiling unchanged.
+// proto file was renamed nico.proto → core.proto with `package nico → package
+// core` and `service NICo → service Core`. This alias keeps existing
+// `crate::generated::nico::*` callsites compiling unchanged.
 #[allow(unused_imports)]
 #[rustfmt::skip]
-pub mod forge {
+pub mod nico {
     pub use super::core::*;
-    pub mod forge_server {
-        pub use super::super::core::core_server::Core as Forge;
-        pub use super::super::core::core_server::CoreServer as ForgeServer;
+    pub mod nico_server {
+        pub use super::super::core::core_server::Core as NICo;
+        pub use super::super::core::core_server::CoreServer as NicoServer;
     }
 }
 #[allow(non_snake_case, unknown_lints, clippy::all)]

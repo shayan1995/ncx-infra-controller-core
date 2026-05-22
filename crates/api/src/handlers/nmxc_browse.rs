@@ -17,17 +17,17 @@
 
 use std::collections::HashMap;
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use libnmxc::nmxc_model::{GetComputeNodeInfoListRequest, GetGpuInfoListRequest, GpuAttr};
 use libnmxc::{Endpoint, NMX_C_GATEWAY_ID, Nmxc};
 use tonic::{Request, Response, Status};
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::{Api, log_request_data};
 
 async fn compute_node_info_list_json(
     nmxc: &mut dyn Nmxc,
-) -> Result<(String, i32, HashMap<String, String>), CarbideError> {
+) -> Result<(String, i32, HashMap<String, String>), NicoError> {
     let resp = nmxc
         .get_compute_node_info_list(GetComputeNodeInfoListRequest {
             context: Some(Default::default()),
@@ -37,7 +37,7 @@ async fn compute_node_info_list_json(
         .await?;
 
     let body = serde_json::to_string(&resp).map_err(|e| {
-        CarbideError::internal(format!("serialize GetComputeNodeInfoListResponse: {e}"))
+        NicoError::internal(format!("serialize GetComputeNodeInfoListResponse: {e}"))
     })?;
     Ok((body, 200, HashMap::new()))
 }
@@ -45,7 +45,7 @@ async fn compute_node_info_list_json(
 async fn gpu_info_json(
     nmxc: &mut dyn Nmxc,
     uid: u64,
-) -> Result<(String, i32, HashMap<String, String>), CarbideError> {
+) -> Result<(String, i32, HashMap<String, String>), NicoError> {
     let gresp = nmxc
         .get_gpu_info_list(GetGpuInfoListRequest {
             context: Some(Default::default()),
@@ -59,20 +59,20 @@ async fn gpu_info_json(
         .await?;
 
     let Some(gpu) = gresp.gpu_info_list.iter().find(|g| g.gpu_uid == uid) else {
-        return Err(CarbideError::NotFoundError {
+        return Err(NicoError::NotFoundError {
             kind: "nmxc_gpu",
             id: uid.to_string(),
         });
     };
 
     let body = serde_json::to_string(gpu)
-        .map_err(|e| CarbideError::internal(format!("serialize GpuInfo: {e}")))?;
+        .map_err(|e| NicoError::internal(format!("serialize GpuInfo: {e}")))?;
     Ok((body, 200, HashMap::new()))
 }
 
 async fn gpu_info_list_json(
     nmxc: &mut dyn Nmxc,
-) -> Result<(String, i32, HashMap<String, String>), CarbideError> {
+) -> Result<(String, i32, HashMap<String, String>), NicoError> {
     let resp = nmxc
         .get_gpu_info_list(GetGpuInfoListRequest {
             context: Some(Default::default()),
@@ -86,7 +86,7 @@ async fn gpu_info_list_json(
         .await?;
 
     let body = serde_json::to_string(&resp)
-        .map_err(|e| CarbideError::internal(format!("serialize GetGpuInfoListResponse: {e}")))?;
+        .map_err(|e| NicoError::internal(format!("serialize GetGpuInfoListResponse: {e}")))?;
     Ok((body, 200, HashMap::new()))
 }
 
@@ -100,7 +100,7 @@ pub(crate) async fn nmxc_browse(
 
     let chassis_serial = request.chassis_serial.trim();
     if chassis_serial.is_empty() {
-        return Err(CarbideError::MissingArgument("chassis_serial").into());
+        return Err(NicoError::MissingArgument("chassis_serial").into());
     }
 
     let op = rpc::NmxcBrowseOperation::try_from(request.operation)
@@ -116,7 +116,7 @@ pub(crate) async fn nmxc_browse(
         .await?;
 
         let Some(row) = endpoint_row else {
-            return Err(CarbideError::NotFoundError {
+            return Err(NicoError::NotFoundError {
                 kind: "nvlink_nmxc_endpoint",
                 id: chassis_serial.to_string(),
             }
@@ -125,16 +125,16 @@ pub(crate) async fn nmxc_browse(
 
         let mut nmxc = api
             .nmxc_client_pool
-            .create_client(Endpoint::new(row.endpoint.clone()).map_err(CarbideError::from)?)
+            .create_client(Endpoint::new(row.endpoint.clone()).map_err(NicoError::from)?)
             .await
-            .map_err(CarbideError::from)?;
+            .map_err(NicoError::from)?;
 
         nmxc.hello(NMX_C_GATEWAY_ID)
             .await
-            .map_err(|e| CarbideError::internal(format!("Failed to call NMX-C hello: {e}")))?;
+            .map_err(|e| NicoError::internal(format!("Failed to call NMX-C hello: {e}")))?;
 
         let result = match op {
-            rpc::NmxcBrowseOperation::Unspecified => Err(CarbideError::InvalidArgument(
+            rpc::NmxcBrowseOperation::Unspecified => Err(NicoError::InvalidArgument(
                 "operation must be set to a supported NmxcBrowseOperation".to_string(),
             )),
             rpc::NmxcBrowseOperation::ComputeNodeInfoList => {
@@ -142,7 +142,7 @@ pub(crate) async fn nmxc_browse(
             }
             rpc::NmxcBrowseOperation::GpuInfo => {
                 if request.gpu_uid == 0 {
-                    Err(CarbideError::InvalidArgument(
+                    Err(NicoError::InvalidArgument(
                         "gpu_uid is required for GPU_INFO operation".to_string(),
                     ))
                 } else {
@@ -158,7 +158,7 @@ pub(crate) async fn nmxc_browse(
                 code,
                 headers,
             })),
-            Err(CarbideError::NotFoundError {
+            Err(NicoError::NotFoundError {
                 kind: "nmxc_gpu",
                 id,
             }) => Ok(Response::new(rpc::NmxcBrowseResponse {
@@ -166,7 +166,7 @@ pub(crate) async fn nmxc_browse(
                 code: 404,
                 headers: HashMap::new(),
             })),
-            Err(CarbideError::InvalidArgument(msg)) => Ok(Response::new(rpc::NmxcBrowseResponse {
+            Err(NicoError::InvalidArgument(msg)) => Ok(Response::new(rpc::NmxcBrowseResponse {
                 body: msg,
                 code: 400,
                 headers: HashMap::new(),
@@ -174,6 +174,6 @@ pub(crate) async fn nmxc_browse(
             Err(e) => Err(e.into()),
         }
     } else {
-        Err(CarbideError::internal("nvlink config not enabled".to_string()).into())
+        Err(NicoError::internal("nvlink config not enabled".to_string()).into())
     }
 }

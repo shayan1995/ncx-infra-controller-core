@@ -15,18 +15,18 @@
  * limitations under the License.
  */
 
-use carbide_rack_controller::context::RackStateHandlerContextObjects;
-use carbide_rack_controller::handler::RackStateHandler;
-use carbide_rack_controller::maintenance::apply_nvos_job_status_response;
-use carbide_rack_controller::metrics::RackMetrics;
-use carbide_uuid::machine::{MachineId, MachineIdSource, MachineType};
-use carbide_uuid::rack::{RackId, RackProfileId};
-use carbide_uuid::switch::SwitchId;
+use nico_rack_controller::context::RackStateHandlerContextObjects;
+use nico_rack_controller::handler::RackStateHandler;
+use nico_rack_controller::maintenance::apply_nvos_job_status_response;
+use nico_rack_controller::metrics::RackMetrics;
+use nico_uuid::machine::{MachineId, MachineIdSource, MachineType};
+use nico_uuid::rack::{RackId, RackProfileId};
+use nico_uuid::switch::SwitchId;
 use db::db_read::DbReader;
 use db::{
     ObjectColumnFilter, expected_rack as db_expected_rack, rack as db_rack, switch as db_switch,
 };
-use forge_secrets::credentials::{BmcCredentialType, CredentialKey, CredentialReader, Credentials};
+use nico_secrets::credentials::{BmcCredentialType, CredentialKey, CredentialReader, Credentials};
 use librms::protos::rack_manager as rms;
 use model::expected_machine::ExpectedMachineData;
 use model::expected_rack::ExpectedRack;
@@ -120,7 +120,7 @@ fn single_capabilities() -> RackCapabilitiesSet {
     }
 }
 
-pub(crate) fn config_with_rack_profiles() -> crate::cfg::file::CarbideConfig {
+pub(crate) fn config_with_rack_profiles() -> crate::cfg::file::NicoConfig {
     let mut config = get_config();
     config.rack_profiles = RackProfileConfig {
         rack_profiles: [
@@ -157,7 +157,7 @@ pub(crate) fn config_with_rack_profiles() -> crate::cfg::file::CarbideConfig {
     config
 }
 
-fn config_with_nmx_cluster_profile() -> crate::cfg::file::CarbideConfig {
+fn config_with_nmx_cluster_profile() -> crate::cfg::file::NicoConfig {
     let mut config = config_with_rack_profiles();
     config.rack_profiles.rack_profiles.insert(
         "NmxCluster".to_string(),
@@ -261,8 +261,8 @@ async fn attach_switches_with_nvos_credentials(
             &expected_switch.serial_number,
             "NVIDIA",
             "Switch",
-            carbide_uuid::switch::SwitchIdSource::ProductBoardChassisSerial,
-            carbide_uuid::switch::SwitchType::NvLink,
+            nico_uuid::switch::SwitchIdSource::ProductBoardChassisSerial,
+            nico_uuid::switch::SwitchType::NvLink,
         )?;
 
         let new_switch = NewSwitch {
@@ -393,16 +393,16 @@ async fn test_on_demand_rack_maintenance_schedules_nvos_only_scope(
 
     crate::handlers::rack::on_demand_rack_maintenance(
         env.api.as_ref(),
-        Request::new(rpc::forge::RackMaintenanceOnDemandRequest {
+        Request::new(rpc::nico::RackMaintenanceOnDemandRequest {
             rack_id: Some(rack_id.clone()),
-            scope: Some(rpc::forge::RackMaintenanceScope {
+            scope: Some(rpc::nico::RackMaintenanceScope {
                 machine_ids: vec![],
                 switch_ids: vec![switch_id.to_string()],
                 power_shelf_ids: vec![],
-                activities: vec![rpc::forge::MaintenanceActivityConfig {
+                activities: vec![rpc::nico::MaintenanceActivityConfig {
                     activity: Some(
-                        rpc::forge::maintenance_activity_config::Activity::NvosUpdate(
-                            rpc::forge::NvosUpdateActivity {
+                        rpc::nico::maintenance_activity_config::Activity::NvosUpdate(
+                            rpc::nico::NvosUpdateActivity {
                                 config_json: r#"{"Id":"fw-nvos"}"#.to_string(),
                                 access_token: Some("token".to_string()),
                             },
@@ -440,16 +440,16 @@ async fn test_on_demand_rack_maintenance_schedules_configure_nmx_cluster_only_sc
 
     crate::handlers::rack::on_demand_rack_maintenance(
         env.api.as_ref(),
-        Request::new(rpc::forge::RackMaintenanceOnDemandRequest {
+        Request::new(rpc::nico::RackMaintenanceOnDemandRequest {
             rack_id: Some(rack_id.clone()),
-            scope: Some(rpc::forge::RackMaintenanceScope {
+            scope: Some(rpc::nico::RackMaintenanceScope {
                 machine_ids: vec![],
                 switch_ids: vec![switch_id.to_string()],
                 power_shelf_ids: vec![],
-                activities: vec![rpc::forge::MaintenanceActivityConfig {
+                activities: vec![rpc::nico::MaintenanceActivityConfig {
                     activity: Some(
-                        rpc::forge::maintenance_activity_config::Activity::ConfigureNmxCluster(
-                            rpc::forge::ConfigureNmxClusterActivity {},
+                        rpc::nico::maintenance_activity_config::Activity::ConfigureNmxCluster(
+                            rpc::nico::ConfigureNmxClusterActivity {},
                         ),
                     ),
                 }],
@@ -482,17 +482,17 @@ async fn test_on_demand_rack_maintenance_schedules_firmware_and_nvos_scope(
 
     crate::handlers::rack::on_demand_rack_maintenance(
         env.api.as_ref(),
-        Request::new(rpc::forge::RackMaintenanceOnDemandRequest {
+        Request::new(rpc::nico::RackMaintenanceOnDemandRequest {
             rack_id: Some(rack_id.clone()),
-            scope: Some(rpc::forge::RackMaintenanceScope {
+            scope: Some(rpc::nico::RackMaintenanceScope {
                 machine_ids: vec![],
                 switch_ids: vec![switch_id.to_string()],
                 power_shelf_ids: vec![],
                 activities: vec![
-                    rpc::forge::MaintenanceActivityConfig {
+                    rpc::nico::MaintenanceActivityConfig {
                         activity: Some(
-                            rpc::forge::maintenance_activity_config::Activity::FirmwareUpgrade(
-                                rpc::forge::FirmwareUpgradeActivity {
+                            rpc::nico::maintenance_activity_config::Activity::FirmwareUpgrade(
+                                rpc::nico::FirmwareUpgradeActivity {
                                     firmware_version: r#"{"Id":"fw-mixed"}"#.to_string(),
                                     components: vec!["BMC".to_string()],
                                     access_token: Some("token".to_string()),
@@ -501,10 +501,10 @@ async fn test_on_demand_rack_maintenance_schedules_firmware_and_nvos_scope(
                             ),
                         ),
                     },
-                    rpc::forge::MaintenanceActivityConfig {
+                    rpc::nico::MaintenanceActivityConfig {
                         activity: Some(
-                            rpc::forge::maintenance_activity_config::Activity::NvosUpdate(
-                                rpc::forge::NvosUpdateActivity {
+                            rpc::nico::maintenance_activity_config::Activity::NvosUpdate(
+                                rpc::nico::NvosUpdateActivity {
                                     config_json: r#"{"Id":"fw-mixed"}"#.to_string(),
                                     access_token: Some("token".to_string()),
                                 },
@@ -566,16 +566,16 @@ async fn test_on_demand_rack_maintenance_rejects_firmware_without_access_token(
 
     let err = crate::handlers::rack::on_demand_rack_maintenance(
         env.api.as_ref(),
-        Request::new(rpc::forge::RackMaintenanceOnDemandRequest {
+        Request::new(rpc::nico::RackMaintenanceOnDemandRequest {
             rack_id: Some(rack_id.clone()),
-            scope: Some(rpc::forge::RackMaintenanceScope {
+            scope: Some(rpc::nico::RackMaintenanceScope {
                 machine_ids: vec![],
                 switch_ids: vec![switch_id.to_string()],
                 power_shelf_ids: vec![],
-                activities: vec![rpc::forge::MaintenanceActivityConfig {
+                activities: vec![rpc::nico::MaintenanceActivityConfig {
                     activity: Some(
-                        rpc::forge::maintenance_activity_config::Activity::FirmwareUpgrade(
-                            rpc::forge::FirmwareUpgradeActivity {
+                        rpc::nico::maintenance_activity_config::Activity::FirmwareUpgrade(
+                            rpc::nico::FirmwareUpgradeActivity {
                                 firmware_version: r#"{"Id":"fw-mixed"}"#.to_string(),
                                 components: vec!["BMC".to_string()],
                                 access_token: None,
@@ -1362,16 +1362,16 @@ async fn test_firmware_upgrade_start_submits_json_and_deletes_access_token(
 
     crate::handlers::rack::on_demand_rack_maintenance(
         env.api.as_ref(),
-        Request::new(rpc::forge::RackMaintenanceOnDemandRequest {
+        Request::new(rpc::nico::RackMaintenanceOnDemandRequest {
             rack_id: Some(rack_id.clone()),
-            scope: Some(rpc::forge::RackMaintenanceScope {
+            scope: Some(rpc::nico::RackMaintenanceScope {
                 machine_ids: vec![],
                 switch_ids: vec![switch_id_string.clone()],
                 power_shelf_ids: vec![],
-                activities: vec![rpc::forge::MaintenanceActivityConfig {
+                activities: vec![rpc::nico::MaintenanceActivityConfig {
                     activity: Some(
-                        rpc::forge::maintenance_activity_config::Activity::FirmwareUpgrade(
-                            rpc::forge::FirmwareUpgradeActivity {
+                        rpc::nico::maintenance_activity_config::Activity::FirmwareUpgrade(
+                            rpc::nico::FirmwareUpgradeActivity {
                                 firmware_version: r#"{"Id":"fw-json"}"#.to_string(),
                                 components: vec!["BMC".to_string()],
                                 access_token: Some("token".to_string()),
@@ -3311,7 +3311,7 @@ async fn set_switch_state(
 
 async fn set_power_shelf_state(
     txn: &mut sqlx::PgConnection,
-    power_shelf_id: &carbide_uuid::power_shelf::PowerShelfId,
+    power_shelf_id: &nico_uuid::power_shelf::PowerShelfId,
     state: model::power_shelf::PowerShelfControllerState,
 ) {
     sqlx::query("UPDATE power_shelves SET controller_state = $1 WHERE id = $2")
@@ -3326,8 +3326,8 @@ async fn create_test_power_shelf(
     txn: &mut sqlx::PgConnection,
     rack_id: &RackId,
     seed: u8,
-) -> carbide_uuid::power_shelf::PowerShelfId {
-    use carbide_uuid::power_shelf::PowerShelfId;
+) -> nico_uuid::power_shelf::PowerShelfId {
+    use nico_uuid::power_shelf::PowerShelfId;
     let mut bytes = [0u8; 16];
     bytes[0] = seed;
     let power_shelf_id = PowerShelfId::from(uuid::Uuid::from_bytes(bytes));

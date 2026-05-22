@@ -1,5 +1,5 @@
 -- etv: EThernet Virtualizer. L2VNI
--- fnn: Forge Native Networking. L3VNI
+-- fnn: NICo Native Networking. L3VNI
 CREATE TYPE network_virtualization_type_t AS ENUM ('etv', 'fnn');
 
 ALTER TABLE vpcs

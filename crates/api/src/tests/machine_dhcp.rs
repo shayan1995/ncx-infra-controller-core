@@ -18,8 +18,8 @@
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use carbide_network::ip::IpAddressFamily;
-use carbide_uuid::machine::MachineInterfaceId;
+use nico_network::ip::IpAddressFamily;
+use nico_uuid::machine::MachineInterfaceId;
 use common::api_fixtures::managed_host::ManagedHostConfig;
 use common::api_fixtures::network_segment::{
     FIXTURE_ADMIN_NETWORK_SEGMENT_GATEWAY, FIXTURE_HOST_INBAND_NETWORK_SEGMENT_GATEWAY,
@@ -36,8 +36,8 @@ use itertools::Itertools;
 use mac_address::MacAddress;
 use model::machine_interface::InterfaceType;
 use model::network_segment::NetworkSegmentType;
-use rpc::forge::ManagedHostNetworkConfigRequest;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::ManagedHostNetworkConfigRequest;
+use rpc::nico::nico_server::NICo;
 
 use crate::DatabaseError;
 use crate::tests::common;
@@ -265,7 +265,7 @@ async fn test_machine_dhcp_declared_admin_nic_allocates_from_relay_admin_segment
         "ADMIN_2",
         "192.0.12.0/24",
         "192.0.12.1",
-        rpc::forge::NetworkSegmentType::Admin,
+        rpc::nico::NetworkSegmentType::Admin,
         None,
         true,
     )
@@ -275,13 +275,13 @@ async fn test_machine_dhcp_declared_admin_nic_allocates_from_relay_admin_segment
     let bmc_mac: MacAddress = "7a:7b:7c:7d:7e:10".parse().unwrap();
     let admin_nic_mac: MacAddress = "7a:7b:7c:7d:7e:11".parse().unwrap();
     env.api
-        .add_expected_machine(tonic::Request::new(rpc::forge::ExpectedMachine {
+        .add_expected_machine(tonic::Request::new(rpc::nico::ExpectedMachine {
             id: None,
             bmc_mac_address: bmc_mac.to_string(),
             bmc_username: "ADMIN".into(),
             bmc_password: "PASS".into(),
             chassis_serial_number: "EM-ADMIN-RELAY-001".into(),
-            host_nics: vec![rpc::forge::ExpectedHostNic {
+            host_nics: vec![rpc::nico::ExpectedHostNic {
                 mac_address: admin_nic_mac.to_string(),
                 nic_type: Some("onboard".into()),
                 fixed_ip: None,
@@ -358,7 +358,7 @@ async fn test_machine_dhcp_with_api_for_instance_physical_virtual(
     };
 
     mh.instance_builer(&env).network(network).build().await;
-    // Instance dhcp is not handled by carbide. Best way to find out allocated IP info is to read
+    // Instance dhcp is not handled by nico. Best way to find out allocated IP info is to read
     // data from managedhostnetworkconfig.
     let response = env
         .api
@@ -449,7 +449,7 @@ async fn machine_interface_discovery_persists_vendor_strings(
         env: &TestEnv,
         mac_address: MacAddress,
         vendor_string: Option<&str>,
-    ) -> rpc::protos::forge::DhcpRecord {
+    ) -> rpc::protos::nico::DhcpRecord {
         let builder = DhcpDiscovery::builder(mac_address, FIXTURE_DHCP_RELAY_ADDRESS);
         let builder = if let Some(vendor_string) = vendor_string {
             builder.vendor_string(vendor_string)
@@ -610,7 +610,7 @@ async fn test_dhcp_record_address_family(
 /// see in production.
 async fn host_interface_and_gateway(
     env: &TestEnv,
-    host_machine_id: carbide_uuid::machine::MachineId,
+    host_machine_id: nico_uuid::machine::MachineId,
 ) -> Result<(MacAddress, IpAddr), Box<dyn std::error::Error>> {
     let mut txn = env.pool.begin().await?;
     let interfaces_by_machine =
@@ -638,7 +638,7 @@ async fn host_interface_and_gateway(
 /// `instances.machine_id`, so a minimal INSERT is enough.
 async fn attach_bare_instance(
     env: &TestEnv,
-    machine_id: carbide_uuid::machine::MachineId,
+    machine_id: nico_uuid::machine::MachineId,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut txn = env.pool.begin().await?;
     sqlx::query("INSERT INTO instances (machine_id) VALUES ($1)")

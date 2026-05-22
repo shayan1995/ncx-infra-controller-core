@@ -25,7 +25,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 const MAX_OBSERVABILITY_CONFIG_NAME: usize = 64;
 const MAX_OBSERVABILITY_PROPERTY_LEN: usize = 128;
@@ -204,8 +204,8 @@ impl TryFrom<rpc::DpuExtensionServiceObservabilityConfig> for ExtensionServiceOb
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::forge::dpu_extension_service_observability_config::Config;
-    use crate::forge::{self as rpc};
+    use crate::nico::dpu_extension_service_observability_config::Config;
+    use crate::nico::{self as rpc};
 
     #[test]
     fn test_observability_config_from_rpc() {

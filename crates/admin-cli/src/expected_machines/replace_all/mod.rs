@@ -27,14 +27,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::expected_machines::common::ExpectedMachineJson;
 
 /// `expected-machine replace-all`: reads a JSON list and calls `replace_all_expected_machines`.
 /// Each `ExpectedMachineJson` may include `bmc_ip_address`; the API runs the same pre-allocation
 /// path as `add_expected_machine` for each entry.
 impl Run for Args {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         let json_file_path = Path::new(&self.filename);
         let reader = BufReader::new(File::open(json_file_path)?);
         #[derive(Debug, Serialize, Deserialize)]

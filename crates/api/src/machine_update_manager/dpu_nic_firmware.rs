@@ -20,8 +20,8 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use async_trait::async_trait;
-use carbide_machine_controller::dpf::DpfOperations;
-use carbide_uuid::machine::MachineId;
+use nico_machine_controller::dpf::DpfOperations;
+use nico_uuid::machine::MachineId;
 use db::dpu_machine_update;
 use model::dpu_machine_update::{DpuMachineUpdate, OutdatedDpfDpu};
 use model::machine::ManagedHostStateSnapshot;
@@ -29,20 +29,20 @@ use sqlx::PgConnection;
 
 use super::dpu_nic_firmware_metrics::DpuNicFirmwareUpdateMetrics;
 use super::machine_update_module::MachineUpdateModule;
-use crate::cfg::file::CarbideConfig;
+use crate::cfg::file::NicoConfig;
 use crate::machine_update_manager::MachineUpdateManager;
-use crate::{CarbideResult, DatabaseError};
+use crate::{NicoResult, DatabaseError};
 
 /// DpuNicFirmwareUpdate is a module used [MachineUpdateManager](crate::machine_update_manager::MachineUpdateManager)
-/// to ensure that DPU NIC firmware matches the expected version of the carbide release.
+/// to ensure that DPU NIC firmware matches the expected version of the nico release.
 ///
-/// Config used from [CarbideConfig](crate::cfg::CarbideConfig)
+/// Config used from [NicoConfig](crate::cfg::NicoConfig)
 /// * `dpu_nic_firmware_update_version` the version of the DPU NIC firmware that is expected to be running on the DPU.
 ///
 /// Note that if the version does not match in either direction, the DPU will be updated.
 pub struct DpuNicFirmwareUpdate {
     pub metrics: Option<DpuNicFirmwareUpdateMetrics>,
-    pub config: Arc<CarbideConfig>,
+    pub config: Arc<NicoConfig>,
     /// DPF handle for discovering outdated DPF-managed DPUs. `None` when DPF
     /// is disabled in config; in that case `find_outdated_dpus_dpf` is not called.
     pub dpf: Option<Arc<dyn DpfOperations>>,
@@ -53,7 +53,7 @@ impl MachineUpdateModule for DpuNicFirmwareUpdate {
     async fn get_updates_in_progress(
         &self,
         txn: &mut PgConnection,
-    ) -> CarbideResult<HashSet<MachineId>> {
+    ) -> NicoResult<HashSet<MachineId>> {
         let current_updating_machines =
             match dpu_machine_update::get_reprovisioning_machines(txn).await {
                 Ok(current_updating_machines) => current_updating_machines,
@@ -75,7 +75,7 @@ impl MachineUpdateModule for DpuNicFirmwareUpdate {
         available_updates: i32,
         updating_host_machines: &HashSet<MachineId>,
         snapshots: &HashMap<MachineId, ManagedHostStateSnapshot>,
-    ) -> CarbideResult<HashSet<MachineId>> {
+    ) -> NicoResult<HashSet<MachineId>> {
         let machine_updates: Vec<DpuMachineUpdate> = self
             .check_for_updates(snapshots, available_updates)
             .await
@@ -145,7 +145,7 @@ impl MachineUpdateModule for DpuNicFirmwareUpdate {
         Ok(updates_started)
     }
 
-    async fn clear_completed_updates(&self, txn: &mut PgConnection) -> CarbideResult<()> {
+    async fn clear_completed_updates(&self, txn: &mut PgConnection) -> NicoResult<()> {
         let updated_machines =
             dpu_machine_update::get_updated_machines(txn, self.config.host_health).await?;
         tracing::debug!("found {} updated machines", updated_machines.len());
@@ -179,7 +179,7 @@ impl MachineUpdateModule for DpuNicFirmwareUpdate {
         &self,
         pool: &sqlx::Pool<sqlx::Postgres>,
         snapshots: &HashMap<MachineId, ManagedHostStateSnapshot>,
-    ) -> CarbideResult<()> {
+    ) -> NicoResult<()> {
         let dpf_outdated = self.fetch_dpf_outdated().await;
         match DpuMachineUpdate::find_available_outdated_dpus(
             None,
@@ -229,7 +229,7 @@ impl MachineUpdateModule for DpuNicFirmwareUpdate {
 
 impl DpuNicFirmwareUpdate {
     pub fn new(
-        config: Arc<CarbideConfig>,
+        config: Arc<NicoConfig>,
         meter: opentelemetry::metrics::Meter,
         dpf: Option<Arc<dyn DpfOperations>>,
     ) -> Option<Self> {

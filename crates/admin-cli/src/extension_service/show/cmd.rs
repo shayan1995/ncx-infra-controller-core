@@ -16,11 +16,11 @@
  */
 
 use ::rpc::admin_cli::output::OutputFormat;
-use ::rpc::forge::{DpuExtensionService, DpuExtensionServiceType};
+use ::rpc::nico::{DpuExtensionService, DpuExtensionServiceType};
 use prettytable::{Table, row};
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn handle_show(
@@ -28,7 +28,7 @@ pub async fn handle_show(
     output_format: OutputFormat,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
 
     let services = if let Some(id) = args.id {

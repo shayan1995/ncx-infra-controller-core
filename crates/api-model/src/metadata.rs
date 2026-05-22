@@ -21,7 +21,7 @@ use serde::Deserialize;
 
 use crate::ConfigValidationError;
 
-/// Metadata that can get associated with Forge managed resources
+/// Metadata that can get associated with NICo managed resources
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize)]
 pub struct Metadata {
     /// user-defined resource name

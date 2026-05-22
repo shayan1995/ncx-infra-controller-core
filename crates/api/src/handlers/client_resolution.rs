@@ -18,13 +18,13 @@
 use std::collections::HashSet;
 use std::net::IpAddr;
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use db;
 use model::instance::snapshot::InstanceSnapshot;
 use model::machine::MachineInterfaceSnapshot;
 use sqlx::PgConnection;
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::Api;
 
 /// What `resolve_client_ip` returned. Either the IP belongs directly
@@ -42,14 +42,14 @@ enum ResolvedClient {
 async fn resolve_client_ip(
     conn: &mut PgConnection,
     client_ip: IpAddr,
-) -> Result<ResolvedClient, CarbideError> {
+) -> Result<ResolvedClient, NicoError> {
     if let Some(iface) = db::machine_interface::find_by_ip(&mut *conn, client_ip).await? {
         return Ok(ResolvedClient::Interface(iface));
     }
 
     let instance_address = db::instance_address::find_by_address(&mut *conn, client_ip)
         .await?
-        .ok_or_else(|| CarbideError::NotFoundError {
+        .ok_or_else(|| NicoError::NotFoundError {
             kind: "Client",
             id: client_ip.to_string(),
         })?;
@@ -57,7 +57,7 @@ async fn resolve_client_ip(
     let instance = db::instance::find_by_id(&mut *conn, instance_address.instance_id)
         .await?
         .ok_or_else(|| {
-            CarbideError::internal(format!(
+            NicoError::internal(format!(
                 "instance_address {client_ip} references missing instance {}",
                 instance_address.instance_id,
             ))
@@ -73,7 +73,7 @@ async fn resolve_client_ip(
 pub(crate) async fn resolve_machine_interface(
     conn: &mut PgConnection,
     client_ip: IpAddr,
-) -> Result<MachineInterfaceSnapshot, CarbideError> {
+) -> Result<MachineInterfaceSnapshot, NicoError> {
     match resolve_client_ip(conn, client_ip).await? {
         ResolvedClient::Interface(iface) => Ok(iface),
         ResolvedClient::Instance(instance) => {
@@ -84,7 +84,7 @@ pub(crate) async fn resolve_machine_interface(
                 interfaces_by_machine
                     .get(&instance.machine_id)
                     .ok_or_else(|| {
-                        CarbideError::internal(format!(
+                        NicoError::internal(format!(
                             "no machine_interfaces for host {}",
                             instance.machine_id,
                         ))
@@ -102,7 +102,7 @@ pub(crate) async fn resolve_machine_interface(
                 .or_else(|| host_interfaces.first())
                 .cloned()
                 .ok_or_else(|| {
-                    CarbideError::internal(format!(
+                    NicoError::internal(format!(
                         "host {} has no machine_interfaces",
                         instance.machine_id,
                     ))
@@ -119,9 +119,9 @@ pub(crate) async fn resolve_cloud_init_instructions(
     api: &Api,
     conn: &mut PgConnection,
     client_ip: IpAddr,
-) -> Result<rpc::CloudInitInstructions, CarbideError> {
+) -> Result<rpc::CloudInitInstructions, NicoError> {
     let cloud_name = "nvidia".to_string();
-    let platform = "forge".to_string();
+    let platform = "nico".to_string();
 
     match resolve_client_ip(conn, client_ip).await? {
         ResolvedClient::Instance(instance) => Ok(rpc::CloudInitInstructions {
@@ -137,7 +137,7 @@ pub(crate) async fn resolve_cloud_init_instructions(
         }),
         ResolvedClient::Interface(machine_interface) => {
             let domain_id = machine_interface.domain_id.ok_or_else(|| {
-                CarbideError::internal(format!(
+                NicoError::internal(format!(
                     "Machine Interface did not have an associated domain {}",
                     machine_interface.id
                 ))
@@ -145,9 +145,9 @@ pub(crate) async fn resolve_cloud_init_instructions(
 
             let domain = db::dns::domain::find_by_uuid(&mut *conn, domain_id)
                 .await
-                .map_err(CarbideError::from)?
+                .map_err(NicoError::from)?
                 .ok_or_else(|| {
-                    CarbideError::internal(format!("Could not find domain with id {domain_id}"))
+                    NicoError::internal(format!("Could not find domain with id {domain_id}"))
                 })?
                 .to_owned();
 
@@ -175,7 +175,7 @@ pub(crate) async fn resolve_cloud_init_instructions(
 
             // For interfaces on the static-assignments segment, include
             // hostname or IP-based URL overrides so external hosts can
-            // reach carbide-api and carbide-pxe services. Just to reiterate,
+            // reach nico-api and nico-pxe services. Just to reiterate,
             // these can be either routable IPs, or externally resolvable
             // hostnames to routable IPs.
             let is_external = machine_interface.segment_id

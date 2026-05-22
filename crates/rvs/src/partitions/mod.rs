@@ -3,7 +3,7 @@ use std::collections::HashMap;
 mod ib;
 mod nvl;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 pub use ib::IbNode;
 pub use nvl::NvlNode;
 
@@ -131,9 +131,9 @@ fn is_validation_state(state: &str) -> bool {
 mod tests {
     use std::str::FromStr;
 
-    use carbide_uuid::machine::{MachineIdSource, MachineType};
-    use carbide_uuid::nvlink::NvLinkDomainId;
-    use carbide_uuid::rack::RackId;
+    use nico_uuid::machine::{MachineIdSource, MachineType};
+    use nico_uuid::nvlink::NvLinkDomainId;
+    use nico_uuid::rack::RackId;
 
     use super::*;
     use crate::client::{TrayData, TrayIbData, TrayNvlData};

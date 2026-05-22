@@ -16,10 +16,10 @@
  */
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn add_host_factory_default(data: Args, api_client: &ApiClient) -> CarbideCliResult<()> {
+pub async fn add_host_factory_default(data: Args, api_client: &ApiClient) -> NicoCliResult<()> {
     api_client.0.create_credential(data).await?;
     Ok(())
 }

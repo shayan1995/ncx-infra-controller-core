@@ -28,7 +28,7 @@ use axum::middleware::Next;
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{Router, get, post};
 use axum_extra::extract::cookie::{Cookie, Key, PrivateCookieJar};
-use carbide_authn::middleware::Principal;
+use nico_authn::middleware::Principal;
 use http::header::CONTENT_TYPE;
 use http::{HeaderMap, Request, StatusCode};
 use itertools::Itertools;
@@ -40,15 +40,15 @@ use oauth2::{
     AuthUrl, Client, ClientId, ClientSecret, CsrfToken, EndpointNotSet, EndpointSet,
     PkceCodeChallenge, RedirectUrl, Scope, StandardRevocableToken, TokenUrl,
 };
-use rpc::forge::forge_server::Forge;
-use rpc::forge::{self as forgerpc};
+use rpc::nico::nico_server::NICo;
+use rpc::nico::{self as nicorpc};
 use tonic::service::AxumBody;
 use tower_http::normalize_path::NormalizePath;
 
-use crate::CarbideError;
+use crate::NicoError;
 use crate::api::Api;
 use crate::auth::AuthContext;
-use crate::cfg::file::{CarbideConfig, ToolLink};
+use crate::cfg::file::{NicoConfig, ToolLink};
 
 /// Process-global tool list. Static because `base.html` is rendered
 /// by more than 70 page structs and threading a field through all of them
@@ -79,7 +79,7 @@ pub trait Base {
 #[derive(Template)]
 #[template(path = "metadata_details.html")]
 pub(crate) struct MetadataDetail {
-    pub metadata: rpc::forge::Metadata,
+    pub metadata: rpc::nico::Metadata,
     pub metadata_version: String,
 }
 
@@ -99,7 +99,7 @@ impl HealthDetail {
         health_reports_url: String,
         health_reports_link_text: &'static str,
         health: Option<rpc::health::HealthReport>,
-        health_sources: Vec<rpc::forge::HealthSourceOrigin>,
+        health_sources: Vec<rpc::nico::HealthSourceOrigin>,
     ) -> Self {
         HealthDetail {
             health_reports_url,
@@ -128,7 +128,7 @@ pub(crate) struct StateDisplay {
 }
 
 impl StateDisplay {
-    pub fn from_lifecycle(lifecycle: Option<&forgerpc::LifecycleStatus>) -> Self {
+    pub fn from_lifecycle(lifecycle: Option<&nicorpc::LifecycleStatus>) -> Self {
         let state = lifecycle
             .map(|lifecycle| lifecycle.state.clone())
             .filter(|state| !state.is_empty())
@@ -153,7 +153,7 @@ impl StateDisplay {
 pub(crate) struct StateSlaDetail {
     pub state_sla: String,
     pub time_in_state_above_sla: bool,
-    pub state_reason: Option<rpc::forge::ControllerStateReason>,
+    pub state_reason: Option<rpc::nico::ControllerStateReason>,
 }
 
 /// Reusable template for rendering lifecycle fields.
@@ -168,15 +168,15 @@ pub(crate) struct LifecycleDetail {
     pub time_in_state: String,
     pub state_sla: String,
     pub time_in_state_above_sla: bool,
-    pub state_reason: Option<rpc::forge::ControllerStateReason>,
+    pub state_reason: Option<rpc::nico::ControllerStateReason>,
 }
 
 impl LifecycleDetail {
     pub fn new(
         state: String,
         version: String,
-        state_reason: Option<forgerpc::ControllerStateReason>,
-        sla: Option<forgerpc::StateSla>,
+        state_reason: Option<nicorpc::ControllerStateReason>,
+        sla: Option<nicorpc::StateSla>,
     ) -> Self {
         let time_in_state_above_sla = sla
             .as_ref()
@@ -199,8 +199,8 @@ impl LifecycleDetail {
     }
 }
 
-impl From<forgerpc::LifecycleStatus> for LifecycleDetail {
-    fn from(lifecycle: forgerpc::LifecycleStatus) -> Self {
+impl From<nicorpc::LifecycleStatus> for LifecycleDetail {
+    fn from(lifecycle: nicorpc::LifecycleStatus) -> Self {
         LifecycleDetail::new(
             lifecycle.state,
             lifecycle.version,
@@ -216,7 +216,7 @@ fn verify_json(state: &str) -> Option<String> {
         .map(|_| state.to_string())
 }
 
-fn format_state_sla(sla: Option<&forgerpc::StateSla>) -> String {
+fn format_state_sla(sla: Option<&nicorpc::StateSla>) -> String {
     sla.and_then(|sla| sla.sla)
         .map(|sla| {
             config_version::format_duration(
@@ -274,27 +274,27 @@ mod tenant_keyset;
 mod ufm_browser;
 mod vpc;
 
-const AUTH_TYPE_ENV: &str = "CARBIDE_WEB_AUTH_TYPE";
+const AUTH_TYPE_ENV: &str = "NICO_WEB_AUTH_TYPE";
 const AUTH_CALLBACK_ROOT: &str = "auth-callback";
 
 // Details https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/5ae5fa35-be8e-44cc-be7b-01ff76af5315/isMSAApp~/false
-const OAUTH2_AUTH_ENDPOINT_ENV: &str = "CARBIDE_WEB_OAUTH2_AUTH_ENDPOINT";
+const OAUTH2_AUTH_ENDPOINT_ENV: &str = "NICO_WEB_OAUTH2_AUTH_ENDPOINT";
 
-const OAUTH2_TOKEN_ENDPOINT_ENV: &str = "CARBIDE_WEB_OAUTH2_TOKEN_ENDPOINT";
+const OAUTH2_TOKEN_ENDPOINT_ENV: &str = "NICO_WEB_OAUTH2_TOKEN_ENDPOINT";
 
-const CARBIDE_WEB_PRIVATE_COOKIEJAR_KEY_ENV: &str = "CARBIDE_WEB_PRIVATE_COOKIEJAR_KEY";
-const CARBIDE_WEB_HOSTNAME_ENV: &str = "CARBIDE_WEB_HOSTNAME";
+const NICO_WEB_PRIVATE_COOKIEJAR_KEY_ENV: &str = "NICO_WEB_PRIVATE_COOKIEJAR_KEY";
+const NICO_WEB_HOSTNAME_ENV: &str = "NICO_WEB_HOSTNAME";
 
-const OAUTH2_CLIENT_SECRET_ENV: &str = "CARBIDE_WEB_OAUTH2_CLIENT_SECRET";
-const OAUTH2_CLIENT_ID_ENV: &str = "CARBIDE_WEB_OAUTH2_CLIENT_ID";
+const OAUTH2_CLIENT_SECRET_ENV: &str = "NICO_WEB_OAUTH2_CLIENT_SECRET";
+const OAUTH2_CLIENT_ID_ENV: &str = "NICO_WEB_OAUTH2_CLIENT_ID";
 
-const ALLOWED_ACCESS_GROUPS_LIST_ENV: &str = "CARBIDE_WEB_ALLOWED_ACCESS_GROUPS";
+const ALLOWED_ACCESS_GROUPS_LIST_ENV: &str = "NICO_WEB_ALLOWED_ACCESS_GROUPS";
 
-const ALLOWED_ACCESS_GROUPS_ID_LIST_ENV: &str = "CARBIDE_WEB_ALLOWED_ACCESS_GROUPS_ID_LIST";
+const ALLOWED_ACCESS_GROUPS_ID_LIST_ENV: &str = "NICO_WEB_ALLOWED_ACCESS_GROUPS_ID_LIST";
 
 const SORTABLE_JS: &str = include_str!("../../templates/static/sortable.min.js");
 const SORTABLE_CSS: &str = include_str!("../../templates/static/sortable.min.css");
-const CARBIDE_CSS: &str = include_str!("../../templates/static/carbide.css");
+const NICO_CSS: &str = include_str!("../../templates/static/nico.css");
 const TABS_JS: &str = include_str!("../../templates/static/tabs.js");
 
 // It would appear the oauth2 author read about the typestate pattern and decided making
@@ -324,7 +324,7 @@ pub(crate) struct Oauth2Layer {
 
 /// All the URLs in the admin interface. Nested under /admin in api.rs.
 pub fn routes(api: Arc<Api>) -> eyre::Result<NormalizePath<Router>> {
-    // `CARBIDE_WEB_AUTH_TYPE`: `none` (default) = no in-process auth — protect the admin UI with
+    // `NICO_WEB_AUTH_TYPE`: `none` (default) = no in-process auth — protect the admin UI with
     // network policy, or a reverse proxy (OAuth2 Proxy, etc.). `oauth2` = Entra / OIDC via env.
     let auth_type = env::var(AUTH_TYPE_ENV)
         .unwrap_or_else(|_| "none".to_string())
@@ -333,10 +333,10 @@ pub fn routes(api: Arc<Api>) -> eyre::Result<NormalizePath<Router>> {
         "oauth2" => {
             // Get our cookiejar key so we can add it as an extension.
             let private_cookiejar_key = Key::try_from(
-                env::var(CARBIDE_WEB_PRIVATE_COOKIEJAR_KEY_ENV)
+                env::var(NICO_WEB_PRIVATE_COOKIEJAR_KEY_ENV)
                     .map_err(|e| {
-                        CarbideError::internal(format!(
-                            "{CARBIDE_WEB_PRIVATE_COOKIEJAR_KEY_ENV}: {e}"
+                        NicoError::internal(format!(
+                            "{NICO_WEB_PRIVATE_COOKIEJAR_KEY_ENV}: {e}"
                         ))
                     })?
                     .as_bytes(),
@@ -344,7 +344,7 @@ pub fn routes(api: Arc<Api>) -> eyre::Result<NormalizePath<Router>> {
 
             // Grab the details for which groups are allowed to access the web UI.
             let allowed_groups = env::var(ALLOWED_ACCESS_GROUPS_LIST_ENV).map_err(|e| {
-                CarbideError::internal(format!("{ALLOWED_ACCESS_GROUPS_LIST_ENV}: {e}"))
+                NicoError::internal(format!("{ALLOWED_ACCESS_GROUPS_LIST_ENV}: {e}"))
             })?;
             let allowed_access_groups_names = allowed_groups.split(",");
             let allowed_access_groups_filter = allowed_access_groups_names
@@ -353,7 +353,7 @@ pub fn routes(api: Arc<Api>) -> eyre::Result<NormalizePath<Router>> {
                 .join(" OR ");
             let allowed_access_groups_ids_to_name = env::var(ALLOWED_ACCESS_GROUPS_ID_LIST_ENV)
                 .map_err(|e| {
-                    CarbideError::internal(format!("{ALLOWED_ACCESS_GROUPS_ID_LIST_ENV}: {e}"))
+                    NicoError::internal(format!("{ALLOWED_ACCESS_GROUPS_ID_LIST_ENV}: {e}"))
                 })?
                 .split(",")
                 .map(|s| s.to_lowercase())
@@ -362,13 +362,13 @@ pub fn routes(api: Arc<Api>) -> eyre::Result<NormalizePath<Router>> {
                 .collect::<HashMap<String, String>>();
 
             let client_id = env::var(OAUTH2_CLIENT_ID_ENV)
-                .map_err(|e| CarbideError::internal(format!("{OAUTH2_CLIENT_ID_ENV}: {e}")))?;
+                .map_err(|e| NicoError::internal(format!("{OAUTH2_CLIENT_ID_ENV}: {e}")))?;
             let client_secret = env::var(OAUTH2_CLIENT_SECRET_ENV)
-                .map_err(|e| CarbideError::internal(format!("{OAUTH2_CLIENT_SECRET_ENV}: {e}")))?;
+                .map_err(|e| NicoError::internal(format!("{OAUTH2_CLIENT_SECRET_ENV}: {e}")))?;
             let auth_endpoint = env::var(OAUTH2_AUTH_ENDPOINT_ENV)
-                .map_err(|e| CarbideError::internal(format!("{OAUTH2_AUTH_ENDPOINT_ENV}: {e}")))?;
+                .map_err(|e| NicoError::internal(format!("{OAUTH2_AUTH_ENDPOINT_ENV}: {e}")))?;
             let token_endpoint = env::var(OAUTH2_TOKEN_ENDPOINT_ENV)
-                .map_err(|e| CarbideError::internal(format!("{OAUTH2_TOKEN_ENDPOINT_ENV}: {e}")))?;
+                .map_err(|e| NicoError::internal(format!("{OAUTH2_TOKEN_ENDPOINT_ENV}: {e}")))?;
 
             // Build the  OAuth2 client.
             let client = BasicClient::new(ClientId::new(client_id))
@@ -377,7 +377,7 @@ pub fn routes(api: Arc<Api>) -> eyre::Result<NormalizePath<Router>> {
                 .set_token_uri(TokenUrl::new(token_endpoint)?)
                 .set_redirect_uri(RedirectUrl::new(format!(
                     "https://{}/admin/{}",
-                    env::var(CARBIDE_WEB_HOSTNAME_ENV).unwrap_or("localhost:1079".to_string()),
+                    env::var(NICO_WEB_HOSTNAME_ENV).unwrap_or("localhost:1079".to_string()),
                     AUTH_CALLBACK_ROOT,
                 ))?);
 
@@ -912,15 +912,15 @@ struct Index {
     log_filter: String,
     site_explorer_enabled: String,
     create_machines: String,
-    carbide_config: CarbideConfig,
+    nico_config: NicoConfig,
     bmc_proxy: String,
 }
 
 impl Base for Index {}
 
 pub async fn root(state: AxumState<Arc<Api>>) -> impl IntoResponse {
-    let request = tonic::Request::new(forgerpc::DpuAgentUpgradePolicyRequest { new_policy: None });
-    use forgerpc::AgentUpgradePolicy::*;
+    let request = tonic::Request::new(nicorpc::DpuAgentUpgradePolicyRequest { new_policy: None });
+    use nicorpc::AgentUpgradePolicy::*;
     let agent_upgrade_policy = match state
         .dpu_agent_upgrade_policy_action(request)
         .await
@@ -957,12 +957,12 @@ pub async fn root(state: AxumState<Arc<Api>>) -> impl IntoResponse {
         .unwrap_or("<None>".to_string());
 
     let index = Index {
-        version: carbide_version::v!(build_version),
+        version: nico_version::v!(build_version),
         log_filter: state.log_filter_string(),
         agent_upgrade_policy,
         site_explorer_enabled,
         create_machines,
-        carbide_config: state.runtime_config.redacted(),
+        nico_config: state.runtime_config.redacted(),
         bmc_proxy,
     };
 
@@ -983,8 +983,8 @@ pub async fn static_data(
         "sortable.css" => {
             (StatusCode::OK, [(CONTENT_TYPE, "text/css")], SORTABLE_CSS).into_response()
         }
-        "carbide.css" => {
-            (StatusCode::OK, [(CONTENT_TYPE, "text/css")], CARBIDE_CSS).into_response()
+        "nico.css" => {
+            (StatusCode::OK, [(CONTENT_TYPE, "text/css")], NICO_CSS).into_response()
         }
         "tabs.js" => (StatusCode::OK, [(CONTENT_TYPE, "text/javascript")], TABS_JS).into_response(),
         _ => (StatusCode::NOT_FOUND, "No such file").into_response(),

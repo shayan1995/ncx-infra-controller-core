@@ -80,8 +80,8 @@ impl TryFrom<rpc::InstanceInterfaceStatusObservation> for InstanceInterfaceStatu
 
     fn try_from(observation: rpc::InstanceInterfaceStatusObservation) -> Result<Self, Self::Error> {
         let function_id = match observation.function_type() {
-            rpc::forge::InterfaceFunctionType::Physical => InterfaceFunctionId::Physical {},
-            rpc::forge::InterfaceFunctionType::Virtual => {
+            rpc::nico::InterfaceFunctionType::Physical => InterfaceFunctionId::Physical {},
+            rpc::nico::InterfaceFunctionType::Virtual => {
                 InterfaceFunctionId::try_virtual_from(observation.virtual_function_id() as u8)
                     .map_err(|_| {
                         RpcDataConversionError::InvalidVirtualFunctionId(

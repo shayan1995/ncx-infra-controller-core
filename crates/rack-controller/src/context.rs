@@ -17,15 +17,15 @@
 
 use std::sync::Arc;
 
-use carbide_rack::rms_client::SwitchSystemImageRmsClient;
-use carbide_rack_controller::config::RackConfig;
-use carbide_rack_controller::metrics::RackMetrics;
-use forge_secrets::credentials::CredentialManager;
+use nico_rack::rms_client::SwitchSystemImageRmsClient;
+use nico_rack_controller::config::RackConfig;
+use nico_rack_controller::metrics::RackMetrics;
+use nico_secrets::credentials::CredentialManager;
 use librms::RmsApi;
 use sqlx::PgPool;
 use state_controller::state_handler::StateHandlerContextObjects;
 
-use crate as carbide_rack_controller;
+use crate as nico_rack_controller;
 
 pub struct RackStateHandlerContextObjects {}
 #[derive(Clone)]
@@ -35,7 +35,7 @@ pub struct RackStateHandlerServices {
     pub rms_client: Option<Arc<dyn RmsApi>>,
     // TODO: probably this is not the best place for config. But this
     // field is introduced during refactoring. In original code it was
-    // full CarbideConfig.
+    // full NicoConfig.
     pub site_config: Arc<RackConfig>,
     /// Shared client for switch system image RPCs that are not yet exposed through
     /// librms::RmsApi.

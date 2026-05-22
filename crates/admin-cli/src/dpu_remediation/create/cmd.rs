@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-use rpc::forge::CreateRemediationRequest;
+use rpc::nico::CreateRemediationRequest;
 
 use super::args::Args;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 pub async fn create_dpu_remediation(
     create_remediation: Args,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
+) -> Result<(), NicoCliError> {
     let script = tokio::fs::read_to_string(&create_remediation.script_filename)
         .await
         .map_err(|err| {
             tracing::error!("Error reading script file for dpu remediation: {:?}", err);
-            CarbideCliError::IOError(err)
+            NicoCliError::IOError(err)
         })?;
 
     let response = api_client

@@ -20,20 +20,20 @@ use prettytable::{Cell, Row, Table};
 
 use super::args::Args;
 use crate::component_manager::common;
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::rpc::ApiClient;
 
 pub async fn update_firmware(
     opts: Args,
     format: OutputFormat,
     api_client: &ApiClient,
-) -> Result<(), CarbideCliError> {
-    let request: rpc::forge::UpdateComponentFirmwareRequest = opts.try_into()?;
+) -> Result<(), NicoCliError> {
+    let request: rpc::nico::UpdateComponentFirmwareRequest = opts.try_into()?;
     let response = api_client
         .0
         .update_component_firmware(request)
         .await
-        .map_err(CarbideCliError::from)?;
+        .map_err(NicoCliError::from)?;
 
     if format == OutputFormat::Json {
         let results = response
@@ -66,7 +66,7 @@ pub async fn update_firmware(
         common::component_failure_count_and_summary(response.results.iter().map(Some));
 
     if failures > 0 {
-        return Err(CarbideCliError::GenericError(format!(
+        return Err(NicoCliError::GenericError(format!(
             "{failures} component firmware update request(s) failed{failure_summary}"
         )));
     }

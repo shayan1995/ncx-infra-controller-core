@@ -19,12 +19,12 @@ use std::collections::HashMap;
 
 use ::rpc::Machine;
 use ::rpc::admin_cli::OutputFormat;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use prettytable::{Row, Table};
 use serde::Serialize;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 use crate::{async_write, async_write_table_as_csv};
 
@@ -34,7 +34,7 @@ pub async fn versions(
     api_client: &ApiClient,
     options: Args,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     handle_dpu_versions(
         output_file,
         output_format,
@@ -123,7 +123,7 @@ impl From<DpuVersions> for Row {
     }
 }
 
-pub fn generate_firmware_status_json(machines: Vec<Machine>) -> CarbideCliResult<String> {
+pub fn generate_firmware_status_json(machines: Vec<Machine>) -> NicoCliResult<String> {
     let machines: Vec<DpuVersions> = machines.into_iter().map(DpuVersions::from).collect();
     Ok(serde_json::to_string_pretty(&machines)?)
 }
@@ -150,7 +150,7 @@ pub async fn handle_dpu_versions(
     api_client: &ApiClient,
     updates_only: bool,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let expected_versions: HashMap<String, String> = if updates_only {
         let bi = api_client.0.version(true).await?;
         let rc = bi.runtime_config.unwrap_or_default();
@@ -161,7 +161,7 @@ pub async fn handle_dpu_versions(
 
     let dpus = api_client
         .get_all_machines(
-            rpc::forge::MachineSearchConfig {
+            rpc::nico::MachineSearchConfig {
                 include_dpus: true,
                 exclude_hosts: true,
                 ..Default::default()

@@ -18,18 +18,18 @@
 use std::path::PathBuf;
 use std::{env, fs};
 
-use ::rpc::forge as rpc;
-use ::rpc::forge_tls_client::ForgeClientConfig;
+use ::rpc::nico as rpc;
+use ::rpc::nico_tls_client::NicoClientConfig;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 
 use crate::tests::common;
 
-const ROOT_CERT_PATH: &str = "dev/certs/forge_developer_local_only_root_cert_pem";
+const ROOT_CERT_PATH: &str = "dev/certs/nico_developer_local_only_root_cert_pem";
 
 #[tokio::test]
 async fn test_upgrade_check() -> eyre::Result<()> {
-    carbide_host_support::init_logging()?;
+    nico_host_support::init_logging()?;
 
     unsafe {
         env::set_var("DISABLE_TLS_ENFORCEMENT", "true");
@@ -43,29 +43,29 @@ async fn test_upgrade_check() -> eyre::Result<()> {
     let app = axum::Router::new()
         .route("/up", get(handle_up))
         .route(
-            "/forge.Forge/DpuAgentUpgradeCheck",
+            "/nico.NICo/DpuAgentUpgradeCheck",
             post(dpu_agent_upgrade_check),
         )
         // Same handlers, registered at the renamed proto path for forward
         // compatibility with clients built from core.proto. Old clients on
-        // /forge.Forge/* continue to hit the routes above; new clients on
+        // /nico.NICo/* continue to hit the routes above; new clients on
         // /core.Core/* hit these. To be collapsed once all callers have
         // migrated to /core.Core/*.
         .route(
             "/core.Core/DpuAgentUpgradeCheck",
             post(dpu_agent_upgrade_check),
         )
-        // ForgeApiClient needs a working Version route for connection retrying
-        .route("/forge.Forge/Version", post(handle_version))
+        // NicoApiClient needs a working Version route for connection retrying
+        .route("/nico.NICo/Version", post(handle_version))
         .route("/core.Core/Version", post(handle_version));
     let (addr, join_handle) = common::run_grpc_server(app).await?;
 
     let client_config =
-        ForgeClientConfig::new(root_dir.join(ROOT_CERT_PATH).display().to_string(), None)
+        NicoClientConfig::new(root_dir.join(ROOT_CERT_PATH).display().to_string(), None)
             .use_mgmt_vrf()?;
 
     let upgrade_cmd = format!(
-        "echo apt-get install --yes --only-upgrade --reinstall forge-dpu-agent > {}",
+        "echo apt-get install --yes --only-upgrade --reinstall nico-dpu-agent > {}",
         marker.path().display()
     );
     let machine_id = "fm100ht6n80e7do39u8gmt7cvhm89pb32st9ngevgdolu542l1nfa4an0rg".parse()?;

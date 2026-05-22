@@ -16,9 +16,9 @@
  */
 use std::net::IpAddr;
 
-use carbide_uuid::domain::DomainId;
-use carbide_uuid::machine::{MachineId, MachineInterfaceId};
-use carbide_uuid::network::NetworkSegmentId;
+use nico_uuid::domain::DomainId;
+use nico_uuid::machine::{MachineId, MachineInterfaceId};
+use nico_uuid::network::NetworkSegmentId;
 use ipnetwork::IpNetwork;
 use mac_address::MacAddress;
 use sqlx::FromRow;

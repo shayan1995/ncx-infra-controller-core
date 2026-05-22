@@ -44,28 +44,28 @@ use crate::credentials::{
     CredentialKey, CredentialManager, CredentialReader, CredentialWriter, Credentials,
 };
 
-const DEFAULT_VAULT_CA_PATH: &str = "/var/run/secrets/forge-roots/ca.crt";
+const DEFAULT_VAULT_CA_PATH: &str = "/var/run/secrets/nico-roots/ca.crt";
 const VAULT_CACERT_ENV_VAR: &str = "VAULT_CACERT";
 
 #[derive(Clone, Debug)]
-enum ForgeVaultAuthenticationType {
+enum NicoVaultAuthenticationType {
     Root(String),
     ServiceAccount(PathBuf),
 }
 
 #[derive(Clone, Debug)]
-struct ForgeVaultAuthentication {
+struct NicoVaultAuthentication {
     expiry: Instant,
 }
 
-enum ForgeVaultAuthenticationStatus {
-    Authenticated(ForgeVaultAuthentication, Arc<VaultClient>),
+enum NicoVaultAuthenticationStatus {
+    Authenticated(NicoVaultAuthentication, Arc<VaultClient>),
     Initialized,
 }
 
 #[derive(Debug, Clone)]
-struct ForgeVaultClientConfig {
-    pub auth_type: ForgeVaultAuthenticationType,
+struct NicoVaultClientConfig {
+    pub auth_type: NicoVaultAuthenticationType,
     pub vault_address: String,
     pub kv_mount_location: String,
     pub pki_mount_location: String,
@@ -98,7 +98,7 @@ fn resolve_vault_root_ca_path(configured_path: &str) -> Result<String, eyre::Rep
     }
 }
 
-impl ForgeVaultClientConfig {
+impl NicoVaultClientConfig {
     pub fn vault_root_ca_path(&self) -> Result<String, eyre::Report> {
         resolve_vault_root_ca_path(&self.vault_root_ca_path)
     }
@@ -128,7 +128,7 @@ fn service_account_role_name_from_jwt(jwt: &str) -> Result<String, eyre::Report>
 }
 
 #[derive(Debug, Clone)]
-pub struct ForgeVaultMetrics {
+pub struct NicoVaultMetrics {
     pub vault_requests_total_counter: Counter<u64>,
     pub vault_requests_succeeded_counter: Counter<u64>,
     pub vault_requests_failed_counter: Counter<u64>,
@@ -140,15 +140,15 @@ struct RefresherMessage {
     response_tx: tokio::sync::oneshot::Sender<Result<Arc<VaultClient>, eyre::Report>>,
 }
 
-pub struct ForgeVaultClient {
-    vault_metrics: ForgeVaultMetrics,
-    vault_client_config: ForgeVaultClientConfig,
+pub struct NicoVaultClient {
+    vault_metrics: NicoVaultMetrics,
+    vault_client_config: NicoVaultClientConfig,
     vault_refresher_tx: Sender<RefresherMessage>,
 }
 
 fn create_vault_client_settings<S>(
     token: S,
-    vault_client_config: &ForgeVaultClientConfig,
+    vault_client_config: &NicoVaultClientConfig,
 ) -> Result<VaultClientSettings, eyre::ErrReport>
 where
     S: Into<String>,
@@ -169,23 +169,23 @@ where
 }
 
 async fn vault_token_refresh(
-    vault_client_config: &ForgeVaultClientConfig,
-    vault_metrics: &ForgeVaultMetrics,
-) -> Result<(ForgeVaultAuthentication, Arc<VaultClient>), eyre::ErrReport> {
+    vault_client_config: &NicoVaultClientConfig,
+    vault_metrics: &NicoVaultMetrics,
+) -> Result<(NicoVaultAuthentication, Arc<VaultClient>), eyre::ErrReport> {
     let (vault_token, vault_token_expiry_secs) = match vault_client_config.auth_type {
-        ForgeVaultAuthenticationType::Root(ref root_token) => {
+        NicoVaultAuthenticationType::Root(ref root_token) => {
             (
                 root_token.clone(),
                 60 * 60 * 24 * 365 * 10, /*root token never expires just use ten years*/
             )
         }
-        ForgeVaultAuthenticationType::ServiceAccount(ref service_account_token_path) => {
+        NicoVaultAuthenticationType::ServiceAccount(ref service_account_token_path) => {
             let jwt = std::fs::read_to_string(service_account_token_path)
                 .wrap_err("service_account_token_file_read")?
                 .trim()
                 .to_string();
 
-            // Multiple services use this crate (carbide-secrets), so figure out what service account
+            // Multiple services use this crate (nico-secrets), so figure out what service account
             // to use to auth to vault. The token JWT contains the service account name in the decoded
             // JSON, so we can just read that.
             let role_name =
@@ -263,7 +263,7 @@ async fn vault_token_refresh(
     }
 
     Ok((
-        ForgeVaultAuthentication {
+        NicoVaultAuthentication {
             expiry: Instant::now() + Duration::from_secs(vault_token_expiry_secs),
         },
         Arc::new(vault_client),
@@ -271,14 +271,14 @@ async fn vault_token_refresh(
 }
 
 async fn maybe_refresh_vault_client(
-    vault_client_config: &ForgeVaultClientConfig,
-    vault_metrics: &ForgeVaultMetrics,
-    vault_auth_status: ForgeVaultAuthenticationStatus,
-) -> Result<(ForgeVaultAuthentication, Arc<VaultClient>), eyre::ErrReport> {
+    vault_client_config: &NicoVaultClientConfig,
+    vault_metrics: &NicoVaultMetrics,
+    vault_auth_status: NicoVaultAuthenticationStatus,
+) -> Result<(NicoVaultAuthentication, Arc<VaultClient>), eyre::ErrReport> {
     let refresh_fut = vault_token_refresh(vault_client_config, vault_metrics);
     match vault_auth_status {
-        ForgeVaultAuthenticationStatus::Initialized => refresh_fut.await,
-        ForgeVaultAuthenticationStatus::Authenticated(authentication, client) => {
+        NicoVaultAuthenticationStatus::Initialized => refresh_fut.await,
+        NicoVaultAuthenticationStatus::Authenticated(authentication, client) => {
             let time_remaining_until_refresh = authentication
                 .expiry
                 .saturating_duration_since(Instant::now());
@@ -298,19 +298,19 @@ async fn maybe_refresh_vault_client(
 
 async fn vault_refresher_loop(
     mut vault_refresher_rx: Receiver<RefresherMessage>,
-    vault_client_config: ForgeVaultClientConfig,
-    vault_metrics: ForgeVaultMetrics,
+    vault_client_config: NicoVaultClientConfig,
+    vault_metrics: NicoVaultMetrics,
 ) {
-    let mut auth_status = ForgeVaultAuthenticationStatus::Initialized;
+    let mut auth_status = NicoVaultAuthenticationStatus::Initialized;
     while let Some(message) = vault_refresher_rx.recv().await {
         match maybe_refresh_vault_client(&vault_client_config, &vault_metrics, auth_status).await {
             Ok((auth, client)) => {
                 message.response_tx.send(Ok(client.clone())).ok();
-                auth_status = ForgeVaultAuthenticationStatus::Authenticated(auth, client);
+                auth_status = NicoVaultAuthenticationStatus::Authenticated(auth, client);
             }
             Err(error) => {
                 message.response_tx.send(Err(error)).ok();
-                auth_status = ForgeVaultAuthenticationStatus::Initialized; // force a refresh until it works
+                auth_status = NicoVaultAuthenticationStatus::Initialized; // force a refresh until it works
             }
         }
     }
@@ -328,8 +328,8 @@ impl From<VaultClientSettingsBuilderError> for SecretsError {
     }
 }
 
-impl ForgeVaultClient {
-    fn new(vault_client_config: ForgeVaultClientConfig, vault_metrics: ForgeVaultMetrics) -> Self {
+impl NicoVaultClient {
+    fn new(vault_client_config: NicoVaultClientConfig, vault_metrics: NicoVaultMetrics) -> Self {
         let (vault_refresher_tx, vault_refresher_rx) = tokio::sync::mpsc::channel(1);
         let vault_client_config_clone = vault_client_config.clone();
         let vault_metrics_clone = vault_metrics.clone();
@@ -369,7 +369,7 @@ trait VaultTask<T> {
     async fn execute(
         &self,
         vault_client: Arc<VaultClient>,
-        vault_metrics: &ForgeVaultMetrics,
+        vault_metrics: &NicoVaultMetrics,
     ) -> Result<T, SecretsError>;
 }
 
@@ -383,7 +383,7 @@ impl VaultTask<Option<Credentials>> for GetCredentialsHelper<'_, '_> {
     async fn execute(
         &self,
         vault_client: Arc<VaultClient>,
-        vault_metrics: &ForgeVaultMetrics,
+        vault_metrics: &NicoVaultMetrics,
     ) -> Result<Option<Credentials>, SecretsError> {
         vault_metrics
             .vault_requests_total_counter
@@ -439,7 +439,7 @@ impl VaultTask<Option<Credentials>> for GetCredentialsHelper<'_, '_> {
 fn record_vault_client_error(
     err: &ClientError,
     request_type: &'static str,
-    vault_metrics: &ForgeVaultMetrics,
+    vault_metrics: &NicoVaultMetrics,
 ) -> Option<u16> {
     let status_code = match err {
         ClientError::APIError { code, errors: _ } => Some(*code),
@@ -472,7 +472,7 @@ impl VaultTask<()> for SetCredentialsHelper<'_, '_> {
     async fn execute(
         &self,
         vault_client: Arc<VaultClient>,
-        vault_metrics: &ForgeVaultMetrics,
+        vault_metrics: &NicoVaultMetrics,
     ) -> Result<(), SecretsError> {
         vault_metrics
             .vault_requests_total_counter
@@ -534,7 +534,7 @@ impl VaultTask<()> for DeleteCredentialsHelper<'_, '_> {
     async fn execute(
         &self,
         vault_client: Arc<VaultClient>,
-        vault_metrics: &ForgeVaultMetrics,
+        vault_metrics: &NicoVaultMetrics,
     ) -> Result<(), SecretsError> {
         vault_metrics
             .vault_requests_total_counter
@@ -568,7 +568,7 @@ impl VaultTask<()> for DeleteCredentialsHelper<'_, '_> {
 }
 
 #[async_trait]
-impl CredentialReader for ForgeVaultClient {
+impl CredentialReader for NicoVaultClient {
     async fn get_credentials(
         &self,
         key: &CredentialKey,
@@ -586,7 +586,7 @@ impl CredentialReader for ForgeVaultClient {
 }
 
 #[async_trait]
-impl CredentialWriter for ForgeVaultClient {
+impl CredentialWriter for NicoVaultClient {
     async fn set_credentials(
         &self,
         key: &CredentialKey,
@@ -636,7 +636,7 @@ impl CredentialWriter for ForgeVaultClient {
     }
 }
 
-impl CredentialManager for ForgeVaultClient {}
+impl CredentialManager for NicoVaultClient {}
 
 struct GetCertificateHelper {
     /// Used to form URI-type SANs for this certificate
@@ -656,14 +656,14 @@ impl VaultTask<Certificate> for GetCertificateHelper {
     async fn execute(
         &self,
         vault_client: Arc<VaultClient>,
-        vault_metrics: &ForgeVaultMetrics,
+        vault_metrics: &NicoVaultMetrics,
     ) -> Result<Certificate, SecretsError> {
         vault_metrics
             .vault_requests_total_counter
             .add(1, &[KeyValue::new("request_type", "get_certificate")]);
 
-        let trust_domain = "forge.local";
-        let namespace = "forge-system";
+        let trust_domain = "nico.local";
+        let namespace = "nico-system";
 
         // spiffe://<trust_domain>/<namespace>/machine/<stable_machine_id>
         let spiffe_id = format!(
@@ -721,7 +721,7 @@ impl VaultTask<Certificate> for GetCertificateHelper {
 }
 
 #[async_trait]
-impl CertificateProvider for ForgeVaultClient {
+impl CertificateProvider for NicoVaultClient {
     async fn get_certificate(
         &self,
         unique_identifier: &str,
@@ -742,7 +742,7 @@ impl CertificateProvider for ForgeVaultClient {
     }
 }
 
-impl ForgeVaultClient {
+impl NicoVaultClient {
     /// list_secrets returns all secret paths in the
     /// KV mount.
     pub async fn list_secrets(&self) -> Result<Vec<String>, SecretsError> {
@@ -933,7 +933,7 @@ impl VaultConfig {
 pub fn create_vault_client(
     vault_config: &VaultConfig,
     meter: Meter,
-) -> eyre::Result<Arc<ForgeVaultClient>> {
+) -> eyre::Result<Arc<NicoVaultClient>> {
     let configured_ca_path = vault_config
         .vault_cacert()
         .unwrap_or_else(|_| DEFAULT_VAULT_CA_PATH.to_string());
@@ -943,37 +943,37 @@ pub fn create_vault_client(
     let service_account_token_path =
         Path::new("/var/run/secrets/kubernetes.io/serviceaccount/token");
     let auth_type = if service_account_token_path.exists() {
-        ForgeVaultAuthenticationType::ServiceAccount(service_account_token_path.to_owned())
+        NicoVaultAuthenticationType::ServiceAccount(service_account_token_path.to_owned())
     } else {
-        ForgeVaultAuthenticationType::Root(vault_config.token()?)
+        NicoVaultAuthenticationType::Root(vault_config.token()?)
     };
 
     let vault_requests_total_counter = meter
-        .u64_counter("carbide-api.vault.requests_attempted")
+        .u64_counter("nico-api.vault.requests_attempted")
         .with_description("The amount of tls connections that were attempted")
         .build();
     let vault_requests_succeeded_counter = meter
-        .u64_counter("carbide-api.vault.requests_succeeded")
+        .u64_counter("nico-api.vault.requests_succeeded")
         .with_description("The amount of tls connections that were successful")
         .build();
     let vault_requests_failed_counter = meter
-        .u64_counter("carbide-api.vault.requests_failed")
+        .u64_counter("nico-api.vault.requests_failed")
         .with_description("The amount of tcp connections that were failures")
         .build();
     let vault_token_time_remaining_until_refresh_gauge = meter
-        .f64_gauge("carbide-api.vault.token_time_until_refresh")
+        .f64_gauge("nico-api.vault.token_time_until_refresh")
         .with_description(
             "The amount of time, in seconds, until the vault token is required to be refreshed",
         )
         .with_unit("s")
         .build();
     let vault_request_duration_histogram = meter
-        .u64_histogram("carbide-api.vault.request_duration")
+        .u64_histogram("nico-api.vault.request_duration")
         .with_description("the duration of outbound vault requests, in milliseconds")
         .with_unit("ms")
         .build();
 
-    let forge_vault_metrics = ForgeVaultMetrics {
+    let nico_vault_metrics = NicoVaultMetrics {
         vault_requests_total_counter,
         vault_requests_succeeded_counter,
         vault_requests_failed_counter,
@@ -981,7 +981,7 @@ pub fn create_vault_client(
         vault_request_duration_histogram,
     };
 
-    let vault_client_config = ForgeVaultClientConfig {
+    let vault_client_config = NicoVaultClientConfig {
         auth_type,
         vault_address: vault_config.address()?,
         kv_mount_location: vault_config.kv_mount_location()?,
@@ -990,8 +990,8 @@ pub fn create_vault_client(
         vault_root_ca_path,
     };
 
-    let forge_vault_client = ForgeVaultClient::new(vault_client_config, forge_vault_metrics);
-    Ok(Arc::new(forge_vault_client))
+    let nico_vault_client = NicoVaultClient::new(vault_client_config, nico_vault_metrics);
+    Ok(Arc::new(nico_vault_client))
 }
 
 #[cfg(test)]
@@ -1042,9 +1042,9 @@ mod tests {
 
     #[test]
     fn extracts_service_account_name_from_kubernetes_jwt_subject() {
-        let jwt = jwt_with_account("carbide-bmc-proxy".into());
+        let jwt = jwt_with_account("nico-bmc-proxy".into());
         let role_name = service_account_role_name_from_jwt(&jwt).unwrap();
-        assert_eq!(role_name, "carbide-bmc-proxy");
+        assert_eq!(role_name, "nico-bmc-proxy");
     }
 
     #[test]

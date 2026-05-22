@@ -16,13 +16,13 @@
  */
 
 use super::args::OnDemandOptions;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn on_demand_machine_validation(
     api_client: &ApiClient,
     args: OnDemandOptions,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     api_client
         .on_demand_machine_validation(
             args.machine,

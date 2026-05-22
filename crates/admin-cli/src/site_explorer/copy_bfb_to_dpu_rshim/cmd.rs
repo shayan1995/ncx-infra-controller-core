@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-use ::rpc::forge::{BmcEndpointRequest, CopyBfbToDpuRshimRequest, SshRequest};
+use ::rpc::nico::{BmcEndpointRequest, CopyBfbToDpuRshimRequest, SshRequest};
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn copy_bfb_to_dpu_rshim(api_client: &ApiClient, args: Args) -> CarbideCliResult<()> {
+pub async fn copy_bfb_to_dpu_rshim(api_client: &ApiClient, args: Args) -> NicoCliResult<()> {
     api_client
         .0
         .copy_bfb_to_dpu_rshim(CopyBfbToDpuRshimRequest {

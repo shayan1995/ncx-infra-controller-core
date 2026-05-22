@@ -17,10 +17,10 @@
 
 use std::collections::{HashMap, HashSet};
 
-use carbide_rack::firmware_update::build_new_node_info;
-use carbide_rack_controller::config::RmsConfig;
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
+use nico_rack::firmware_update::build_new_node_info;
+use nico_rack_controller::config::RmsConfig;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
 use db::switch as db_switch;
 use librms::protos::rack_manager as rms;
 use model::rack::FirmwareUpgradeDeviceInfo;
@@ -28,7 +28,7 @@ use model::switch::{FabricManagerState, FabricManagerStatus};
 use serde::Deserialize;
 use sqlx::PgConnection;
 
-use crate as carbide_rack_controller;
+use crate as nico_rack_controller;
 
 pub(super) fn validate_switch_inventory_for_nmx_cluster(
     switches: &[FirmwareUpgradeDeviceInfo],

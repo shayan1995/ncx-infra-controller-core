@@ -16,10 +16,10 @@
  */
 
 use clap::Parser;
-use rpc::{CredentialType, forge as forgerpc};
+use rpc::{CredentialType, nico as nicorpc};
 
 use crate::credential::common::url_validator;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
 #[derive(Parser, Debug, Clone)]
 pub struct Args {
@@ -30,9 +30,9 @@ pub struct Args {
     pub token: String,
 }
 
-impl TryFrom<Args> for forgerpc::CredentialCreationRequest {
-    type Error = CarbideCliError;
-    fn try_from(args: Args) -> CarbideCliResult<Self> {
+impl TryFrom<Args> for nicorpc::CredentialCreationRequest {
+    type Error = NicoCliError;
+    fn try_from(args: Args) -> NicoCliResult<Self> {
         let username = url_validator(args.url)?;
         Ok(Self {
             credential_type: CredentialType::Ufm.into(),

@@ -18,7 +18,7 @@ use std::fmt::Debug;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use carbide_metrics_utils::OtelView;
+use nico_metrics_utils::OtelView;
 use eyre::WrapErr;
 use opentelemetry::metrics::{Meter, MeterProvider};
 use opentelemetry::trace::{Link, SamplingDecision, SamplingResult, SpanKind, TracerProvider};
@@ -114,7 +114,7 @@ pub fn setup_logging(
     // This doesn't track levels but instead just enabled/disabled (when we want tracing enabled, we
     // typically want a high level of verbosity.) Enabled by default if debug is enabled.
     let tracing_enabled = Arc::new(AtomicBool::new(debug == 1));
-    let trace_sampler = CarbideSpanSampler::new(tracing_enabled.clone());
+    let trace_sampler = NicoSpanSampler::new(tracing_enabled.clone());
     let trace_filter =
         filter::filter_fn(should_accept_span_or_event).with_max_level_hint(log_level);
 
@@ -134,18 +134,18 @@ pub fn setup_logging(
                         .build()?;
 
                     let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
-                        // CarbideSpanSampler selects spans that begin from our crate
+                        // NicoSpanSampler selects spans that begin from our crate
                         .with_sampler(trace_sampler.into_sampler())
                         .with_batch_exporter(otlp_exporter)
                         .with_resource(
                             Resource::builder()
-                                .with_attributes([KeyValue::new("service.name", "carbide-api")])
+                                .with_attributes([KeyValue::new("service.name", "nico-api")])
                                 .build(),
                         )
                         .build();
                     Some(
                         tracing_opentelemetry::layer()
-                            .with_tracer(tracer_provider.tracer("carbide"))
+                            .with_tracer(tracer_provider.tracer("nico"))
                             .with_filter(trace_filter),
                     )
                 }
@@ -189,8 +189,8 @@ pub fn create_metrics() -> eyre::Result<Metrics> {
     use opentelemetry::KeyValue;
     let service_telemetry_attributes = opentelemetry_sdk::Resource::builder()
         .with_attributes(vec![
-            KeyValue::new(semcov::resource::SERVICE_NAME, "carbide-api"),
-            KeyValue::new(semcov::resource::SERVICE_NAMESPACE, "forge-system"),
+            KeyValue::new(semcov::resource::SERVICE_NAME, "nico-api"),
+            KeyValue::new(semcov::resource::SERVICE_NAMESPACE, "nico-system"),
         ])
         .build();
     let prometheus_registry = prometheus::Registry::new();
@@ -208,7 +208,7 @@ pub fn create_metrics() -> eyre::Result<Metrics> {
         .build();
     // After this call `global::meter()` will be available
     opentelemetry::global::set_meter_provider(meter_provider.clone());
-    let meter = meter_provider.meter("carbide-api");
+    let meter = meter_provider.meter("nico-api");
 
     Ok(Metrics {
         registry: prometheus_registry,
@@ -224,8 +224,8 @@ pub fn create_metrics() -> eyre::Result<Metrics> {
 /// buckets are 0, 5, 10, 25
 fn create_metric_view_for_retry_histograms(
     name_filter: &'static str,
-) -> carbide_metrics_utils::Result<OtelView> {
-    carbide_metrics_utils::new_view(
+) -> nico_metrics_utils::Result<OtelView> {
+    nico_metrics_utils::new_view(
         name_filter,
         Some(opentelemetry_sdk::metrics::InstrumentKind::Histogram),
         opentelemetry_sdk::metrics::Aggregation::ExplicitBucketHistogram {
@@ -236,21 +236,21 @@ fn create_metric_view_for_retry_histograms(
 }
 
 #[derive(Debug, Clone)]
-struct CarbideSpanSampler(Arc<AtomicBool>);
+struct NicoSpanSampler(Arc<AtomicBool>);
 
-impl CarbideSpanSampler {
+impl NicoSpanSampler {
     fn new(enabled: Arc<AtomicBool>) -> Self {
         Self(enabled)
     }
 
-    /// Construct a new Sampler that samples spans originating from the carbide crate
+    /// Construct a new Sampler that samples spans originating from the nico crate
     fn into_sampler(self) -> Sampler {
         Sampler::ParentBased(Box::new(self))
     }
 }
 
 /// Predicate to check if a child span or event should be accepted. This is distinct from
-/// CarbideSpanSampler, which chooses which *root* spans to accept (ie. just ours). This predicate
+/// NicoSpanSampler, which chooses which *root* spans to accept (ie. just ours). This predicate
 /// checks if any span or event should be accepted, even within a root span.
 ///
 /// Currently discards tokio spans: tokio seems to have an issue where it creates spans without
@@ -263,7 +263,7 @@ fn should_accept_span_or_event(metadata: &tracing::Metadata<'_>) -> bool {
     !is_tokio
 }
 
-impl ShouldSample for CarbideSpanSampler {
+impl ShouldSample for NicoSpanSampler {
     fn should_sample(
         &self,
         _parent_context: Option<&Context>,
@@ -288,7 +288,7 @@ impl ShouldSample for CarbideSpanSampler {
                     Value::String(str) => Some(str.as_str()),
                     _ => None,
                 })
-                .is_some_and(|s| s.starts_with("carbide::"))
+                .is_some_and(|s| s.starts_with("nico::"))
         };
 
         SamplingResult {
@@ -308,8 +308,8 @@ pub fn create_metric_for_spancount_reader(
     spancount_reader: Option<SpanCountReader>,
 ) {
     meter
-        .u64_observable_gauge("carbide_api_tracing_spans_open")
-        .with_description("Whether the Forge Site Controller API is running")
+        .u64_observable_gauge("nico_api_tracing_spans_open")
+        .with_description("Whether the NICo Site Controller API is running")
         .with_callback(move |observer| {
             let open_spans = if let Some(spancount_reader) = &spancount_reader {
                 spancount_reader.open_spans()
@@ -432,8 +432,8 @@ mod tests {
         // RUST_LOG=info; user only sets a default, no per-target directives.
         with_filter("info", || {
             // User's default applies to unrelated targets.
-            assert!(tracing::enabled!(target: "carbide", tracing::Level::INFO));
-            assert!(!tracing::enabled!(target: "carbide", tracing::Level::DEBUG));
+            assert!(tracing::enabled!(target: "nico", tracing::Level::INFO));
+            assert!(!tracing::enabled!(target: "nico", tracing::Level::DEBUG));
             // Dep caps still apply where the user didn't override.
             assert!(!tracing::enabled!(target: "hyper", tracing::Level::INFO));
             assert!(tracing::enabled!(target: "hyper", tracing::Level::ERROR));
@@ -444,9 +444,9 @@ mod tests {
 
     #[test]
     fn user_target_overrides_default_without_touching_others() {
-        // RUST_LOG=info,carbide=debug; raises one target; deps stay capped.
-        with_filter("info,carbide=debug", || {
-            assert!(tracing::enabled!(target: "carbide", tracing::Level::DEBUG));
+        // RUST_LOG=info,nico=debug; raises one target; deps stay capped.
+        with_filter("info,nico=debug", || {
+            assert!(tracing::enabled!(target: "nico", tracing::Level::DEBUG));
             // Unrelated target still at the INFO default.
             assert!(tracing::enabled!(target: "other", tracing::Level::INFO));
             assert!(!tracing::enabled!(target: "other", tracing::Level::DEBUG));
@@ -475,8 +475,8 @@ mod tests {
 
         let subscriber = tracing_subscriber::registry().with(dep_log_filter(initial));
         tracing::subscriber::with_default(subscriber, || {
-            assert!(tracing::enabled!(target: "carbide", tracing::Level::DEBUG));
-            assert!(!tracing::enabled!(target: "carbide", tracing::Level::TRACE));
+            assert!(tracing::enabled!(target: "nico", tracing::Level::DEBUG));
+            assert!(!tracing::enabled!(target: "nico", tracing::Level::TRACE));
         });
     }
 }

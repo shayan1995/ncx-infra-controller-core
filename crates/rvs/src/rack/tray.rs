@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use carbide_uuid::rack::RackId;
+use nico_uuid::rack::RackId;
 
 use crate::partitions::{IbNode, NvlNode};
 

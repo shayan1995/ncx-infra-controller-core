@@ -19,17 +19,17 @@ use ::rpc::admin_cli::output::OutputFormat;
 
 use super::super::show::cmd::convert_extension_services_to_table;
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn handle_update(
     args: Args,
     output_format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let is_json = output_format == OutputFormat::Json;
 
-    let req: ::rpc::forge::UpdateDpuExtensionServiceRequest = args.try_into()?;
+    let req: ::rpc::nico::UpdateDpuExtensionServiceRequest = args.try_into()?;
     let extension_service = api_client.0.update_dpu_extension_service(req).await?;
 
     if is_json {

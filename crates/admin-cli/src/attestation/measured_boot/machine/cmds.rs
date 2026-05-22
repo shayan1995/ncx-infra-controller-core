@@ -29,7 +29,7 @@ use serde::Serialize;
 use crate::attestation::measured_boot::global;
 use crate::attestation::measured_boot::machine::args::{Attest, CmdMachine, Show};
 use crate::cli_output;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 /// dispatch matches + dispatches the correct command
@@ -37,7 +37,7 @@ use crate::rpc::ApiClient;
 pub async fn dispatch(
     cmd: CmdMachine,
     cli: &mut global::cmds::CliData<'_, '_>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match cmd {
         CmdMachine::Attest(local_args) => {
             cli_output(
@@ -74,29 +74,29 @@ pub async fn dispatch(
 
 /// attest sends attestation data for the given machine ID, as in, PCR
 /// register + value pairings, which results in a journal entry being made.
-pub async fn attest(grpc_conn: &ApiClient, attest: Attest) -> CarbideCliResult<MeasurementReport> {
+pub async fn attest(grpc_conn: &ApiClient, attest: Attest) -> NicoCliResult<MeasurementReport> {
     let response = grpc_conn.0.attest_candidate_machine(attest).await?;
 
     MeasurementReport::from_grpc_opt(response.report)
-        .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+        .map_err(|e| NicoCliError::GenericError(e.to_string()))
 }
 
 /// show_by_id shows all info about a given machine ID.
-pub async fn show_by_id(grpc_conn: &ApiClient, show: Show) -> CarbideCliResult<CandidateMachine> {
+pub async fn show_by_id(grpc_conn: &ApiClient, show: Show) -> NicoCliResult<CandidateMachine> {
     let response = grpc_conn
         .0
         .show_candidate_machine(ShowCandidateMachineRequest::try_from(show)?)
         .await?;
 
     CandidateMachine::from_grpc_opt(response.machine)
-        .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+        .map_err(|e| NicoCliError::GenericError(e.to_string()))
 }
 
 /// show_all shows all info about all machines.
 pub async fn show_all(
     grpc_conn: &ApiClient,
     _show: Show,
-) -> CarbideCliResult<CandidateMachineList> {
+) -> NicoCliResult<CandidateMachineList> {
     Ok(CandidateMachineList(
         grpc_conn
             .0
@@ -106,14 +106,14 @@ pub async fn show_all(
             .into_iter()
             .map(|machine| {
                 CandidateMachine::try_from(machine)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))
             })
-            .collect::<CarbideCliResult<Vec<CandidateMachine>>>()?,
+            .collect::<NicoCliResult<Vec<CandidateMachine>>>()?,
     ))
 }
 
 /// list lists all machine IDs.
-pub async fn list(grpc_conn: &ApiClient) -> CarbideCliResult<CandidateMachineSummaryList> {
+pub async fn list(grpc_conn: &ApiClient) -> NicoCliResult<CandidateMachineSummaryList> {
     Ok(CandidateMachineSummaryList(
         grpc_conn
             .0
@@ -123,9 +123,9 @@ pub async fn list(grpc_conn: &ApiClient) -> CarbideCliResult<CandidateMachineSum
             .into_iter()
             .map(|machine| {
                 CandidateMachineSummary::try_from(machine)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))
             })
-            .collect::<CarbideCliResult<Vec<CandidateMachineSummary>>>()?,
+            .collect::<NicoCliResult<Vec<CandidateMachineSummary>>>()?,
     ))
 }
 

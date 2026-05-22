@@ -20,14 +20,14 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use carbide_dpf::DpuPhase;
-use carbide_machine_controller::dpf::DpfOperations;
+use nico_dpf::DpuPhase;
+use nico_machine_controller::dpf::DpfOperations;
 use model::machine::ManagedHostState;
 use tokio::time::timeout;
 
 const TEST_TIMEOUT: Duration = Duration::from_secs(30);
 
-use carbide_machine_controller::dpf::MockDpfOperations;
+use nico_machine_controller::dpf::MockDpfOperations;
 
 use crate::tests::common::api_fixtures::{
     TestEnvOverrides, create_managed_host_with_dpf, create_test_env_with_overrides, get_config,
@@ -72,9 +72,9 @@ async fn test_dpu_and_host_till_ready(pool: sqlx::PgPool) {
     assert!(host.dpf.used_for_ingestion);
     assert!(matches!(dpu.current_state(), ManagedHostState::Ready));
 
-    let carbide_machines_per_state = env.test_meter.parsed_metrics("carbide_machines_per_state");
+    let nico_machines_per_state = env.test_meter.parsed_metrics("nico_machines_per_state");
 
-    assert!(carbide_machines_per_state.contains(&(
+    assert!(nico_machines_per_state.contains(&(
         "{fresh=\"true\",state=\"ready\",substate=\"\"}".to_string(),
         "3".to_string()
     )));

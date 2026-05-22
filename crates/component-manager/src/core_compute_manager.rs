@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
-use carbide_redfish::libredfish::RedfishClientPool;
-use forge_secrets::credentials::Credentials;
+use nico_redfish::libredfish::RedfishClientPool;
+use nico_secrets::credentials::Credentials;
 use model::component_manager::{ComputeTrayComponent, PowerAction};
 
 use crate::compute_tray_manager::{
@@ -77,7 +77,7 @@ impl crate::compute_tray_manager::ComputeTrayManager for CoreComputeTrayManager 
                 ref password,
             } = ep.bmc_credentials;
 
-            let auth = carbide_redfish::libredfish::RedfishAuth::Direct(
+            let auth = nico_redfish::libredfish::RedfishAuth::Direct(
                 username.clone(),
                 password.clone(),
             );

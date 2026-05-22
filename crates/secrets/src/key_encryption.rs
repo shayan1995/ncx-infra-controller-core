@@ -162,7 +162,7 @@ pub fn decrypt(
 
 /// Generates an ES256 (ECDSA P-256) signing key pair (PKCS#8 private + SPKI public PEM via `p256`).
 ///
-/// The public PEM matches `p256::PublicKey::from_public_key_pem` (same as carbide-api JWKS).
+/// The public PEM matches `p256::PublicKey::from_public_key_pem` (same as nico-api JWKS).
 /// Returns (private_key_pem_bytes, public_key_pem).
 pub fn generate_es256_key_pair() -> Result<(Vec<u8>, String), KeyEncryptionError> {
     let secret_key = SecretKey::try_generate_from_rng(&mut SysRng).map_err(|e| {

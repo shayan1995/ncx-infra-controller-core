@@ -19,7 +19,7 @@ use ::rpc::admin_cli::OutputFormat;
 use prettytable::row;
 
 use crate::dpf::common::DpfQuery;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 pub async fn show(
@@ -27,10 +27,10 @@ pub async fn show(
     _format: OutputFormat,
     page_size: usize,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let machine_ids = if let Some(host) = query.host {
-        if host.machine_type() != carbide_uuid::machine::MachineType::Dpu {
-            return Err(CarbideCliError::GenericError(
+        if host.machine_type() != nico_uuid::machine::MachineType::Dpu {
+            return Err(NicoCliError::GenericError(
                 "Only host id is expected!!".to_string(),
             ));
         }
@@ -38,7 +38,7 @@ pub async fn show(
     } else {
         api_client
             .0
-            .find_machine_ids(::rpc::forge::MachineSearchConfig {
+            .find_machine_ids(::rpc::nico::MachineSearchConfig {
                 include_dpus: false,
                 include_predicted_host: true,
                 ..Default::default()

@@ -16,13 +16,13 @@
  */
 use std::ops::DerefMut;
 
-use ::rpc::forge::ManagedHostNetworkConfigRequest;
-use carbide_redfish::libredfish::test_support::RedfishSimAction;
-use forge::forge_server::Forge;
+use ::rpc::nico::ManagedHostNetworkConfigRequest;
+use nico_redfish::libredfish::test_support::RedfishSimAction;
+use nico::nico_server::NICo;
 use ipnetwork::IpNetwork;
 use itertools::Itertools;
 use model::machine::{ManagedHostState, ManagedHostStateSnapshot};
-use rpc::{Metadata, forge};
+use rpc::{Metadata, nico};
 
 use crate::tests::common;
 use crate::tests::common::api_fixtures;
@@ -170,7 +170,7 @@ async fn create_test_env_for_instance_allocation(
         &FIXTURE_HOST_INBAND_NETWORK_SEGMENT_GATEWAY_2
             .ip()
             .to_string(),
-        forge::NetworkSegmentType::HostInband,
+        nico::NetworkSegmentType::HostInband,
         Some(if options.host_inband_segments_in_different_vpcs {
             flat_vpc_2_id
         } else {
@@ -208,29 +208,29 @@ async fn test_zero_dpu_instance_allocation_rejects_explicit_interfaces(
     // Allocate an instance by explicitly specifying an interface that is on the HOST_INBAND network
     let instance = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(), // from sql fixture
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
                 network_security_group_id: None,
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
-                    interfaces: vec![forge::InstanceInterfaceConfig {
-                        function_type: forge::InterfaceFunctionType::Physical as i32,
+                network: Some(nico::InstanceNetworkConfig {
+                    interfaces: vec![nico::InstanceInterfaceConfig {
+                        function_type: nico::InterfaceFunctionType::Physical as i32,
                         network_segment_id: Some(host_inband_segment.id),
                         network_details: None,
                         device: None,
@@ -283,27 +283,27 @@ async fn test_zero_dpu_instance_allocation_auto(
 
     let instance = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(),
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
                 network_security_group_id: None,
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
+                network: Some(nico::InstanceNetworkConfig {
                     interfaces: vec![],
                     auto: true,
                 }),
@@ -323,7 +323,7 @@ async fn test_zero_dpu_instance_allocation_auto(
     // Make sure getting the Machine over RPC has the correct instance network restrictions. While
     // not strictly testing instance allocation, it's very related, because cloud-api will be using
     // the static_vpc_id field to determine where allocation should happen.
-    let rpc_machine: forge::Machine = env
+    let rpc_machine: nico::Machine = env
         .find_machine(zero_dpu_host.host_snapshot.id)
         .await
         .remove(0);
@@ -331,7 +331,7 @@ async fn test_zero_dpu_instance_allocation_auto(
     let instance_network_restrictions = rpc_machine.instance_network_restrictions.unwrap();
     assert_eq!(
         instance_network_restrictions.network_segment_membership_type,
-        forge::InstanceNetworkSegmentMembershipType::Static as i32,
+        nico::InstanceNetworkSegmentMembershipType::Static as i32,
         "Machine that was just ingested should have a static network membership type in its instance network restrictions, since it has zero DPUs",
     );
     assert_eq!(
@@ -378,21 +378,21 @@ async fn test_zero_dpu_instance_allocation_rejects_missing_auto(
 
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(),
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
@@ -465,26 +465,26 @@ async fn test_zero_dpu_instance_allocation_auto_multi_segment(
 
     let instance = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(), // from sql fixture
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
+                network: Some(nico::InstanceNetworkConfig {
                     interfaces: vec![],
                     auto: true,
                 }),
@@ -610,21 +610,21 @@ async fn test_reject_single_dpu_instance_allocation_no_network_config(
     // Create an instance on a host with DPUs, without specifying a network config, which is not allowed
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(single_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(), // from sql fixture
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
@@ -669,28 +669,28 @@ async fn test_reject_single_dpu_instance_allocation_host_inband_network_config(
     // which is not allowed
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(single_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(), // from sql fixture
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
-                    interfaces: vec![forge::InstanceInterfaceConfig {
-                        function_type: forge::InterfaceFunctionType::Physical as i32,
+                network: Some(nico::InstanceNetworkConfig {
+                    interfaces: vec![nico::InstanceInterfaceConfig {
+                        function_type: nico::InterfaceFunctionType::Physical as i32,
                         network_segment_id: Some(host_inband_segment.id),
                         network_details: None,
                         device: None,
@@ -787,7 +787,7 @@ async fn test_reject_zero_dpu_instance_allocation_multiple_vpcs(
         })
         .await?;
 
-    let host_snapshot_rpc: forge::Machine = zero_dpu_host.host_snapshot.clone().into();
+    let host_snapshot_rpc: nico::Machine = zero_dpu_host.host_snapshot.clone().into();
 
     let host_inband_segment =
         db::network_segment::find_by_name(env.pool.begin().await?.deref_mut(), "HOST_INBAND")
@@ -799,7 +799,7 @@ async fn test_reject_zero_dpu_instance_allocation_multiple_vpcs(
     let instance_network_restrictions = host_snapshot_rpc.instance_network_restrictions.unwrap();
     assert_eq!(
         instance_network_restrictions.network_segment_membership_type,
-        forge::InstanceNetworkSegmentMembershipType::Static as i32,
+        nico::InstanceNetworkSegmentMembershipType::Static as i32,
         "Instance network segment membership should be Static since the host has zero DPUs"
     );
     assert_eq!(
@@ -827,22 +827,22 @@ async fn test_reject_zero_dpu_instance_allocation_multiple_vpcs(
     // Allocate an instance without specifying a network config
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
+            config: Some(nico::InstanceConfig {
                 network_security_group_id: None,
-                tenant: Some(forge::TenantConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(), // from sql fixture
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
@@ -887,28 +887,28 @@ async fn test_single_dpu_instance_allocation(
     // Create an instance on a host with DPUs, without specifying a network config, which is not allowed
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(single_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(), // from sql fixture
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
-                    interfaces: vec![forge::InstanceInterfaceConfig {
-                        function_type: forge::InterfaceFunctionType::Physical as i32,
+                network: Some(nico::InstanceNetworkConfig {
+                    interfaces: vec![nico::InstanceInterfaceConfig {
+                        function_type: nico::InterfaceFunctionType::Physical as i32,
                         network_segment_id: Some(tenant_segment.id),
                         network_details: None,
                         device: None,
@@ -938,7 +938,7 @@ async fn test_single_dpu_instance_allocation(
 
     let mut machine = env
         .api
-        .find_machines_by_ids(tonic::Request::new(rpc::forge::MachinesByIdsRequest {
+        .find_machines_by_ids(tonic::Request::new(rpc::nico::MachinesByIdsRequest {
             machine_ids: vec![mid],
             ..Default::default()
         }))
@@ -1031,29 +1031,29 @@ async fn test_reject_zero_dpu_instance_with_tenant_network_segment(
 
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(),
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
                 network_security_group_id: None,
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
-                    interfaces: vec![forge::InstanceInterfaceConfig {
-                        function_type: forge::InterfaceFunctionType::Physical as i32,
+                network: Some(nico::InstanceNetworkConfig {
+                    interfaces: vec![nico::InstanceInterfaceConfig {
+                        function_type: nico::InterfaceFunctionType::Physical as i32,
                         network_segment_id: Some(tenant_segment.id),
                         network_details: None,
                         device: None,
@@ -1109,29 +1109,29 @@ async fn test_zero_dpu_instance_surfaces_underlay_ip_in_status(
 
     crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(),
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
                 network_security_group_id: None,
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
                 // Tenant signals `auto: true` with no interfaces; NICo
                 // resolves the HostInband segment from the host snapshot.
-                network: Some(forge::InstanceNetworkConfig {
+                network: Some(nico::InstanceNetworkConfig {
                     interfaces: vec![],
                     auto: true,
                 }),
@@ -1169,7 +1169,7 @@ async fn test_zero_dpu_instance_surfaces_underlay_ip_in_status(
 
     assert_eq!(
         net_status.configs_synced,
-        forge::SyncState::Synced as i32,
+        nico::SyncState::Synced as i32,
         "host-inband interfaces don't need DPU-agent observations, so the status should be synthesized from config and report Synced immediately"
     );
 
@@ -1236,30 +1236,30 @@ async fn test_reject_zero_dpu_instance_with_extension_services(
 
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(),
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
                 network_security_group_id: None,
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
                 network: None,
                 infiniband: None,
-                dpu_extension_services: Some(forge::InstanceDpuExtensionServicesConfig {
-                    service_configs: vec![forge::InstanceDpuExtensionServiceConfig {
+                dpu_extension_services: Some(nico::InstanceDpuExtensionServicesConfig {
+                    service_configs: vec![nico::InstanceDpuExtensionServiceConfig {
                         service_id: "test-service".to_string(),
                         version: "1.0.0".to_string(),
                     }],
@@ -1299,29 +1299,29 @@ async fn test_instance_allocation_rejects_auto_with_explicit_interfaces(
 
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(zero_dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(),
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
                 network_security_group_id: None,
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
-                    interfaces: vec![forge::InstanceInterfaceConfig {
-                        function_type: forge::InterfaceFunctionType::Physical as i32,
+                network: Some(nico::InstanceNetworkConfig {
+                    interfaces: vec![nico::InstanceInterfaceConfig {
+                        function_type: nico::InterfaceFunctionType::Physical as i32,
                         network_segment_id: Some(host_inband_segment.id),
                         network_details: None,
                         device: None,
@@ -1370,27 +1370,27 @@ async fn test_instance_allocation_rejects_auto_on_dpu_host(
 
     let result = crate::handlers::instance::allocate(
         env.api.as_ref(),
-        tonic::Request::new(forge::InstanceAllocationRequest {
+        tonic::Request::new(nico::InstanceAllocationRequest {
             machine_id: Some(dpu_host.host_snapshot.id),
             instance_type_id: None,
-            config: Some(forge::InstanceConfig {
-                tenant: Some(forge::TenantConfig {
+            config: Some(nico::InstanceConfig {
+                tenant: Some(nico::TenantConfig {
                     tenant_organization_id: "2829bbe3-c169-4cd9-8b2a-19a8b1618a93".to_string(),
                     hostname: None,
                     tenant_keyset_ids: vec![],
                 }),
                 network_security_group_id: None,
-                os: Some(forge::InstanceOperatingSystemConfig {
+                os: Some(nico::InstanceOperatingSystemConfig {
                     phone_home_enabled: false,
                     run_provisioning_instructions_on_every_boot: false,
                     user_data: None,
-                    variant: Some(forge::instance_operating_system_config::Variant::Ipxe(
-                        forge::InlineIpxe {
+                    variant: Some(nico::instance_operating_system_config::Variant::Ipxe(
+                        nico::InlineIpxe {
                             ipxe_script: "exit".to_string(),
                         },
                     )),
                 }),
-                network: Some(forge::InstanceNetworkConfig {
+                network: Some(nico::InstanceNetworkConfig {
                     interfaces: vec![],
                     auto: true,
                 }),

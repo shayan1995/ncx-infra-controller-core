@@ -16,10 +16,10 @@
  */
 
 use clap::Parser;
-use rpc::{CredentialType, forge as forgerpc};
+use rpc::{CredentialType, nico as nicorpc};
 
 use crate::credential::common::password_validator;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 
 #[derive(Parser, Debug, Clone)]
 pub struct Args {
@@ -27,10 +27,10 @@ pub struct Args {
     pub password: String,
 }
 
-impl TryFrom<Args> for forgerpc::CredentialCreationRequest {
-    type Error = CarbideCliError;
+impl TryFrom<Args> for nicorpc::CredentialCreationRequest {
+    type Error = NicoCliError;
 
-    fn try_from(args: Args) -> CarbideCliResult<Self> {
+    fn try_from(args: Args) -> NicoCliResult<Self> {
         Ok(Self {
             credential_type: CredentialType::BgpSiteWideLeafPassword.into(),
             username: None,

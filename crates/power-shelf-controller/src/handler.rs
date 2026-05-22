@@ -17,7 +17,7 @@
 
 //! State Handler implementation for PowerShelves (mirrors Switch state handler structure).
 
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_uuid::power_shelf::PowerShelfId;
 use model::power_shelf::{
     PowerShelf, PowerShelfControllerState, derive_power_shelf_aggregate_health,
 };

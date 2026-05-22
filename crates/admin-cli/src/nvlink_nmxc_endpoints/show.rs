@@ -9,7 +9,7 @@ use prettytable::{Table, row};
 
 use crate::cfg::run::Run;
 use crate::cfg::runtime::RuntimeContext;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 
 #[derive(Parser, Debug)]
@@ -20,17 +20,17 @@ pub struct Args {
 }
 
 impl Run for Args {
-    async fn run(self, ctx: &mut RuntimeContext) -> CarbideCliResult<()> {
+    async fn run(self, ctx: &mut RuntimeContext) -> NicoCliResult<()> {
         run(self, ctx.config.format, &ctx.api_client).await
     }
 }
 
-async fn run(args: Args, format: OutputFormat, api_client: &ApiClient) -> CarbideCliResult<()> {
+async fn run(args: Args, format: OutputFormat, api_client: &ApiClient) -> NicoCliResult<()> {
     let list = api_client
         .0
         .list_nvlink_nmxc_endpoints()
         .await
-        .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+        .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
 
     let mut entries = list.entries;
     if let Some(ref s) = args.chassis_serial {
@@ -40,7 +40,7 @@ async fn run(args: Args, format: OutputFormat, api_client: &ApiClient) -> Carbid
     if format == OutputFormat::Json {
         println!(
             "{}",
-            serde_json::to_string_pretty(&entries).map_err(CarbideCliError::from)?
+            serde_json::to_string_pretty(&entries).map_err(NicoCliError::from)?
         );
         return Ok(());
     }

@@ -19,9 +19,9 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Instant;
 
-use ::rpc::forge as rpc;
-use carbide_authn::SpiffeContext;
-use carbide_authn::middleware::{CertDescriptionMiddleware, ConnectionAttributes};
+use ::rpc::nico as rpc;
+use nico_authn::SpiffeContext;
+use nico_authn::middleware::{CertDescriptionMiddleware, ConnectionAttributes};
 use hyper::server::conn::{http1, http2};
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use hyper_util::service::TowerToHyperService;
@@ -42,7 +42,7 @@ use crate::api::Api;
 use crate::auth;
 use crate::auth::Authorization;
 use crate::cfg::file::AuthConfig;
-use crate::errors::CarbideError;
+use crate::errors::NicoError;
 use crate::logging::api_logs::LogLayer;
 
 pub enum ApiListenMode {
@@ -209,9 +209,9 @@ pub async fn start(
         })
         .map(SpiffeContext::try_from)
         .transpose()?
-        .ok_or(CarbideError::InvalidConfiguration(
+        .ok_or(NicoError::InvalidConfiguration(
             ConfigValidationError::InvalidValue(
-                "could not parse trust config from auth config in carbide api config toml file"
+                "could not parse trust config from auth config in nico api config toml file"
                     .to_string(),
             ),
         ))?;
@@ -247,19 +247,19 @@ pub async fn start(
         .route("/", axum::routing::get(root_url))
         .route_service(
             "/core.Core/{*rpc}",
-            rpc::forge_server::ForgeServer::from_arc(api_service.clone()),
+            rpc::nico_server::NicoServer::from_arc(api_service.clone()),
         )
-        // Backward-compat alias: accept legacy /forge.Forge/* paths by
+        // Backward-compat alias: accept legacy /nico.NICo/* paths by
         // rewriting them to /core.Core/* before dispatch. The generated
-        // gRPC server (CoreServer, exposed via the ForgeServer type alias)
+        // gRPC server (CoreServer, exposed via the NicoServer type alias)
         // matches on the full URI path internally, so the rewrite is
         // required for the legacy path to find its handler. Wire payload
         // bytes are untouched — only the URI path is substituted.
         .route_service(
-            "/forge.Forge/{*rpc}",
+            "/nico.NICo/{*rpc}",
             tower::ServiceBuilder::new()
                 .map_request(|mut req: http::Request<axum::body::Body>| {
-                    let new_path = req.uri().path().replacen("/forge.Forge/", "/core.Core/", 1);
+                    let new_path = req.uri().path().replacen("/nico.NICo/", "/core.Core/", 1);
                     let pq: http::uri::PathAndQuery = match req.uri().query() {
                         Some(q) => format!("{new_path}?{q}")
                             .parse()
@@ -274,7 +274,7 @@ pub async fn start(
                         .expect("URI parts with rewritten path+query reassemble into a valid URI");
                     req
                 })
-                .service(rpc::forge_server::ForgeServer::from_arc(
+                .service(rpc::nico_server::NicoServer::from_arc(
                     api_service.clone(),
                 )),
         )
@@ -292,15 +292,15 @@ pub async fn start(
         .service(router);
 
     let connection_total_counter = meter
-        .u64_counter("carbide-api.tls.connection_attempted")
+        .u64_counter("nico-api.tls.connection_attempted")
         .with_description("The amount of tls connections that were attempted")
         .build();
     let connection_succeeded_counter = meter
-        .u64_counter("carbide-api.tls.connection_success")
+        .u64_counter("nico-api.tls.connection_success")
         .with_description("The amount of tls connections that were successful")
         .build();
     let connection_failed_counter = meter
-        .u64_counter("carbide-api.tls.connection_fail")
+        .u64_counter("nico-api.tls.connection_fail")
         .with_description("The amount of tcp connections that were failures")
         .build();
 
@@ -424,7 +424,7 @@ pub async fn start(
                 .expect("could not spawn task to handle HTTP connection");
         }
 
-        tracing::info!("carbide-api shutting down");
+        tracing::info!("nico-api shutting down");
     })?;
 
     Ok(())
@@ -432,10 +432,10 @@ pub async fn start(
 
 /// Handle the root URL. Health check services often expect a 200 here.
 async fn root_url() -> &'static str {
-    const ROOT_CONTENTS: &str = if carbide_version::literal!(build_version).is_empty() {
-        "Forge development build\n"
+    const ROOT_CONTENTS: &str = if nico_version::literal!(build_version).is_empty() {
+        "NICo development build\n"
     } else {
-        concat!("Forge ", carbide_version::literal!(build_version), "\n")
+        concat!("NICo ", nico_version::literal!(build_version), "\n")
     };
     ROOT_CONTENTS
 }

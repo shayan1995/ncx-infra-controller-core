@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-use carbide_network::virtualization::DEFAULT_NETWORK_VIRTUALIZATION_TYPE;
-use carbide_uuid::network_security_group::NetworkSecurityGroupIdParseError;
+use nico_network::virtualization::DEFAULT_NETWORK_VIRTUALIZATION_TYPE;
+use nico_uuid::network_security_group::NetworkSecurityGroupIdParseError;
 use config_version::ConfigVersion;
 use model::metadata::{LabelFilter, Metadata};
 use model::vpc::{
@@ -26,8 +26,8 @@ use model::vpc::{
 use crate as rpc;
 use crate::errors::RpcDataConversionError;
 
-impl From<rpc::forge::VpcSearchFilter> for VpcSearchFilter {
-    fn from(filter: rpc::forge::VpcSearchFilter) -> Self {
+impl From<rpc::nico::VpcSearchFilter> for VpcSearchFilter {
+    fn from(filter: rpc::nico::VpcSearchFilter) -> Self {
         VpcSearchFilter {
             name: filter.name,
             tenant_org_id: filter.tenant_org_id,
@@ -36,9 +36,9 @@ impl From<rpc::forge::VpcSearchFilter> for VpcSearchFilter {
     }
 }
 
-impl From<Vpc> for rpc::forge::Vpc {
+impl From<Vpc> for rpc::nico::Vpc {
     fn from(src: Vpc) -> Self {
-        rpc::forge::Vpc {
+        rpc::nico::Vpc {
             id: Some(src.id),
             version: src.version.version_string(),
             tenant_organization_id: src.tenant_organization_id,
@@ -52,9 +52,9 @@ impl From<Vpc> for rpc::forge::Vpc {
             deprecated_vni: src.status.as_ref().and_then(|x| x.vni.map(|v| v as u32)),
             vni: src.vni.map(|x| x as u32),
             network_virtualization_type: Some(
-                rpc::forge::VpcVirtualizationType::from(src.network_virtualization_type).into(),
+                rpc::nico::VpcVirtualizationType::from(src.network_virtualization_type).into(),
             ),
-            status: src.status.map(rpc::forge::VpcStatus::from),
+            status: src.status.map(rpc::nico::VpcStatus::from),
             routing_profile_type: src.routing_profile_type,
             metadata: {
                 Some(rpc::Metadata {
@@ -64,7 +64,7 @@ impl From<Vpc> for rpc::forge::Vpc {
                         .metadata
                         .labels
                         .iter()
-                        .map(|(key, value)| rpc::forge::Label {
+                        .map(|(key, value)| rpc::nico::Label {
                             key: key.clone(),
                             value: if value.clone().is_empty() {
                                 None
@@ -80,19 +80,19 @@ impl From<Vpc> for rpc::forge::Vpc {
     }
 }
 
-impl From<VpcStatus> for rpc::forge::VpcStatus {
+impl From<VpcStatus> for rpc::nico::VpcStatus {
     fn from(src: VpcStatus) -> Self {
-        rpc::forge::VpcStatus {
+        rpc::nico::VpcStatus {
             // This is the pattern we have elsewhere because a VNI should never be negative.
             vni: src.vni.map(|x| x as u32),
         }
     }
 }
 
-impl TryFrom<rpc::forge::VpcCreationRequest> for NewVpc {
+impl TryFrom<rpc::nico::VpcCreationRequest> for NewVpc {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::VpcCreationRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::VpcCreationRequest) -> Result<Self, Self::Error> {
         let virt_type = match value.network_virtualization_type {
             None => DEFAULT_NETWORK_VIRTUALIZATION_TYPE,
             Some(v) => rpc::network::vpc_virtualization_type_try_from_rpc(v)?,
@@ -136,10 +136,10 @@ impl TryFrom<rpc::forge::VpcCreationRequest> for NewVpc {
     }
 }
 
-impl TryFrom<rpc::forge::VpcUpdateRequest> for UpdateVpc {
+impl TryFrom<rpc::nico::VpcUpdateRequest> for UpdateVpc {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::VpcUpdateRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::VpcUpdateRequest) -> Result<Self, Self::Error> {
         let if_version_match: Option<ConfigVersion> =
             match &value.if_version_match {
                 Some(version) => Some(version.parse::<ConfigVersion>().map_err(|_| {
@@ -174,10 +174,10 @@ impl TryFrom<rpc::forge::VpcUpdateRequest> for UpdateVpc {
     }
 }
 
-impl TryFrom<rpc::forge::VpcUpdateVirtualizationRequest> for UpdateVpcVirtualization {
+impl TryFrom<rpc::nico::VpcUpdateVirtualizationRequest> for UpdateVpcVirtualization {
     type Error = RpcDataConversionError;
 
-    fn try_from(value: rpc::forge::VpcUpdateVirtualizationRequest) -> Result<Self, Self::Error> {
+    fn try_from(value: rpc::nico::VpcUpdateVirtualizationRequest) -> Result<Self, Self::Error> {
         let if_version_match: Option<ConfigVersion> =
             match &value.if_version_match {
                 Some(version) => Some(version.parse::<ConfigVersion>().map_err(|_| {
@@ -205,13 +205,13 @@ impl TryFrom<rpc::forge::VpcUpdateVirtualizationRequest> for UpdateVpcVirtualiza
     }
 }
 
-impl From<Vpc> for rpc::forge::VpcDeletionResult {
+impl From<Vpc> for rpc::nico::VpcDeletionResult {
     fn from(_src: Vpc) -> Self {
-        rpc::forge::VpcDeletionResult {}
+        rpc::nico::VpcDeletionResult {}
     }
 }
 
-impl From<VpcPeering> for rpc::forge::VpcPeering {
+impl From<VpcPeering> for rpc::nico::VpcPeering {
     fn from(db_vpc_peering: VpcPeering) -> Self {
         let VpcPeering {
             id,
@@ -237,10 +237,10 @@ mod tests {
 
     #[test]
     fn vpc_search_filter_from_rpc_all_fields() {
-        let rpc_filter = rpc::forge::VpcSearchFilter {
+        let rpc_filter = rpc::nico::VpcSearchFilter {
             name: Some("my-vpc".to_string()),
             tenant_org_id: Some("org-123".to_string()),
-            label: Some(rpc::forge::Label {
+            label: Some(rpc::nico::Label {
                 key: "env".to_string(),
                 value: Some("prod".to_string()),
             }),
@@ -255,7 +255,7 @@ mod tests {
 
     #[test]
     fn vpc_search_filter_from_rpc_no_fields() {
-        let rpc_filter = rpc::forge::VpcSearchFilter {
+        let rpc_filter = rpc::nico::VpcSearchFilter {
             name: None,
             tenant_org_id: None,
             label: None,
@@ -268,10 +268,10 @@ mod tests {
 
     #[test]
     fn vpc_search_filter_from_rpc_label_key_only() {
-        let rpc_filter = rpc::forge::VpcSearchFilter {
+        let rpc_filter = rpc::nico::VpcSearchFilter {
             name: None,
             tenant_org_id: None,
-            label: Some(rpc::forge::Label {
+            label: Some(rpc::nico::Label {
                 key: "team".to_string(),
                 value: None,
             }),

@@ -37,23 +37,23 @@ pub mod core {
     include!(concat!(env!("OUT_DIR"), "/core.rs"));
 }
 
-// Backward-compat alias module. The proto file was renamed forge.proto →
-// core.proto with `package forge → package core` and `service Forge → service
+// Backward-compat alias module. The proto file was renamed nico.proto →
+// core.proto with `package nico → package core` and `service NICo → service
 // Core`, but message/field names were intentionally left unchanged in this
-// PR. To avoid a sweeping rename of every `crate::protos::forge::*` callsite
+// PR. To avoid a sweeping rename of every `crate::protos::nico::*` callsite
 // in one go, this alias re-exports the generated `core::*` items under the
-// `forge::*` name so existing imports keep working unchanged. To be removed
+// `nico::*` name so existing imports keep working unchanged. To be removed
 // in a follow-up PR after downstream callers are migrated to `core::*`.
 #[allow(unused_imports)]
 #[rustfmt::skip]
-pub mod forge {
+pub mod nico {
     pub use super::core::*;
-    pub mod forge_server {
-        pub use super::super::core::core_server::Core as Forge;
-        pub use super::super::core::core_server::CoreServer as ForgeServer;
+    pub mod nico_server {
+        pub use super::super::core::core_server::Core as NICo;
+        pub use super::super::core::core_server::CoreServer as NicoServer;
     }
-    pub mod forge_client {
-        pub use super::super::core::core_client::CoreClient as ForgeClient;
+    pub mod nico_client {
+        pub use super::super::core::core_client::CoreClient as NicoClient;
     }
 }
 
@@ -101,8 +101,8 @@ pub mod fmds {
 
 #[allow(clippy::all, deprecated)]
 #[rustfmt::skip]
-pub mod forge_api_client {
-    include!(concat!(env!("OUT_DIR"), "/forge_api_client.rs"));
+pub mod nico_api_client {
+    include!(concat!(env!("OUT_DIR"), "/nico_api_client.rs"));
 }
 
 #[allow(clippy::all)]

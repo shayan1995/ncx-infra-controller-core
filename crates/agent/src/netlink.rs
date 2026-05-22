@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::error::Error;
 
 use futures_util::TryStreamExt;
-use rpc::forge as rpc;
+use rpc::nico as rpc;
 use rtnetlink;
 use rtnetlink::packet_route::link::{
     LinkAttribute, LinkLayerType, LinkMessage, State as LinkState,

@@ -16,16 +16,16 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use carbide_uuid::dpu_remediations::RemediationId;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::dpu_remediations::RemediationId;
+use nico_uuid::machine::MachineId;
 use prettytable::{Table, row};
-use rpc::forge::{
+use rpc::nico::{
     AppliedRemediationIdList, AppliedRemediationList, FindAppliedRemediationIdsRequest,
     FindAppliedRemediationsRequest,
 };
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 use crate::{async_write, async_writeln};
 
@@ -35,7 +35,7 @@ pub(crate) async fn handle_list_applied(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match (args.remediation_id, args.machine_id) {
         (Some(remediation_id), Some(machine_id)) => {
             show_applied_remediation_details(
@@ -69,7 +69,7 @@ pub(crate) async fn handle_list_applied(
             .await?;
         }
         (None, None) => {
-            return Err(CarbideCliError::GenericError(
+            return Err(NicoCliError::GenericError(
                 "Invalid arguments, must provide at least one of remediation_id or machine_id"
                     .to_string(),
             ));
@@ -86,7 +86,7 @@ async fn show_applied_remediation_details(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
     _page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let applied_remediations = api_client
         .0
         .find_applied_remediations(FindAppliedRemediationsRequest {
@@ -120,7 +120,7 @@ async fn show_machines_for_applied_remediation(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
     _page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let applied_remediation_ids = api_client
         .0
         .find_applied_remediation_ids(FindAppliedRemediationIdsRequest {
@@ -154,7 +154,7 @@ async fn show_applied_remediations_for_machine(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     api_client: &ApiClient,
     _page_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let applied_remediation_ids = api_client
         .0
         .find_applied_remediation_ids(FindAppliedRemediationIdsRequest {

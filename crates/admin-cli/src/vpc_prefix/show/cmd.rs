@@ -21,12 +21,12 @@ use std::io::{Write, stdout};
 
 use ::rpc::admin_cli::output::OutputFormat;
 use prettytable::{Row, Table};
-use rpc::forge::{PrefixMatchType, VpcPrefix};
+use rpc::nico::{PrefixMatchType, VpcPrefix};
 use serde::Serialize;
 
 use super::args::Args;
 use crate::Destination;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 use crate::vpc_prefix::common::{VpcPrefixSelector, get_by_ids, match_all, search};
 
@@ -35,19 +35,19 @@ pub async fn show(
     output_format: OutputFormat,
     api_client: &ApiClient,
     batch_size: usize,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let show_method = ShowMethod::from(args);
     let output = fetch(api_client, batch_size, show_method).await?;
 
     output
         .write_output(output_format, crate::Destination::Stdout())
-        .map_err(CarbideCliError::from)
+        .map_err(NicoCliError::from)
 }
 
 #[derive(Debug)]
 enum ShowMethod {
     Get(VpcPrefixSelector),
-    Search(rpc::forge::VpcPrefixSearchQuery),
+    Search(rpc::nico::VpcPrefixSearchQuery),
 }
 
 pub enum ShowOutput {
@@ -89,7 +89,7 @@ async fn fetch(
     api_client: &ApiClient,
     batch_size: usize,
     show_method: ShowMethod,
-) -> Result<ShowOutput, CarbideCliError> {
+) -> Result<ShowOutput, NicoCliError> {
     match show_method {
         ShowMethod::Get(get_one) => get_one.fetch(api_client).await.map(ShowOutput::One),
         ShowMethod::Search(query) => {

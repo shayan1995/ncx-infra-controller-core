@@ -18,7 +18,7 @@
 use ::rpc::admin_cli::OutputFormat;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 pub async fn network(
@@ -26,7 +26,7 @@ pub async fn network(
     cmd: Args,
     format: OutputFormat,
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match cmd {
         Args::Status => {
             println!(

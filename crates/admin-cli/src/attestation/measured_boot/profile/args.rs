@@ -38,14 +38,14 @@ use ::rpc::protos::measured_boot::{
     list_measurement_system_profile_machines_request, rename_measurement_system_profile_request,
     show_measurement_system_profile_request,
 };
-use carbide_uuid::measured_boot::MeasurementSystemProfileId;
+use nico_uuid::measured_boot::MeasurementSystemProfileId;
 use clap::Parser;
 
 use crate::attestation::measured_boot::global::cmds::{
     IdNameIdentifier, IdentifierType, get_identifier,
 };
 use crate::cfg::measurement::{KvPair as CfgKvPair, parse_colon_pairs};
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 
 // CmdProfile provides a container for the `profile`
 // subcommand, which itself contains other subcommands
@@ -265,12 +265,12 @@ impl From<Create> for CreateMeasurementSystemProfileRequest {
 }
 
 impl TryFrom<Delete> for DeleteMeasurementSystemProfileRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
     fn try_from(delete: Delete) -> Result<Self, Self::Error> {
         let selector = match get_identifier(&delete)? {
             IdentifierType::ForId => {
                 let profile_id = MeasurementSystemProfileId::from_str(&delete.identifier)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
                 Some(delete_measurement_system_profile_request::Selector::ProfileId(profile_id))
             }
             IdentifierType::ForName => Some(
@@ -294,12 +294,12 @@ impl TryFrom<Delete> for DeleteMeasurementSystemProfileRequest {
 }
 
 impl TryFrom<Rename> for RenameMeasurementSystemProfileRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
     fn try_from(rename: Rename) -> Result<Self, Self::Error> {
         let selector = match get_identifier(&rename)? {
             IdentifierType::ForId => {
                 let profile_id = MeasurementSystemProfileId::from_str(&rename.identifier)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
                 Some(rename_measurement_system_profile_request::Selector::ProfileId(profile_id))
             }
             IdentifierType::ForName => Some(
@@ -326,18 +326,18 @@ impl TryFrom<Rename> for RenameMeasurementSystemProfileRequest {
 }
 
 impl TryFrom<Show> for ShowMeasurementSystemProfileRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
     fn try_from(show: Show) -> Result<Self, Self::Error> {
         let identifier_type = get_identifier(&show)?;
         let identifier = show
             .identifier
-            .ok_or(CarbideCliError::GenericError(String::from(
+            .ok_or(NicoCliError::GenericError(String::from(
                 "identifier expected to be set here",
             )))?;
         let selector = match identifier_type {
             IdentifierType::ForId => {
                 let profile_id = MeasurementSystemProfileId::from_str(&identifier)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
                 Some(show_measurement_system_profile_request::Selector::ProfileId(profile_id))
             }
             IdentifierType::ForName => {
@@ -357,12 +357,12 @@ impl TryFrom<Show> for ShowMeasurementSystemProfileRequest {
 }
 
 impl TryFrom<ListBundles> for ListMeasurementSystemProfileBundlesRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
     fn try_from(list_bundles: ListBundles) -> Result<Self, Self::Error> {
         let selector = match get_identifier(&list_bundles)? {
             IdentifierType::ForId => {
                 let profile_id = MeasurementSystemProfileId::from_str(&list_bundles.identifier)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
                 Some(
                     list_measurement_system_profile_bundles_request::Selector::ProfileId(
                         profile_id,
@@ -394,12 +394,12 @@ impl TryFrom<ListBundles> for ListMeasurementSystemProfileBundlesRequest {
 }
 
 impl TryFrom<ListMachines> for ListMeasurementSystemProfileMachinesRequest {
-    type Error = CarbideCliError;
+    type Error = NicoCliError;
     fn try_from(list_machines: ListMachines) -> Result<Self, Self::Error> {
         let selector = match get_identifier(&list_machines)? {
             IdentifierType::ForId => {
                 let profile_id = MeasurementSystemProfileId::from_str(&list_machines.identifier)
-                    .map_err(|e| CarbideCliError::GenericError(e.to_string()))?;
+                    .map_err(|e| NicoCliError::GenericError(e.to_string()))?;
                 Some(
                     list_measurement_system_profile_machines_request::Selector::ProfileId(
                         profile_id,

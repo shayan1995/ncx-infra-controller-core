@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-use carbide_uuid::dpu_remediations::RemediationId;
-use carbide_uuid::instance::InstanceId;
-use carbide_uuid::machine::{MachineId, MachineIdParseError};
-use carbide_uuid::switch::{SwitchId, SwitchIdParseError};
-use rpc::forge::MachineType;
-use rpc::forge_tls_client::ForgeTlsClientError;
+use nico_uuid::dpu_remediations::RemediationId;
+use nico_uuid::instance::InstanceId;
+use nico_uuid::machine::{MachineId, MachineIdParseError};
+use nico_uuid::switch::{SwitchId, SwitchIdParseError};
+use rpc::nico::MachineType;
+use rpc::nico_tls_client::NicoTlsClientError;
 
 #[derive(thiserror::Error, Debug)]
-pub enum CarbideCliError {
-    #[error("Unable to connect to carbide API: {0}")]
-    ApiConnectFailed(#[from] ForgeTlsClientError),
+pub enum NicoCliError {
+    #[error("Unable to connect to nico API: {0}")]
+    ApiConnectFailed(#[from] NicoTlsClientError),
 
-    #[error("The API call to the Forge API server returned {0}")]
+    #[error("The API call to the NICo API server returned {0}")]
     ApiInvocationError(#[from] tonic::Status),
 
     #[error("Error while writing into string: {0}")]
@@ -114,13 +114,13 @@ pub enum CarbideCliError {
     EyreReport(eyre::Report),
 }
 
-impl From<eyre::Report> for CarbideCliError {
+impl From<eyre::Report> for NicoCliError {
     // For commands that are [still] returning an eyre::Report,
-    // and not a CarbideCliError, preserve the full report and
+    // and not a NicoCliError, preserve the full report and
     // error chain for complete context.
     fn from(err: eyre::Report) -> Self {
-        CarbideCliError::EyreReport(err)
+        NicoCliError::EyreReport(err)
     }
 }
 
-pub type CarbideCliResult<T> = Result<T, CarbideCliError>;
+pub type NicoCliResult<T> = Result<T, NicoCliError>;

@@ -21,12 +21,12 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use carbide_dpf::types::{HostDpfSnapshot, ServiceTemplateVersion};
-use carbide_dpf::{
+use nico_dpf::types::{HostDpfSnapshot, ServiceTemplateVersion};
+use nico_dpf::{
     BmcPasswordProvider, DpfError, DpfSdk, DpuDeviceInfo, DpuNodeInfo, DpuPhase, DpuWatcher,
     KubeRepository, ResourceLabeler, node_id_from_dpu_node_cr_name,
 };
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use model::dpu_machine_update::OutdatedDpfDpu;
 use model::machine::ManagedHostStateSnapshot;
 use sqlx::PgPool;
@@ -35,17 +35,17 @@ use tokio::task::JoinSet;
 
 use crate::io::MachineStateControllerIO;
 
-/// Label key used by [`CarbideDPFLabeler`] to stamp the carbide `MachineId` of
+/// Label key used by [`NicoDPFLabeler`] to stamp the nico `MachineId` of
 /// the DPU onto its DPUDevice. Propagates to the DPU CR via DPF.
-const DPU_MACHINE_ID_LABEL: &str = "carbide.nvidia.com/dpu-machine-id";
+const DPU_MACHINE_ID_LABEL: &str = "nico.nvidia.com/dpu-machine-id";
 
-/// Label key used by [`CarbideDPFLabeler`] to mark a DPU device as
-/// carbide-controlled. Propagates to the DPU CR.
-const CONTROLLED_DEVICE_LABEL: &str = "carbide.nvidia.com/controlled.device";
+/// Label key used by [`NicoDPFLabeler`] to mark a DPU device as
+/// nico-controlled. Propagates to the DPU CR.
+const CONTROLLED_DEVICE_LABEL: &str = "nico.nvidia.com/controlled.device";
 
-/// Trait for DPF SDK operations used by Carbide.
+/// Trait for DPF SDK operations used by NICo.
 ///
-/// The DPF operator owns provisioning; Carbide declares setup (deployment, devices, node),
+/// The DPF operator owns provisioning; NICo declares setup (deployment, devices, node),
 /// reacts to watcher callbacks, and performs reprovision/force-delete.
 ///
 /// Reboot handling is managed via the watcher's `on_reboot_required` callback.
@@ -99,10 +99,10 @@ pub trait DpfOperations: Send + Sync + std::fmt::Debug {
     -> Result<Vec<ServiceTemplateVersion>, DpfError>;
 
     /// Return DPUs whose installed BFB or `spec.dpuFlavor` does not match
-    /// the namespace's ready DPUDeployment, mapped back to carbide
-    /// `MachineId` via the `carbide.nvidia.com/dpu-machine-id` label. The
+    /// the namespace's ready DPUDeployment, mapped back to nico
+    /// `MachineId` via the `nico.nvidia.com/dpu-machine-id` label. The
     /// expected BFB and flavor are read from the live DPUDeployment, not
-    /// from carbide config — see [`DpfSdk::find_outdated_dpus_dpf`] for
+    /// from nico config — see [`DpfSdk::find_outdated_dpus_dpf`] for
     /// details.
     async fn find_outdated_dpus_dpf(&self) -> Result<Vec<OutdatedDpfDpu>, DpfError>;
 }
@@ -131,7 +131,7 @@ pub async fn dpf_dpudevices_and_dpunode_crs_noexist(
 
     let dpu_count = managed_host_state.dpu_snapshots.len();
 
-    let node_name = carbide_dpf::dpu_node_cr_name(&dpf_id);
+    let node_name = nico_dpf::dpu_node_cr_name(&dpf_id);
     let dpf_sdk_host_snapshot = dpf_sdk.snapshot_host(&node_name).await?;
     let dpunode_cr_exists = dpf_sdk_host_snapshot.dpu_node.is_some();
     let dpfdevice_cr_count = dpf_sdk_host_snapshot.dpu_devices.len();
@@ -150,7 +150,7 @@ pub async fn dpf_dpudevices_and_dpunode_crs_noexist(
     )))
 }
 
-/// Applies carbide-specific labels to DPF resources.
+/// Applies nico-specific labels to DPF resources.
 ///
 /// Label inheritance in DPF:
 /// - DPUDevice labels propagate to the DPU CR created by the operator.
@@ -158,26 +158,26 @@ pub async fn dpf_dpudevices_and_dpunode_crs_noexist(
 ///   `dpuNodeSelector` to match nodes, and also propagate to DPU CRs.
 /// - DPUNode contextual labels (`node_context_labels`) are only set at
 ///   creation and propagate to DPU CRs, but are not part of selectors.
-pub struct CarbideDPFLabeler {
+pub struct NicoDPFLabeler {
     node_label_key: String,
 }
 
-impl CarbideDPFLabeler {
+impl NicoDPFLabeler {
     pub fn new(node_label_key: String) -> Self {
         Self { node_label_key }
     }
 }
 
-impl ResourceLabeler for CarbideDPFLabeler {
+impl ResourceLabeler for NicoDPFLabeler {
     fn device_labels(&self, info: &DpuDeviceInfo) -> BTreeMap<String, String> {
         BTreeMap::from([
             (CONTROLLED_DEVICE_LABEL.to_string(), "true".to_string()),
             (
-                "carbide.nvidia.com/host-bmc-ip".to_string(),
+                "nico.nvidia.com/host-bmc-ip".to_string(),
                 info.host_bmc_ip.clone(),
             ),
             (
-                "carbide.nvidia.com/is-primary-dpu".to_string(),
+                "nico.nvidia.com/is-primary-dpu".to_string(),
                 info.is_primary.to_string(),
             ),
             (
@@ -199,7 +199,7 @@ impl ResourceLabeler for CarbideDPFLabeler {
 
     fn node_context_labels(&self, info: &DpuNodeInfo) -> BTreeMap<String, String> {
         BTreeMap::from([(
-            "carbide.nvidia.com/host-bmc-ip".to_string(),
+            "nico.nvidia.com/host-bmc-ip".to_string(),
             info.host_bmc_ip.clone(),
         )])
     }
@@ -209,19 +209,19 @@ impl ResourceLabeler for CarbideDPFLabeler {
     }
 }
 
-/// BMC password provider backed by the Carbide credential manager.
-pub struct CarbideBmcPasswordProvider(Arc<dyn forge_secrets::credentials::CredentialReader>);
+/// BMC password provider backed by the NICo credential manager.
+pub struct NicoBmcPasswordProvider(Arc<dyn nico_secrets::credentials::CredentialReader>);
 
-impl CarbideBmcPasswordProvider {
-    pub fn new(credential_reader: Arc<dyn forge_secrets::credentials::CredentialReader>) -> Self {
+impl NicoBmcPasswordProvider {
+    pub fn new(credential_reader: Arc<dyn nico_secrets::credentials::CredentialReader>) -> Self {
         Self(credential_reader)
     }
 }
 
 #[async_trait]
-impl BmcPasswordProvider for CarbideBmcPasswordProvider {
+impl BmcPasswordProvider for NicoBmcPasswordProvider {
     async fn get_bmc_password(&self) -> Result<String, DpfError> {
-        use forge_secrets::credentials::{BmcCredentialType, CredentialKey, Credentials};
+        use nico_secrets::credentials::{BmcCredentialType, CredentialKey, Credentials};
         let key = CredentialKey::BmcCredentials {
             credential_type: BmcCredentialType::SiteWideRoot,
         };
@@ -239,14 +239,14 @@ impl BmcPasswordProvider for CarbideBmcPasswordProvider {
 
 /// DPF SDK operations implementation that wraps the real DPF SDK.
 pub struct DpfSdkOps {
-    sdk: Arc<DpfSdk<KubeRepository, CarbideDPFLabeler>>,
+    sdk: Arc<DpfSdk<KubeRepository, NicoDPFLabeler>>,
     _watcher: DpuWatcher,
 }
 
 impl DpfSdkOps {
-    /// Create a new DpfSdkOps using the DPF SDK and sets up watcher callbacks to trigger carbide state handling.
+    /// Create a new DpfSdkOps using the DPF SDK and sets up watcher callbacks to trigger nico state handling.
     pub fn new(
-        sdk: Arc<DpfSdk<KubeRepository, CarbideDPFLabeler>>,
+        sdk: Arc<DpfSdk<KubeRepository, NicoDPFLabeler>>,
         db_pool: PgPool,
         join_set: &mut JoinSet<()>,
     ) -> std::io::Result<Self> {

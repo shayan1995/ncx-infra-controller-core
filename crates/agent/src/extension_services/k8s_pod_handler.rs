@@ -19,7 +19,7 @@ use std::fmt::Write;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
-use ::rpc::forge as rpc;
+use ::rpc::nico as rpc;
 use async_trait::async_trait;
 use eyre::{Result, WrapErr};
 use serde_json::Value as Json;
@@ -872,8 +872,8 @@ JSON
         }
 
         let socks_proxy_config = r#"[Service]
-Environment="HTTP_PROXY=socks5://socks.forge:1888"
-Environment="HTTPS_PROXY=socks5://socks.forge:1888"
+Environment="HTTP_PROXY=socks5://socks.nico:1888"
+Environment="HTTPS_PROXY=socks5://socks.nico:1888"
 Environment="NO_PROXY=127.0.0.1,localhost,.svc,.svc.cluster.local"
 "#;
 
@@ -1449,7 +1449,7 @@ spec:
             },
         );
         creds.insert(
-            "nvcr.io/nvforge".to_string(),
+            "nvcr.io/nvnico".to_string(),
             UsernamePassword {
                 username: "user2".to_string(),
                 password: "pass2".to_string(),
@@ -1479,7 +1479,7 @@ spec:
             .collect();
         let want: std::collections::HashSet<_> = [
             "nvcr.io/nv-ngn/sdn".to_string(),
-            "nvcr.io/nvforge".to_string(),
+            "nvcr.io/nvnico".to_string(),
         ]
         .into_iter()
         .collect();

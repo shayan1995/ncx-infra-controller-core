@@ -16,10 +16,10 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::health_utils;
 use crate::rpc::ApiClient;
 
@@ -27,7 +27,7 @@ pub async fn handle_health_report(
     command: Args,
     output_format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match command {
         Args::Show { dpu_id } => {
             ensure_dpu_id(dpu_id)?;
@@ -72,11 +72,11 @@ pub async fn handle_health_report(
     Ok(())
 }
 
-fn ensure_dpu_id(dpu_id: MachineId) -> CarbideCliResult<()> {
+fn ensure_dpu_id(dpu_id: MachineId) -> NicoCliResult<()> {
     if dpu_id.machine_type().is_dpu() {
         Ok(())
     } else {
-        Err(CarbideCliError::GenericError(format!(
+        Err(NicoCliError::GenericError(format!(
             "{dpu_id} is not a DPU machine ID"
         )))
     }

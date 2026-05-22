@@ -18,7 +18,7 @@
 use std::fs;
 use std::time::Duration;
 
-use carbide_libmlx_model::device::info::MlxDeviceInfo;
+use nico_libmlx_model::device::info::MlxDeviceInfo;
 use prettytable::{Cell, Row, Table};
 use regex::Regex;
 use serde_json;

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 
@@ -192,7 +192,7 @@ pub mod spdm {
         #[error("The Object ID must have 2 parts but not as should be {0:?}")]
         WrongFormat(String),
         #[error("The Machine ID parsing failed: {0}")]
-        MachineIdParsingFailed(#[from] carbide_uuid::machine::MachineIdParseError),
+        MachineIdParsingFailed(#[from] nico_uuid::machine::MachineIdParseError),
     }
 
     #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, FromRow)]

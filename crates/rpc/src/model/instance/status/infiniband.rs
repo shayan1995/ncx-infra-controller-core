@@ -18,7 +18,7 @@
 use model::instance::status::infiniband::{InstanceIbInterfaceStatus, InstanceInfinibandStatus};
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<InstanceInfinibandStatus> for rpc::InstanceInfinibandStatus {
     type Error = RpcDataConversionError;

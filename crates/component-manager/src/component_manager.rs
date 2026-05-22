@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use carbide_redfish::libredfish::RedfishClientPool;
+use nico_redfish::libredfish::RedfishClientPool;
 use librms::RmsApi;
 use sqlx::PgPool;
 

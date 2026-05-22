@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 use chrono::TimeZone;
 
-use crate::errors::CarbideCliError;
+use crate::errors::NicoCliError;
 use crate::managed_host::StartUpdates;
 use crate::rpc::ApiClient;
 
@@ -36,7 +36,7 @@ pub async fn start_updates(
             if let Some(start) = time_parse(start.as_str()) {
                 start
             } else {
-                return Err(CarbideCliError::GenericError(
+                return Err(NicoCliError::GenericError(
                     "Invalid time format for --start".to_string(),
                 )
                 .into());
@@ -48,7 +48,7 @@ pub async fn start_updates(
             if let Some(end) = time_parse(end.as_str()) {
                 end
             } else {
-                return Err(CarbideCliError::GenericError(
+                return Err(NicoCliError::GenericError(
                     "Invalid time format for --end".to_string(),
                 )
                 .into());
@@ -60,7 +60,7 @@ pub async fn start_updates(
         };
         (start, end)
     };
-    let request = forgerpc::SetFirmwareUpdateTimeWindowRequest {
+    let request = nicorpc::SetFirmwareUpdateTimeWindowRequest {
         machine_ids: options.machines,
         start_timestamp: Some(start_timestamp.into()),
         end_timestamp: Some(end_timestamp.into()),

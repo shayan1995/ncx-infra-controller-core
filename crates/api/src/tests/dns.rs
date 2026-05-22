@@ -16,10 +16,10 @@
  */
 use std::net::IpAddr;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use common::api_fixtures::{create_managed_host, create_test_env};
 use const_format::concatcp;
-use rpc::forge::forge_server::Forge;
+use rpc::nico::nico_server::NICo;
 use sqlx::{Postgres, Row};
 
 use crate::tests::common;

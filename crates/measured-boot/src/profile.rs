@@ -20,7 +20,7 @@
  *  tables in the database, leveraging the profile-specific record types.
  */
 
-use carbide_uuid::measured_boot::MeasurementSystemProfileId;
+use nico_uuid::measured_boot::MeasurementSystemProfileId;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 

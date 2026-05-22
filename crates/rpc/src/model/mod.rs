@@ -114,9 +114,9 @@ where
     }
 }
 
-impl From<StateSla> for rpc::forge::StateSla {
+impl From<StateSla> for rpc::nico::StateSla {
     fn from(value: StateSla) -> Self {
-        rpc::forge::StateSla {
+        rpc::nico::StateSla {
             sla: value.sla.map(|sla| sla.into()),
             time_in_state_above_sla: value.time_in_state_above_sla,
         }

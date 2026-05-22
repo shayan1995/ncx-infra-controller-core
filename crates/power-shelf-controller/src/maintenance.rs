@@ -17,10 +17,10 @@
 
 //! Handler for PowerShelfControllerState::Maintenance.
 
-use carbide_rack::rack_manager_error;
-use carbide_uuid::power_shelf::PowerShelfId;
+use nico_rack::rack_manager_error;
+use nico_uuid::power_shelf::PowerShelfId;
 use db::power_shelf as db_power_shelf;
-use forge_secrets::credentials::{
+use nico_secrets::credentials::{
     BmcCredentialType, CredentialKey, CredentialManager, Credentials,
 };
 use librms::protos::rack_manager as rms;

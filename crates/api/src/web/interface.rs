@@ -24,8 +24,8 @@ use axum::extract::{OriginalUri, Path as AxumPath, Query, State as AxumState};
 use axum::response::{Html, IntoResponse, Response};
 use chrono::{DateTime, Utc};
 use hyper::http::StatusCode;
-use rpc::forge as forgerpc;
-use rpc::forge::forge_server::Forge;
+use rpc::nico as nicorpc;
+use rpc::nico::nico_server::NICo;
 
 use super::pagination::{self, PageContext, PaginationParams};
 use super::{Base, filters};
@@ -59,8 +59,8 @@ struct InterfaceAssociationDisplay {
     power_shelf_id: String,
 }
 
-impl From<&forgerpc::MachineInterface> for InterfaceAssociationDisplay {
-    fn from(mi: &forgerpc::MachineInterface) -> Self {
+impl From<&nicorpc::MachineInterface> for InterfaceAssociationDisplay {
+    fn from(mi: &nicorpc::MachineInterface) -> Self {
         let machine_id = mi
             .machine_id
             .as_ref()
@@ -78,38 +78,38 @@ impl From<&forgerpc::MachineInterface> for InterfaceAssociationDisplay {
             .unwrap_or_default();
         let association_type = mi
             .association_type
-            .and_then(|value| forgerpc::InterfaceAssociationType::try_from(value).ok());
+            .and_then(|value| nicorpc::InterfaceAssociationType::try_from(value).ok());
         let association_type = association_type.or({
             if !machine_id.is_empty() {
-                Some(forgerpc::InterfaceAssociationType::Machine)
+                Some(nicorpc::InterfaceAssociationType::Machine)
             } else if !switch_id.is_empty() {
-                Some(forgerpc::InterfaceAssociationType::Switch)
+                Some(nicorpc::InterfaceAssociationType::Switch)
             } else if !power_shelf_id.is_empty() {
-                Some(forgerpc::InterfaceAssociationType::Powershelf)
+                Some(nicorpc::InterfaceAssociationType::Powershelf)
             } else {
                 None
             }
         });
         let (association_type, machine_id, switch_id, power_shelf_id) = match association_type {
-            Some(forgerpc::InterfaceAssociationType::Machine) => (
+            Some(nicorpc::InterfaceAssociationType::Machine) => (
                 "Machine".to_string(),
                 machine_id,
                 String::new(),
                 String::new(),
             ),
-            Some(forgerpc::InterfaceAssociationType::Switch) => (
+            Some(nicorpc::InterfaceAssociationType::Switch) => (
                 "Switch".to_string(),
                 String::new(),
                 switch_id,
                 String::new(),
             ),
-            Some(forgerpc::InterfaceAssociationType::Powershelf) => (
+            Some(nicorpc::InterfaceAssociationType::Powershelf) => (
                 "Powershelf".to_string(),
                 String::new(),
                 String::new(),
                 power_shelf_id,
             ),
-            Some(forgerpc::InterfaceAssociationType::None) | None => (
+            Some(nicorpc::InterfaceAssociationType::None) | None => (
                 "None".to_string(),
                 String::new(),
                 String::new(),
@@ -126,13 +126,13 @@ impl From<&forgerpc::MachineInterface> for InterfaceAssociationDisplay {
     }
 }
 
-impl From<forgerpc::MachineInterface> for InterfaceRowDisplay {
-    fn from(mi: forgerpc::MachineInterface) -> Self {
+impl From<nicorpc::MachineInterface> for InterfaceRowDisplay {
+    fn from(mi: nicorpc::MachineInterface) -> Self {
         let association = InterfaceAssociationDisplay::from(&mi);
 
         Self {
             id: mi.id.unwrap_or_default().to_string(),
-            interface_type: if mi.interface_type == Some(forgerpc::InterfaceType::Bmc as i32) {
+            interface_type: if mi.interface_type == Some(nicorpc::InterfaceType::Bmc as i32) {
                 "BMC".to_string()
             } else {
                 "Data".to_string()
@@ -226,8 +226,8 @@ pub async fn show_all_json(AxumState(state): AxumState<Arc<Api>>) -> Response {
 
 async fn fetch_machine_interfaces(
     api: Arc<Api>,
-) -> Result<Vec<forgerpc::MachineInterface>, tonic::Status> {
-    let request = tonic::Request::new(forgerpc::InterfaceSearchQuery { id: None, ip: None });
+) -> Result<Vec<nicorpc::MachineInterface>, tonic::Status> {
+    let request = tonic::Request::new(nicorpc::InterfaceSearchQuery { id: None, ip: None });
     let mut out = api
         .find_interfaces(request)
         .await
@@ -260,8 +260,8 @@ struct InterfaceDetail {
     last_dhcp: String,
 }
 
-impl From<forgerpc::MachineInterface> for InterfaceDetail {
-    fn from(mi: forgerpc::MachineInterface) -> Self {
+impl From<nicorpc::MachineInterface> for InterfaceDetail {
+    fn from(mi: nicorpc::MachineInterface) -> Self {
         let association = InterfaceAssociationDisplay::from(&mi);
         let created: DateTime<Utc> = mi
             .created
@@ -274,7 +274,7 @@ impl From<forgerpc::MachineInterface> for InterfaceDetail {
         };
         Self {
             id: mi.id.unwrap_or_default().to_string(),
-            interface_type: if mi.interface_type == Some(forgerpc::InterfaceType::Bmc as i32) {
+            interface_type: if mi.interface_type == Some(nicorpc::InterfaceType::Bmc as i32) {
                 "BMC".to_string()
             } else {
                 "Data".to_string()
@@ -327,7 +327,7 @@ pub async fn detail(
         }
     };
 
-    let request = tonic::Request::new(forgerpc::InterfaceSearchQuery {
+    let request = tonic::Request::new(nicorpc::InterfaceSearchQuery {
         id: Some(interface_id),
         ip: None,
     });

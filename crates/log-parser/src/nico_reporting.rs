@@ -18,10 +18,10 @@ use std::collections::VecDeque;
 use std::path::Path;
 use std::str::FromStr;
 
-use ::rpc::forge::{self as rpc};
-use ::rpc::forge_tls_client::{self, ApiConfig, ForgeClientConfig, ForgeClientT};
-use carbide_uuid::machine::MachineId;
-use forge_tls::client_config::ClientCert;
+use ::rpc::nico::{self as rpc};
+use ::rpc::nico_tls_client::{self, ApiConfig, NicoClientConfig, NicoClientT};
+use nico_uuid::machine::MachineId;
+use nico_tls::client_config::ClientCert;
 use health_report::{
     HealthAlertClassification, HealthProbeAlert, HealthProbeId, HealthProbeSuccess, HealthReport,
 };
@@ -30,10 +30,10 @@ use crate::Event;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ReportingError {
-    #[error("Unable to connect to carbide API: {0}")]
+    #[error("Unable to connect to nico API: {0}")]
     ApiConnectFailed(String),
 
-    #[error("The API call to the Forge API server returned {0}")]
+    #[error("The API call to the NICo API server returned {0}")]
     ApiInvocationError(tonic::Status),
 
     #[error("Generic Error: {0}")]
@@ -73,10 +73,10 @@ pub(crate) fn get_client_cert_info(
     )
 }
 
-pub(crate) fn get_forge_root_ca_path(forge_root_ca_path: Option<String>) -> String {
+pub(crate) fn get_nico_root_ca_path(nico_root_ca_path: Option<String>) -> String {
     // First from command line, second env var.
-    if let Some(forge_root_ca_path) = forge_root_ca_path {
-        return forge_root_ca_path;
+    if let Some(nico_root_ca_path) = nico_root_ca_path {
+        return nico_root_ca_path;
     }
     // this is the location for most k8s pods
     if Path::new("/var/run/secrets/spiffe.io/ca.crt").exists() {
@@ -84,19 +84,19 @@ pub(crate) fn get_forge_root_ca_path(forge_root_ca_path: Option<String>) -> Stri
     }
     // if you make it here, you'll just have to tell me where the root CA is.
     panic!(
-        r###"Unknown FORGE_ROOT_CA_PATH. Set (will be read in same sequence.)
-           1. --forge-root-ca-path flag or
+        r###"Unknown NICO_ROOT_CA_PATH. Set (will be read in same sequence.)
+           1. --nico-root-ca-path flag or
            2. a file existing at "/var/run/secrets/spiffe.io/ca.crt"."###
     )
 }
 
-pub(crate) async fn create_forge_client(
+pub(crate) async fn create_nico_client(
     root_ca: String,
     client_cert: String,
     client_key: String,
     api_url: String,
-) -> Result<ForgeClientT, ReportingError> {
-    let client_config = ForgeClientConfig::new(
+) -> Result<NicoClientT, ReportingError> {
+    let client_config = NicoClientConfig::new(
         root_ca,
         Some(ClientCert {
             cert_path: client_cert,
@@ -106,14 +106,14 @@ pub(crate) async fn create_forge_client(
 
     let api_config = ApiConfig::new(&api_url, &client_config);
 
-    let client = forge_tls_client::ForgeTlsClient::retry_build(&api_config)
+    let client = nico_tls_client::NicoTlsClient::retry_build(&api_config)
         .await
         .map_err(|err| ReportingError::ApiConnectFailed(err.to_string()))?;
     Ok(client)
 }
 
 async fn send_one_report(
-    client: &mut ForgeClientT,
+    client: &mut NicoClientT,
     machine_id: &mut String,
     report: &HealthReport,
 ) -> Result<(), ReportingError> {
@@ -140,7 +140,7 @@ async fn send_one_report(
 }
 
 pub(crate) async fn send_health_alerts(
-    client: &mut ForgeClientT,
+    client: &mut NicoClientT,
     events: &VecDeque<Event>,
     pipeline: &str,
     file_name: &str,

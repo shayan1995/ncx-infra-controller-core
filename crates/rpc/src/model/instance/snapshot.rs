@@ -17,7 +17,7 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::machine::MachineId;
+use nico_uuid::machine::MachineId;
 use config_version::Versioned;
 use model::health::HealthReportSources;
 use model::instance::snapshot::InstanceSnapshot;

@@ -21,7 +21,7 @@
 
 use std::path::{Path, PathBuf};
 
-use forge_ssh::ssh_client::{AuthConfig, HostKeyVerification, SshClientConfig};
+use nico_ssh::ssh_client::{AuthConfig, HostKeyVerification, SshClientConfig};
 use tokio::io::AsyncWriteExt;
 use tracing;
 
@@ -416,7 +416,7 @@ mod tests {
     use std::collections::HashMap;
 
     use base64::Engine;
-    use forge_ssh::ssh_client::tests::TestSshServer;
+    use nico_ssh::ssh_client::tests::TestSshServer;
     use russh::keys::known_hosts::learn_known_hosts_path;
     use russh::keys::signature::digest::common::getrandom::SysRng;
     use russh::keys::ssh_key::LineEnding;

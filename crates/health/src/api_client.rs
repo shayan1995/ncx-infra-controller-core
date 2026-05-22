@@ -20,13 +20,13 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 
-use carbide_uuid::rack::RackId;
-use carbide_uuid::switch::SwitchId;
-use forge_tls::client_config::ClientCert;
+use nico_uuid::rack::RackId;
+use nico_uuid::switch::SwitchId;
+use nico_tls::client_config::ClientCert;
 use mac_address::MacAddress;
-use rpc::forge::MachineSearchConfig;
-use rpc::forge_api_client::ForgeApiClient;
-use rpc::forge_tls_client::{ApiConfig, ForgeClientConfig};
+use rpc::nico::MachineSearchConfig;
+use rpc::nico_api_client::NicoApiClient;
+use rpc::nico_tls_client::{ApiConfig, NicoClientConfig};
 use url::Url;
 
 use crate::HealthError;
@@ -37,12 +37,12 @@ use crate::endpoint::{
 
 #[derive(Clone)]
 pub struct ApiClientWrapper {
-    client: ForgeApiClient,
+    client: NicoApiClient,
 }
 
 #[derive(Clone)]
 struct ApiCredentialProvider {
-    client: ForgeApiClient,
+    client: NicoApiClient,
     kind: ApiCredentialKind,
 }
 
@@ -60,7 +60,7 @@ impl CredentialProvider for ApiCredentialProvider {
         Box::pin(async move {
             let response = match &self.kind {
                 ApiCredentialKind::Bmc => {
-                    let request = rpc::forge::GetBmcCredentialsRequest {
+                    let request = rpc::nico::GetBmcCredentialsRequest {
                         mac_addr: endpoint.mac.to_string(),
                     };
 
@@ -70,7 +70,7 @@ impl CredentialProvider for ApiCredentialProvider {
                         .map_err(HealthError::ApiInvocationError)?
                 }
                 ApiCredentialKind::SwitchNvosAdmin { switch_id } => {
-                    let request = rpc::forge::GetSwitchNvosCredentialsRequest {
+                    let request = rpc::nico::GetSwitchNvosCredentialsRequest {
                         switch_id: Some(*switch_id),
                     };
 
@@ -93,7 +93,7 @@ impl CredentialProvider for ApiCredentialProvider {
 }
 
 fn switch_endpoint_metadata(
-    switch: &rpc::forge::Switch,
+    switch: &rpc::nico::Switch,
     endpoint_role: SwitchEndpointRole,
     nmxt_enabled: bool,
 ) -> Result<EndpointMetadata, HealthError> {
@@ -122,7 +122,7 @@ fn switch_endpoint_metadata(
 
 impl ApiClientWrapper {
     pub fn new(root_ca: String, client_cert: String, client_key: String, api_url: &Url) -> Self {
-        let client_config = ForgeClientConfig::new(
+        let client_config = NicoClientConfig::new(
             root_ca,
             Some(ClientCert {
                 cert_path: client_cert,
@@ -131,7 +131,7 @@ impl ApiClientWrapper {
         );
         let api_config = ApiConfig::new(api_url.as_str(), &client_config);
 
-        let client = ForgeApiClient::new(&api_config);
+        let client = NicoApiClient::new(&api_config);
 
         Self { client }
     }
@@ -161,7 +161,7 @@ impl ApiClientWrapper {
         let mut endpoints = Vec::new();
 
         for ids_chunk in machine_ids.machine_ids.chunks(100) {
-            let request = ::rpc::forge::MachinesByIdsRequest {
+            let request = ::rpc::nico::MachinesByIdsRequest {
                 machine_ids: Vec::from(ids_chunk),
                 ..Default::default()
             };
@@ -191,7 +191,7 @@ impl ApiClientWrapper {
     }
 
     async fn fetch_switch_endpoints(&self) -> Vec<Arc<BmcEndpoint>> {
-        let switch_request = rpc::forge::SwitchQuery {
+        let switch_request = rpc::nico::SwitchQuery {
             name: None,
             switch_id: None,
         };
@@ -234,7 +234,7 @@ impl ApiClientWrapper {
     }
 
     async fn fetch_power_shelf_endpoints(&self) -> Vec<Arc<BmcEndpoint>> {
-        let request = rpc::forge::PowerShelfQuery {
+        let request = rpc::nico::PowerShelfQuery {
             name: None,
             power_shelf_id: None,
         };
@@ -266,7 +266,7 @@ impl ApiClientWrapper {
 
     async fn extract_machine_endpoint(
         &self,
-        machine: &rpc::forge::Machine,
+        machine: &rpc::nico::Machine,
     ) -> Result<BmcEndpoint, HealthError> {
         let Some(bmc_info) = &machine.bmc_info else {
             return Err(HealthError::GenericError(
@@ -308,7 +308,7 @@ impl ApiClientWrapper {
 
     async fn extract_switch_endpoint(
         &self,
-        switch: &rpc::forge::Switch,
+        switch: &rpc::nico::Switch,
     ) -> Result<BmcEndpoint, HealthError> {
         let Some(bmc_info) = &switch.bmc_info else {
             return Err(HealthError::GenericError(
@@ -332,7 +332,7 @@ impl ApiClientWrapper {
 
     async fn extract_switch_host_endpoint(
         &self,
-        switch: &rpc::forge::Switch,
+        switch: &rpc::nico::Switch,
     ) -> Result<Option<BmcEndpoint>, HealthError> {
         let Some(nvos_info) = switch.nvos_info.as_ref() else {
             return Ok(None);
@@ -358,7 +358,7 @@ impl ApiClientWrapper {
 
     async fn extract_power_shelf_endpoint(
         &self,
-        power_shelf: &rpc::forge::PowerShelf,
+        power_shelf: &rpc::nico::PowerShelf,
     ) -> Result<BmcEndpoint, HealthError> {
         let Some(bmc_info) = &power_shelf.bmc_info else {
             return Err(HealthError::GenericError(
@@ -411,15 +411,15 @@ impl ApiClientWrapper {
 
     pub async fn submit_health_report(
         &self,
-        machine_id: &carbide_uuid::machine::MachineId,
+        machine_id: &nico_uuid::machine::MachineId,
         report: health_report::HealthReport,
     ) -> Result<(), HealthError> {
-        let ovrd = rpc::forge::HealthReportEntry {
+        let ovrd = rpc::nico::HealthReportEntry {
             report: Some(report.into()),
-            mode: rpc::forge::HealthReportApplyMode::Merge.into(),
+            mode: rpc::nico::HealthReportApplyMode::Merge.into(),
         };
 
-        let request = rpc::forge::InsertMachineHealthReportRequest {
+        let request = rpc::nico::InsertMachineHealthReportRequest {
             machine_id: Some(*machine_id),
             health_report_entry: Some(ovrd),
         };
@@ -434,15 +434,15 @@ impl ApiClientWrapper {
 
     pub async fn submit_rack_health_report(
         &self,
-        rack_id: &carbide_uuid::rack::RackId,
+        rack_id: &nico_uuid::rack::RackId,
         report: health_report::HealthReport,
     ) -> Result<(), HealthError> {
-        let ovrd = rpc::forge::HealthReportEntry {
+        let ovrd = rpc::nico::HealthReportEntry {
             report: Some(report.into()),
-            mode: rpc::forge::HealthReportApplyMode::Merge.into(),
+            mode: rpc::nico::HealthReportApplyMode::Merge.into(),
         };
 
-        let request = rpc::forge::InsertRackHealthReportRequest {
+        let request = rpc::nico::InsertRackHealthReportRequest {
             rack_id: Some(rack_id.clone()),
             health_report_entry: Some(ovrd),
         };
@@ -457,15 +457,15 @@ impl ApiClientWrapper {
 
     pub async fn submit_switch_health_report(
         &self,
-        switch_id: &carbide_uuid::switch::SwitchId,
+        switch_id: &nico_uuid::switch::SwitchId,
         report: health_report::HealthReport,
     ) -> Result<(), HealthError> {
-        let ovrd = rpc::forge::HealthReportEntry {
+        let ovrd = rpc::nico::HealthReportEntry {
             report: Some(report.into()),
-            mode: rpc::forge::HealthReportApplyMode::Merge.into(),
+            mode: rpc::nico::HealthReportApplyMode::Merge.into(),
         };
 
-        let request = rpc::forge::InsertSwitchHealthReportRequest {
+        let request = rpc::nico::InsertSwitchHealthReportRequest {
             switch_id: Some(*switch_id),
             health_report_entry: Some(ovrd),
         };
@@ -480,15 +480,15 @@ impl ApiClientWrapper {
 
     pub async fn submit_power_shelf_health_report(
         &self,
-        power_shelf_id: &carbide_uuid::power_shelf::PowerShelfId,
+        power_shelf_id: &nico_uuid::power_shelf::PowerShelfId,
         report: health_report::HealthReport,
     ) -> Result<(), HealthError> {
-        let ovrd = rpc::forge::HealthReportEntry {
+        let ovrd = rpc::nico::HealthReportEntry {
             report: Some(report.into()),
-            mode: rpc::forge::HealthReportApplyMode::Merge.into(),
+            mode: rpc::nico::HealthReportApplyMode::Merge.into(),
         };
 
-        let request = rpc::forge::InsertPowerShelfHealthReportRequest {
+        let request = rpc::nico::InsertPowerShelfHealthReportRequest {
             power_shelf_id: Some(*power_shelf_id),
             health_report_entry: Some(ovrd),
         };
@@ -508,10 +508,10 @@ impl EndpointSource for ApiClientWrapper {
     }
 }
 
-impl TryFrom<&rpc::forge::BmcInfo> for BmcAddr {
+impl TryFrom<&rpc::nico::BmcInfo> for BmcAddr {
     type Error = HealthError;
 
-    fn try_from(bmc_info: &rpc::forge::BmcInfo) -> Result<Self, Self::Error> {
+    fn try_from(bmc_info: &rpc::nico::BmcInfo) -> Result<Self, Self::Error> {
         let ip = bmc_info
             .ip
             .as_ref()
@@ -532,10 +532,10 @@ impl TryFrom<&rpc::forge::BmcInfo> for BmcAddr {
     }
 }
 
-impl TryFrom<&rpc::forge::SwitchNvosInfo> for BmcAddr {
+impl TryFrom<&rpc::nico::SwitchNvosInfo> for BmcAddr {
     type Error = HealthError;
 
-    fn try_from(nvos_info: &rpc::forge::SwitchNvosInfo) -> Result<Self, Self::Error> {
+    fn try_from(nvos_info: &rpc::nico::SwitchNvosInfo) -> Result<Self, Self::Error> {
         let ip = nvos_info
             .ip
             .as_ref()
@@ -556,8 +556,8 @@ impl TryFrom<&rpc::forge::SwitchNvosInfo> for BmcAddr {
     }
 }
 
-impl From<rpc::forge::UsernamePassword> for BmcCredentials {
-    fn from(value: rpc::forge::UsernamePassword) -> Self {
+impl From<rpc::nico::UsernamePassword> for BmcCredentials {
+    fn from(value: rpc::nico::UsernamePassword) -> Self {
         Self::UsernamePassword {
             username: value.username,
             password: Some(value.password),
@@ -565,17 +565,17 @@ impl From<rpc::forge::UsernamePassword> for BmcCredentials {
     }
 }
 
-impl From<rpc::forge::SessionToken> for BmcCredentials {
-    fn from(value: rpc::forge::SessionToken) -> Self {
+impl From<rpc::nico::SessionToken> for BmcCredentials {
+    fn from(value: rpc::nico::SessionToken) -> Self {
         Self::SessionToken { token: value.token }
     }
 }
 
-impl From<rpc::forge::bmc_credentials::Type> for BmcCredentials {
-    fn from(value: rpc::forge::bmc_credentials::Type) -> Self {
+impl From<rpc::nico::bmc_credentials::Type> for BmcCredentials {
+    fn from(value: rpc::nico::bmc_credentials::Type) -> Self {
         match value {
-            rpc::forge::bmc_credentials::Type::UsernamePassword(value) => value.into(),
-            rpc::forge::bmc_credentials::Type::SessionToken(value) => value.into(),
+            rpc::nico::bmc_credentials::Type::UsernamePassword(value) => value.into(),
+            rpc::nico::bmc_credentials::Type::SessionToken(value) => value.into(),
         }
     }
 }

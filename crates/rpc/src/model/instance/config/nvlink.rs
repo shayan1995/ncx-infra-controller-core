@@ -20,7 +20,7 @@
 use model::instance::config::nvlink::{InstanceNvLinkConfig, InstanceNvLinkGpuConfig};
 
 use crate::errors::RpcDataConversionError;
-use crate::forge as rpc;
+use crate::nico as rpc;
 
 impl TryFrom<rpc::InstanceNvLinkConfig> for InstanceNvLinkConfig {
     type Error = RpcDataConversionError;

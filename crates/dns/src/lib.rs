@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-//! Carbide DNS Server
+//! NICo DNS Server
 //!
 //! Listens directly on a DNS port (UDP/TCP) and resolves queries by forwarding
-//! them to carbide-api via the `lookup_record` RPC.
+//! them to nico-api via the `lookup_record` RPC.
 
 use std::iter;
 use std::sync::Arc;
@@ -29,7 +29,7 @@ use eyre::Report;
 use metrics_endpoint::{MetricsEndpointConfig, new_metrics_setup, run_metrics_endpoint};
 use opentelemetry::KeyValue;
 use opentelemetry::metrics::{Counter, Meter};
-use rpc::forge_tls_client::{ApiConfig, ForgeClientT, ForgeTlsClient};
+use rpc::nico_tls_client::{ApiConfig, NicoClientT, NicoTlsClient};
 use rpc::protos::dns::DnsResourceRecordLookupRequest;
 use tokio::net::{TcpListener, UdpSocket};
 use tokio::sync::Mutex;
@@ -58,16 +58,16 @@ impl DnsMetrics {
     fn new(meter: &Meter) -> Self {
         Self {
             negative_cache_hit: meter
-                .u64_counter("carbide_dns_negative_cache_hit_count")
+                .u64_counter("nico_dns_negative_cache_hit_count")
                 .build(),
             negative_cache_miss: meter
-                .u64_counter("carbide_dns_negative_cache_miss_count")
+                .u64_counter("nico_dns_negative_cache_miss_count")
                 .build(),
             negative_cache_eviction: meter
-                .u64_counter("carbide_dns_negative_cache_eviction_count")
+                .u64_counter("nico_dns_negative_cache_eviction_count")
                 .build(),
             negative_cache_drop: meter
-                .u64_counter("carbide_dns_negative_cache_drop_count")
+                .u64_counter("nico_dns_negative_cache_drop_count")
                 .build(),
         }
     }
@@ -82,7 +82,7 @@ impl std::fmt::Debug for DnsMetrics {
 
 #[derive(Debug)]
 pub struct DnsServer {
-    forge_client: Mutex<ForgeClientT>,
+    nico_client: Mutex<NicoClientT>,
     negative_cache: Arc<NegativeCache>,
     metrics: DnsMetrics,
 }
@@ -139,7 +139,7 @@ impl RequestHandler for DnsServer {
             // Clone the client out under the lock, then release it so the
             // upstream RPC runs without serializing other in-flight queries.
             let client = {
-                let guard = self.forge_client.lock().await;
+                let guard = self.nico_client.lock().await;
                 guard.clone()
             };
             match Self::retrieve_records(client, &qname, dns_qtype, &record_name).await {
@@ -203,9 +203,9 @@ impl RequestHandler for DnsServer {
 }
 
 impl DnsServer {
-    pub fn new(forge_client: Mutex<ForgeClientT>, meter: &Meter, config: &Config) -> Self {
+    pub fn new(nico_client: Mutex<NicoClientT>, meter: &Meter, config: &Config) -> Self {
         Self {
-            forge_client,
+            nico_client,
             negative_cache: Arc::new(NegativeCache::new(
                 Duration::from_secs(config.negative_cache_ttl_secs),
                 config.negative_cache_entries_max_count as usize,
@@ -214,10 +214,10 @@ impl DnsServer {
         }
     }
 
-    /// Queries carbide-api for DNS records matching `qname` and `qtype`, then
+    /// Queries nico-api for DNS records matching `qname` and `qtype`, then
     /// converts the results into trust-dns `Record` objects ready for the response.
     async fn retrieve_records(
-        mut forge_client: ForgeClientT,
+        mut nico_client: NicoClientT,
         qname: &str,
         qtype: DnsResourceRecordType,
         record_name: &Name,
@@ -235,7 +235,7 @@ impl DnsServer {
         });
 
         let api_start = Instant::now();
-        let response = forge_client.lookup_record(request).await?.into_inner();
+        let response = nico_client.lookup_record(request).await?.into_inner();
         let api_duration = api_start.elapsed();
 
         tracing::debug!(
@@ -300,17 +300,17 @@ impl DnsServer {
 
         info!("Starting DNS server on {}", listen);
 
-        let forge_client_config = config.forge_client_config();
+        let nico_client_config = config.nico_client_config();
         let api_uri = config.api_uri.to_string();
-        let api_config = ApiConfig::new(api_uri.as_str(), &forge_client_config);
+        let api_config = ApiConfig::new(api_uri.as_str(), &nico_client_config);
 
-        info!("Connecting to carbide-api at {}", api_uri);
+        info!("Connecting to nico-api at {}", api_uri);
 
-        let client = Mutex::new(ForgeTlsClient::retry_build(&api_config).await?);
+        let client = Mutex::new(NicoTlsClient::retry_build(&api_config).await?);
 
         let negative_ttl = Duration::from_secs(config.negative_cache_ttl_secs);
 
-        let metrics_setup = new_metrics_setup("carbide-dns", "carbide", true)?;
+        let metrics_setup = new_metrics_setup("nico-dns", "nico", true)?;
 
         // Must keep meter_provider alive for the lifetime of the server;
         // dropping it shuts down the Prometheus exporter.
@@ -356,15 +356,15 @@ impl DnsServer {
         info!(
             "Started DNS server on {} version {}",
             listen,
-            carbide_version::version!()
+            nico_version::version!()
         );
 
         match srv.block_until_done().await {
             Ok(()) => {
-                info!("Carbide-dns server is stopping");
+                info!("NICo-dns server is stopping");
             }
             Err(e) => {
-                let error_msg = format!("Carbide-dns has encountered an error: {e}");
+                let error_msg = format!("NICo-dns has encountered an error: {e}");
                 error!("{}", error_msg);
                 return Err(eyre::eyre!("{}", error_msg));
             }

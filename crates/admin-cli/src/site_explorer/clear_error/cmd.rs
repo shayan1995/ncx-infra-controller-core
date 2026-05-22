@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
-pub async fn clear_error(api_client: &ApiClient, address: String) -> CarbideCliResult<()> {
+pub async fn clear_error(api_client: &ApiClient, address: String) -> NicoCliResult<()> {
     api_client.0.clear_site_exploration_error(address).await?;
     Ok(())
 }

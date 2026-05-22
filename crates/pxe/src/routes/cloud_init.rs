@@ -24,27 +24,27 @@ use axum::response::IntoResponse;
 use axum::routing::get;
 use axum_template::TemplateEngine;
 use base64::Engine as _;
-use carbide_host_support::agent_config;
-use carbide_uuid::machine::MachineInterfaceId;
-use rpc::forge;
-use rpc::forge::PxeDomain;
+use nico_host_support::agent_config;
+use nico_uuid::machine::MachineInterfaceId;
+use rpc::nico;
+use rpc::nico::PxeDomain;
 
 use crate::common::{AppState, Machine};
 
 const DEFAULT_NUM_OF_VFS: u32 = 16;
 
-/// Generates the content of the /etc/forge/config.toml file.
+/// Generates the content of the /etc/nico/config.toml file.
 ///
 /// When `api_url_override` is provided (for external hosts on the
-/// static-assignments segment), it's written into the `[forge-system]`
+/// static-assignments segment), it's written into the `[nico-system]`
 /// section so the DPU agent connects to the correct API endpoint
-/// instead of defaulting to `carbide-api.forge`.
-fn generate_forge_agent_config(
+/// instead of defaulting to `nico-api.nico`.
+fn generate_nico_agent_config(
     machine_interface_id: MachineInterfaceId,
     api_url_override: Option<&str>,
 ) -> String {
     let config = agent_config::AgentConfigFromPxe {
-        forge_system: api_url_override.map(|url| agent_config::ForgeSystemConfigFromPxe {
+        nico_system: api_url_override.map(|url| agent_config::NicoSystemConfigFromPxe {
             api_server: url.to_string(),
         }),
         machine: agent_config::MachineConfigFromPxe {
@@ -68,7 +68,7 @@ fn print_and_generate_generic_error(error: String) -> (String, HashMap<String, S
 #[allow(clippy::too_many_arguments)]
 fn user_data_handler(
     machine_interface_id: MachineInterfaceId,
-    machine_interface: forge::MachineInterface,
+    machine_interface: nico::MachineInterface,
     domain: PxeDomain,
     hbn_reps: Option<String>,
     hbn_sfs: Option<String>,
@@ -83,16 +83,16 @@ fn user_data_handler(
     state: State<AppState>,
 ) -> (String, HashMap<String, String>) {
     let config = state.runtime_config.clone();
-    let forge_agent_config =
-        generate_forge_agent_config(machine_interface_id, api_url_override.as_deref());
+    let nico_agent_config =
+        generate_nico_agent_config(machine_interface_id, api_url_override.as_deref());
 
     let mut context: HashMap<String, String> = HashMap::new();
     context.insert("mac_address".to_string(), machine_interface.mac_address);
 
     if let Some(domain_oneof) = domain.domain {
         let domain_name = match domain_oneof {
-            forge::pxe_domain::Domain::LegacyDomain(domain) => domain.name,
-            forge::pxe_domain::Domain::NewDomain(domain) => domain.name,
+            nico::pxe_domain::Domain::LegacyDomain(domain) => domain.name,
+            nico::pxe_domain::Domain::NewDomain(domain) => domain.name,
         };
         context.insert(
             "hostname".to_string(),
@@ -111,15 +111,15 @@ fn user_data_handler(
         pxe_url_override.unwrap_or(config.pxe_url),
     );
     context.insert(
-        "forge_agent_config_b64".to_string(),
-        base64::engine::general_purpose::STANDARD.encode(forge_agent_config),
+        "nico_agent_config_b64".to_string(),
+        base64::engine::general_purpose::STANDARD.encode(nico_agent_config),
     );
 
     let bmc_fw_update = state
         .engine
         .render("bmc_fw_update", HashMap::<String, String>::new())
         .unwrap_or("".to_string());
-    context.insert("forge_bmc_fw_update".to_string(), bmc_fw_update);
+    context.insert("nico_bmc_fw_update".to_string(), bmc_fw_update);
 
     let seconds_since_epoch = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -132,11 +132,11 @@ fn user_data_handler(
     );
 
     if let Some(hbn_reps) = hbn_reps {
-        context.insert("forge_hbn_reps".to_string(), hbn_reps);
+        context.insert("nico_hbn_reps".to_string(), hbn_reps);
     }
 
     if let Some(hbn_sfs) = hbn_sfs {
-        context.insert("forge_hbn_sfs".to_string(), hbn_sfs);
+        context.insert("nico_hbn_sfs".to_string(), hbn_sfs);
     }
 
     let num_of_vfs = num_of_vfs.unwrap_or(DEFAULT_NUM_OF_VFS);
@@ -144,55 +144,55 @@ fn user_data_handler(
 
     if let Some(vf_intercept_bridge_name) = vf_intercept_bridge_name {
         context.insert(
-            "forge_vf_intercept_bridge_name".to_string(),
+            "nico_vf_intercept_bridge_name".to_string(),
             vf_intercept_bridge_name,
         );
     }
 
     if let Some(host_intercept_bridge_name) = host_intercept_bridge_name {
         context.insert(
-            "forge_host_intercept_bridge_name".to_string(),
+            "nico_host_intercept_bridge_name".to_string(),
             host_intercept_bridge_name,
         );
     }
 
     if let Some(host_intercept_bridge_port) = host_intercept_bridge_port {
         context.insert(
-            "forge_host_intercept_hbn_port".to_string(),
+            "nico_host_intercept_hbn_port".to_string(),
             format!("patch-hbn-{host_intercept_bridge_port}"),
         );
 
         context.insert(
-            "forge_host_intercept_bridge_port".to_string(),
+            "nico_host_intercept_bridge_port".to_string(),
             host_intercept_bridge_port,
         );
     }
 
     if let Some(vf_intercept_bridge_port) = vf_intercept_bridge_port {
         context.insert(
-            "forge_vf_intercept_hbn_port".to_string(),
+            "nico_vf_intercept_hbn_port".to_string(),
             format!("patch-hbn-{vf_intercept_bridge_port}"),
         );
 
         context.insert(
-            "forge_vf_intercept_bridge_port".to_string(),
+            "nico_vf_intercept_bridge_port".to_string(),
             vf_intercept_bridge_port,
         );
     }
 
     if let Some(vf_intercept_bridge_sf) = vf_intercept_bridge_sf {
         context.insert(
-            "forge_vf_intercept_bridge_sf_representor".to_string(),
+            "nico_vf_intercept_bridge_sf_representor".to_string(),
             format!("{vf_intercept_bridge_sf}_r"),
         );
 
         context.insert(
-            "forge_vf_intercept_bridge_sf_hbn_bridge_representor".to_string(),
+            "nico_vf_intercept_bridge_sf_hbn_bridge_representor".to_string(),
             format!("{vf_intercept_bridge_sf}_if_r"),
         );
 
         context.insert(
-            "forge_vf_intercept_bridge_sf".to_string(),
+            "nico_vf_intercept_bridge_sf".to_string(),
             vf_intercept_bridge_sf,
         );
     }
@@ -314,12 +314,12 @@ mod tests {
         AppState {
             engine: axum_template::engine::Engine::from(Tera::default()),
             runtime_config: RuntimeConfig {
-                internal_api_url: "https://carbide-api.forge-system.svc.cluster.local:1079"
+                internal_api_url: "https://nico-api.nico-system.svc.cluster.local:1079"
                     .to_string(),
-                client_facing_api_url: "https://carbide-api.forge".to_string(),
-                pxe_url: "http://carbide-pxe.forge".to_string(),
-                static_pxe_url: "http://carbide-pxe.forge".to_string(),
-                forge_root_ca_path: String::new(),
+                client_facing_api_url: "https://nico-api.nico".to_string(),
+                pxe_url: "http://nico-pxe.nico".to_string(),
+                static_pxe_url: "http://nico-pxe.nico".to_string(),
+                nico_root_ca_path: String::new(),
                 server_cert_path: String::new(),
                 server_key_path: String::new(),
                 bind_address: "0.0.0.0".to_string(),
@@ -331,9 +331,9 @@ mod tests {
     }
 
     #[test]
-    fn forge_agent_config() {
+    fn nico_agent_config() {
         let interface_id = "91609f10-c91d-470d-a260-6293ea0c1234".parse().unwrap();
-        let config = generate_forge_agent_config(interface_id, None);
+        let config = generate_nico_agent_config(interface_id, None);
 
         // The intent here is to actually test what the written
         // configuration file looks like, so we can visualize to
@@ -356,8 +356,8 @@ mod tests {
             interface_id.to_string().as_str(),
         );
 
-        // No forge-system section when no override is provided.
-        assert!(data.get("forge-system").is_none());
+        // No nico-system section when no override is provided.
+        assert!(data.get("nico-system").is_none());
 
         // Check to make sure is_fake_dpu gets skipped
         // from the serialized output.
@@ -369,9 +369,9 @@ mod tests {
     }
 
     #[test]
-    fn forge_agent_config_with_external_api_url() {
+    fn nico_agent_config_with_external_api_url() {
         let interface_id = "91609f10-c91d-470d-a260-6293ea0c1234".parse().unwrap();
-        let config = generate_forge_agent_config(interface_id, Some("https://10.99.0.1:1079"));
+        let config = generate_nico_agent_config(interface_id, Some("https://10.99.0.1:1079"));
 
         let test_config =
             fs::read_to_string(format!("{TEST_DATA_DIR}/agent_config_external.toml")).unwrap();
@@ -380,7 +380,7 @@ mod tests {
         let data: toml::Value = toml::from_str(&config).unwrap();
 
         assert_eq!(
-            data.get("forge-system")
+            data.get("nico-system")
                 .unwrap()
                 .get("api-server")
                 .unwrap()
@@ -410,25 +410,25 @@ mod tests {
         let context = HashMap::from([
             (
                 "api_url".to_string(),
-                "https://carbide-api.forge".to_string(),
+                "https://nico-api.nico".to_string(),
             ),
             (
-                "forge_agent_config_b64".to_string(),
+                "nico_agent_config_b64".to_string(),
                 "W21hY2hpbmVdCg==".to_string(),
             ),
-            ("forge_bmc_fw_update".to_string(), String::new()),
-            ("forge_hbn_reps".to_string(), String::new()),
-            ("forge_hbn_sfs".to_string(), String::new()),
+            ("nico_bmc_fw_update".to_string(), String::new()),
+            ("nico_hbn_reps".to_string(), String::new()),
+            ("nico_hbn_sfs".to_string(), String::new()),
             (
-                "forge_host_intercept_bridge_name".to_string(),
+                "nico_host_intercept_bridge_name".to_string(),
                 String::new(),
             ),
             (
-                "forge_host_intercept_bridge_port".to_string(),
+                "nico_host_intercept_bridge_port".to_string(),
                 String::new(),
             ),
-            ("forge_vf_intercept_bridge_name".to_string(), String::new()),
-            ("forge_vf_intercept_bridge_port".to_string(), String::new()),
+            ("nico_vf_intercept_bridge_name".to_string(), String::new()),
+            ("nico_vf_intercept_bridge_port".to_string(), String::new()),
             ("hostname".to_string(), "test-host".to_string()),
             (
                 "interface_id".to_string(),
@@ -437,7 +437,7 @@ mod tests {
             ("num_of_vfs".to_string(), "3".to_string()),
             (
                 "pxe_url".to_string(),
-                "http://carbide-pxe.forge".to_string(),
+                "http://nico-pxe.nico".to_string(),
             ),
             ("seconds_since_epoch".to_string(), "0".to_string()),
         ]);
@@ -462,15 +462,15 @@ mod tests {
     fn user_data_handler_sets_fqdn_hostname() {
         let interface_id: MachineInterfaceId =
             "91609f10-c91d-470d-a260-6293ea0c1234".parse().unwrap();
-        let machine_interface = forge::MachineInterface {
+        let machine_interface = nico::MachineInterface {
             id: Some(interface_id),
             hostname: "node-01".to_string(),
             mac_address: "aa:bb:cc:dd:ee:ff".to_string(),
             ..Default::default()
         };
         let domain = PxeDomain {
-            domain: Some(forge::pxe_domain::Domain::LegacyDomain(forge::Domain {
-                name: "forge.example.com".to_string(),
+            domain: Some(nico::pxe_domain::Domain::LegacyDomain(nico::Domain {
+                name: "nico.example.com".to_string(),
                 ..Default::default()
             })),
         };
@@ -496,7 +496,7 @@ mod tests {
         assert_eq!(template_key, "user-data");
         assert_eq!(
             context.get("hostname").map(String::as_str),
-            Some("node-01.forge.example.com"),
+            Some("node-01.nico.example.com"),
         );
     }
 
@@ -504,15 +504,15 @@ mod tests {
     fn user_data_handler_sets_fqdn_hostname_with_new_domain() {
         let interface_id: MachineInterfaceId =
             "91609f10-c91d-470d-a260-6293ea0c1234".parse().unwrap();
-        let machine_interface = forge::MachineInterface {
+        let machine_interface = nico::MachineInterface {
             id: Some(interface_id),
             hostname: "node-02".to_string(),
             mac_address: "aa:bb:cc:dd:ee:ff".to_string(),
             ..Default::default()
         };
         let domain = PxeDomain {
-            domain: Some(forge::pxe_domain::Domain::NewDomain(rpc::dns::Domain {
-                name: "new.forge.example.com".to_string(),
+            domain: Some(nico::pxe_domain::Domain::NewDomain(rpc::dns::Domain {
+                name: "new.nico.example.com".to_string(),
                 ..Default::default()
             })),
         };
@@ -537,7 +537,7 @@ mod tests {
 
         assert_eq!(
             context.get("hostname").map(String::as_str),
-            Some("node-02.new.forge.example.com"),
+            Some("node-02.new.nico.example.com"),
         );
     }
 }

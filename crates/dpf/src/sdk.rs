@@ -1749,7 +1749,7 @@ impl<R: DpuNodeRepository + DpuDeviceRepository + DpuRepository, L> DpfSdk<R, L>
 impl<R: DpuServiceTemplateRepository, L> DpfSdk<R, L> {
     /// List the helm-chart versions currently declared on each live
     /// `DPUServiceTemplate` CR. Useful for comparing what's deployed in
-    /// the cluster against the carbide-config service versions.
+    /// the cluster against the nico-config service versions.
     pub async fn list_service_template_versions(
         &self,
     ) -> Result<Vec<ServiceTemplateVersion>, DpfError> {

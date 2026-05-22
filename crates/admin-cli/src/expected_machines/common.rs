@@ -17,7 +17,7 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::rack::RackId;
+use nico_uuid::rack::RackId;
 use mac_address::MacAddress;
 use serde::{Deserialize, Serialize};
 
@@ -32,10 +32,10 @@ pub struct ExpectedMachineJson {
     pub chassis_serial_number: String,
     pub fallback_dpu_serial_numbers: Option<Vec<String>>,
     #[serde(default)]
-    pub metadata: Option<rpc::forge::Metadata>,
+    pub metadata: Option<rpc::nico::Metadata>,
     pub sku_id: Option<String>,
     #[serde(default)]
-    pub host_nics: Vec<rpc::forge::ExpectedHostNic>,
+    pub host_nics: Vec<rpc::nico::ExpectedHostNic>,
     pub rack_id: Option<RackId>,
     pub default_pause_ingestion_and_poweron: Option<bool>,
     pub dpf_enabled: Option<bool>,
@@ -49,7 +49,7 @@ pub struct ExpectedMachineJson {
     /// `[site_explorer] dpu_mode` setting (falls back to `DpuMode::DpuMode`
     /// if that's also unset).
     #[serde(default)]
-    pub dpu_mode: Option<rpc::forge::DpuMode>,
+    pub dpu_mode: Option<rpc::nico::DpuMode>,
     /// Per-host lifecycle profile for settings that affect state-machine progression.
     #[serde(default)]
     pub host_lifecycle_profile: Option<HostLifecycleProfile>,

@@ -30,7 +30,7 @@ pub struct InternalRBACRules {
 
 #[derive(Debug)]
 enum RulePrincipal {
-    ForgeAdminCLI,
+    NicoAdminCLI,
     Machineatron,
     SiteAgent,
     Agent, // Agent on the DPU, NOT site agent
@@ -48,7 +48,7 @@ enum RulePrincipal {
     Anonymous, // Permitted for everything
 }
 use self::RulePrincipal::{
-    Agent, Anonymous, BmcProxy, Dhcp, Dns, DsxExchangeConsumer, Flow, ForgeAdminCLI, Health,
+    Agent, Anonymous, BmcProxy, Dhcp, Dns, DsxExchangeConsumer, Flow, NicoAdminCLI, Health,
     Machineatron, MaintenanceJobs, Pxe, Scout, SiteAgent, Ssh, SshRs,
 };
 
@@ -64,149 +64,149 @@ impl InternalRBACRules {
         x.perm("CreateDomainLegacy", vec![]);
         x.perm("UpdateDomainLegacy", vec![]);
         x.perm("DeleteDomainLegacy", vec![]);
-        x.perm("FindDomainLegacy", vec![ForgeAdminCLI]);
+        x.perm("FindDomainLegacy", vec![NicoAdminCLI]);
         x.perm("UpdateDomain", vec![]);
         x.perm("DeleteDomain", vec![]);
-        x.perm("FindDomain", vec![ForgeAdminCLI]);
+        x.perm("FindDomain", vec![NicoAdminCLI]);
         x.perm("CreateVpc", vec![SiteAgent, Machineatron]);
-        x.perm("UpdateVpc", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateVpcVirtualization", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("UpdateVpc", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateVpcVirtualization", vec![NicoAdminCLI, SiteAgent]);
         x.perm("DeleteVpc", vec![Machineatron, SiteAgent]);
-        x.perm("FindVpcIds", vec![SiteAgent, ForgeAdminCLI, Machineatron]);
-        x.perm("FindVpcsByIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateVpcPrefix", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("SearchVpcPrefixes", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetVpcPrefixes", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateVpcPrefix", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteVpcPrefix", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetAllDpaInterfaceIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindDpaInterfacesByIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("FindVpcIds", vec![SiteAgent, NicoAdminCLI, Machineatron]);
+        x.perm("FindVpcsByIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateVpcPrefix", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("SearchVpcPrefixes", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetVpcPrefixes", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateVpcPrefix", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteVpcPrefix", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetAllDpaInterfaceIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindDpaInterfacesByIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm("CreateDpaInterface", vec![]);
         x.perm("EnsureDpaInterface", vec![]);
         x.perm("DeleteDpaInterface", vec![]);
         x.perm("SetDpaNetworkObservationStatus", vec![]);
         x.perm(
             "FindNetworkSegmentIds",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "FindNetworkSegmentsByIds",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "FindNetworkSegmentStateHistories",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm("CreateNetworkSegment", vec![Machineatron, SiteAgent]);
         x.perm(
             "DeleteNetworkSegment",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm("NetworkSegmentsForVpc", vec![]);
-        x.perm("FindIBPartitionIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindIBPartitionsByIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("FindIBPartitionIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindIBPartitionsByIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm("CreateIBPartition", vec![SiteAgent]);
         x.perm("UpdateIBPartition", vec![SiteAgent]);
         x.perm("DeleteIBPartition", vec![SiteAgent]);
         x.perm("IBPartitionsForTenant", vec![]);
-        x.perm("FindIBFabricIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("FindIBFabricIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "AllocateInstance",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "AllocateInstances",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
-        x.perm("ReleaseInstance", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("ReleaseInstance", vec![NicoAdminCLI, SiteAgent]);
         x.perm("UpdateInstanceOperatingSystem", vec![SiteAgent]);
-        x.perm("UpdateInstanceConfig", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindInstanceIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("UpdateInstanceConfig", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindInstanceIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "FindInstancesByIds",
-            vec![ForgeAdminCLI, SiteAgent, Ssh, SshRs],
+            vec![NicoAdminCLI, SiteAgent, Ssh, SshRs],
         );
         x.perm(
             "FindInstanceByMachineID",
-            vec![ForgeAdminCLI, Agent, SiteAgent],
+            vec![NicoAdminCLI, Agent, SiteAgent],
         );
         x.perm("RecordObservedInstanceNetworkStatus", vec![]);
         x.perm(
             "GetManagedHostNetworkConfig",
-            vec![ForgeAdminCLI, Agent, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Agent, Machineatron, SiteAgent],
         );
         x.perm("RecordDpuNetworkStatus", vec![Agent, Machineatron]);
         x.perm(
             "ListMachineHealthReports",
-            vec![ForgeAdminCLI, Health, Ssh, SshRs],
+            vec![NicoAdminCLI, Health, Ssh, SshRs],
         );
         x.perm(
             "InsertMachineHealthReport",
-            vec![ForgeAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
+            vec![NicoAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
         );
         x.perm(
             "RemoveMachineHealthReport",
-            vec![ForgeAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
+            vec![NicoAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
         );
         x.perm(
             "ListRackHealthReports",
-            vec![ForgeAdminCLI, Health, DsxExchangeConsumer],
+            vec![NicoAdminCLI, Health, DsxExchangeConsumer],
         );
         x.perm(
             "InsertRackHealthReport",
-            vec![ForgeAdminCLI, Health, DsxExchangeConsumer],
+            vec![NicoAdminCLI, Health, DsxExchangeConsumer],
         );
         x.perm(
             "RemoveRackHealthReport",
-            vec![ForgeAdminCLI, Health, DsxExchangeConsumer],
+            vec![NicoAdminCLI, Health, DsxExchangeConsumer],
         );
-        x.perm("ListSwitchHealthReports", vec![ForgeAdminCLI, Health]);
-        x.perm("InsertSwitchHealthReport", vec![ForgeAdminCLI, Health]);
-        x.perm("RemoveSwitchHealthReport", vec![ForgeAdminCLI, Health]);
-        x.perm("ListPowerShelfHealthReports", vec![ForgeAdminCLI, Health]);
-        x.perm("InsertPowerShelfHealthReport", vec![ForgeAdminCLI, Health]);
-        x.perm("RemovePowerShelfHealthReport", vec![ForgeAdminCLI, Health]);
+        x.perm("ListSwitchHealthReports", vec![NicoAdminCLI, Health]);
+        x.perm("InsertSwitchHealthReport", vec![NicoAdminCLI, Health]);
+        x.perm("RemoveSwitchHealthReport", vec![NicoAdminCLI, Health]);
+        x.perm("ListPowerShelfHealthReports", vec![NicoAdminCLI, Health]);
+        x.perm("InsertPowerShelfHealthReport", vec![NicoAdminCLI, Health]);
+        x.perm("RemovePowerShelfHealthReport", vec![NicoAdminCLI, Health]);
         // Deprecated aliases for the machine health report RPCs. Mirror the
         // permissions of their canonical equivalents above. Drop once we're
         // confident no clients are still calling the old names.
         x.perm(
             "ListHealthReportOverrides",
-            vec![ForgeAdminCLI, Health, Ssh, SshRs],
+            vec![NicoAdminCLI, Health, Ssh, SshRs],
         );
         x.perm(
             "InsertHealthReportOverride",
-            vec![ForgeAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
+            vec![NicoAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
         );
         x.perm(
             "RemoveHealthReportOverride",
-            vec![ForgeAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
+            vec![NicoAdminCLI, Health, SiteAgent, Ssh, SshRs, Flow],
         );
         x.perm("DpuAgentUpgradeCheck", vec![Scout]);
-        x.perm("DpuAgentUpgradePolicyAction", vec![ForgeAdminCLI]);
+        x.perm("DpuAgentUpgradePolicyAction", vec![NicoAdminCLI]);
         x.perm("LookupRecord", vec![Dns]);
         x.perm("LookupRecordLegacy", vec![Dns]);
         x.perm("GetAllDomainMetadata", vec![Dns]);
         x.perm("GetAllDomains", vec![Dns]);
-        x.perm("InvokeInstancePower", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ForgeAgentControl", vec![Machineatron, Scout]);
+        x.perm("InvokeInstancePower", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("NicoAgentControl", vec![Machineatron, Scout]);
         x.perm("DiscoverMachine", vec![Anonymous]);
         x.perm("RenewMachineCertificate", vec![Agent]);
         x.perm("DiscoveryCompleted", vec![Machineatron, Scout]);
         x.perm("CleanupMachineCompleted", vec![Machineatron, Scout]);
-        x.perm("ReportForgeScoutError", vec![Scout]);
+        x.perm("ReportNicoScoutError", vec![Scout]);
         x.perm("ReportScoutFirmwareUpgradeStatus", vec![Scout]);
         x.perm("DiscoverDhcp", vec![Dhcp, Machineatron]);
         x.perm("ExpireDhcpLease", vec![Dhcp, Machineatron]);
-        x.perm("AssignStaticAddress", vec![ForgeAdminCLI]);
-        x.perm("RemoveStaticAddress", vec![ForgeAdminCLI]);
-        x.perm("FindInterfaceAddresses", vec![ForgeAdminCLI]);
-        x.perm("FindInterfaces", vec![ForgeAdminCLI, Agent, Flow]);
-        x.perm("DeleteInterface", vec![ForgeAdminCLI]);
-        x.perm("FindIpAddress", vec![ForgeAdminCLI]);
+        x.perm("AssignStaticAddress", vec![NicoAdminCLI]);
+        x.perm("RemoveStaticAddress", vec![NicoAdminCLI]);
+        x.perm("FindInterfaceAddresses", vec![NicoAdminCLI]);
+        x.perm("FindInterfaces", vec![NicoAdminCLI, Agent, Flow]);
+        x.perm("DeleteInterface", vec![NicoAdminCLI]);
+        x.perm("FindIpAddress", vec![NicoAdminCLI]);
         x.perm(
             "FindMachineIds",
             vec![
-                ForgeAdminCLI,
+                NicoAdminCLI,
                 Machineatron,
                 Health,
                 SiteAgent,
@@ -218,7 +218,7 @@ impl InternalRBACRules {
         x.perm(
             "FindMachinesByIds",
             vec![
-                ForgeAdminCLI,
+                NicoAdminCLI,
                 Machineatron,
                 Health,
                 SiteAgent,
@@ -227,13 +227,13 @@ impl InternalRBACRules {
                 Flow,
             ],
         );
-        x.perm("FindConnectedDevicesByDpuMachineIds", vec![ForgeAdminCLI]);
-        x.perm("FindMachineIdsByBmcIps", vec![ForgeAdminCLI, Flow]);
-        x.perm("FindMachineHealthHistories", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindMachineStateHistories", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("IdentifyUuid", vec![ForgeAdminCLI]);
-        x.perm("IdentifyMac", vec![ForgeAdminCLI]);
-        x.perm("IdentifySerial", vec![ForgeAdminCLI, Machineatron, Flow]);
+        x.perm("FindConnectedDevicesByDpuMachineIds", vec![NicoAdminCLI]);
+        x.perm("FindMachineIdsByBmcIps", vec![NicoAdminCLI, Flow]);
+        x.perm("FindMachineHealthHistories", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindMachineStateHistories", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("IdentifyUuid", vec![NicoAdminCLI]);
+        x.perm("IdentifyMac", vec![NicoAdminCLI]);
+        x.perm("IdentifySerial", vec![NicoAdminCLI, Machineatron, Flow]);
         x.perm("GetBMCMetaData", vec![Health, Ssh, SshRs]);
         x.perm("UpdateBMCMetaData", vec![Machineatron]);
         x.perm("UpdateMachineCredentials", vec![]);
@@ -241,622 +241,622 @@ impl InternalRBACRules {
         x.perm("GetCloudInitInstructions", vec![Pxe]);
         x.perm("Echo", vec![Dhcp]);
         x.perm("CreateTenant", vec![SiteAgent]);
-        x.perm("FindTenant", vec![SiteAgent, ForgeAdminCLI]);
-        x.perm("UpdateTenant", vec![SiteAgent, ForgeAdminCLI]);
+        x.perm("FindTenant", vec![SiteAgent, NicoAdminCLI]);
+        x.perm("UpdateTenant", vec![SiteAgent, NicoAdminCLI]);
         x.perm("CreateTenantKeyset", vec![SiteAgent]);
-        x.perm("FindTenantKeysetIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindTenantKeysetsByIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("FindTenantKeysetIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindTenantKeysetsByIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm("UpdateTenantKeyset", vec![SiteAgent]);
         x.perm("DeleteTenantKeyset", vec![SiteAgent]);
         x.perm("ValidateTenantPublicKey", vec![SiteAgent, Ssh, SshRs]);
         x.perm("GetBmcCredentials", vec![Health, BmcProxy]);
         x.perm("GetSwitchNvosCredentials", vec![Health]);
-        x.perm("GetAllManagedHostNetworkStatus", vec![ForgeAdminCLI]);
+        x.perm("GetAllManagedHostNetworkStatus", vec![NicoAdminCLI]);
         x.perm(
             "GetSiteExplorationReport",
-            vec![ForgeAdminCLI, Machineatron],
+            vec![NicoAdminCLI, Machineatron],
         );
-        x.perm("ClearSiteExplorationError", vec![ForgeAdminCLI]);
-        x.perm("IsBmcInManagedHost", vec![ForgeAdminCLI]);
-        x.perm("Explore", vec![ForgeAdminCLI, Flow]);
-        x.perm("ReExploreEndpoint", vec![ForgeAdminCLI, Flow]);
-        x.perm("RefreshEndpointReport", vec![ForgeAdminCLI, Flow]);
-        x.perm("DeleteExploredEndpoint", vec![ForgeAdminCLI]);
-        x.perm("PauseExploredEndpointRemediation", vec![ForgeAdminCLI]);
-        x.perm("FindExploredEndpointIds", vec![ForgeAdminCLI, Flow]);
-        x.perm("FindExploredEndpointsByIds", vec![ForgeAdminCLI, Flow]);
-        x.perm("FindExploredManagedHostIds", vec![ForgeAdminCLI, Flow]);
-        x.perm("FindExploredManagedHostsByIds", vec![ForgeAdminCLI, Flow]);
-        x.perm("AdminForceDeleteMachine", vec![ForgeAdminCLI, Machineatron]);
-        x.perm("AdminForceDeleteSwitch", vec![ForgeAdminCLI, Machineatron]);
+        x.perm("ClearSiteExplorationError", vec![NicoAdminCLI]);
+        x.perm("IsBmcInManagedHost", vec![NicoAdminCLI]);
+        x.perm("Explore", vec![NicoAdminCLI, Flow]);
+        x.perm("ReExploreEndpoint", vec![NicoAdminCLI, Flow]);
+        x.perm("RefreshEndpointReport", vec![NicoAdminCLI, Flow]);
+        x.perm("DeleteExploredEndpoint", vec![NicoAdminCLI]);
+        x.perm("PauseExploredEndpointRemediation", vec![NicoAdminCLI]);
+        x.perm("FindExploredEndpointIds", vec![NicoAdminCLI, Flow]);
+        x.perm("FindExploredEndpointsByIds", vec![NicoAdminCLI, Flow]);
+        x.perm("FindExploredManagedHostIds", vec![NicoAdminCLI, Flow]);
+        x.perm("FindExploredManagedHostsByIds", vec![NicoAdminCLI, Flow]);
+        x.perm("AdminForceDeleteMachine", vec![NicoAdminCLI, Machineatron]);
+        x.perm("AdminForceDeleteSwitch", vec![NicoAdminCLI, Machineatron]);
         x.perm(
             "AdminForceDeletePowerShelf",
-            vec![ForgeAdminCLI, Machineatron],
+            vec![NicoAdminCLI, Machineatron],
         );
-        x.perm("AdminListResourcePools", vec![ForgeAdminCLI]);
-        x.perm("AdminGrowResourcePool", vec![ForgeAdminCLI]);
-        x.perm("SetMaintenance", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("SetDynamicConfig", vec![ForgeAdminCLI, Machineatron]);
-        x.perm("TriggerDpuReprovisioning", vec![ForgeAdminCLI]);
-        x.perm("TriggerHostReprovisioning", vec![ForgeAdminCLI, Flow]);
-        x.perm("ListDpuWaitingForReprovisioning", vec![ForgeAdminCLI]);
-        x.perm("MarkManualFirmwareUpgradeComplete", vec![ForgeAdminCLI]);
+        x.perm("AdminListResourcePools", vec![NicoAdminCLI]);
+        x.perm("AdminGrowResourcePool", vec![NicoAdminCLI]);
+        x.perm("SetMaintenance", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("SetDynamicConfig", vec![NicoAdminCLI, Machineatron]);
+        x.perm("TriggerDpuReprovisioning", vec![NicoAdminCLI]);
+        x.perm("TriggerHostReprovisioning", vec![NicoAdminCLI, Flow]);
+        x.perm("ListDpuWaitingForReprovisioning", vec![NicoAdminCLI]);
+        x.perm("MarkManualFirmwareUpgradeComplete", vec![NicoAdminCLI]);
         x.perm(
             "ListHostsWaitingForReprovisioning",
-            vec![ForgeAdminCLI, Flow],
+            vec![NicoAdminCLI, Flow],
         );
         x.perm("GetDpuInfoList", vec![Agent]);
-        x.perm("GetMachineBootOverride", vec![ForgeAdminCLI]);
-        x.perm("SetMachineBootOverride", vec![ForgeAdminCLI]);
-        x.perm("ClearMachineBootOverride", vec![ForgeAdminCLI]);
-        x.perm("GetNetworkTopology", vec![ForgeAdminCLI]);
-        x.perm("FindNetworkDevicesByDeviceIds", vec![ForgeAdminCLI]);
-        x.perm("CreateCredential", vec![ForgeAdminCLI]);
-        x.perm("DeleteCredential", vec![ForgeAdminCLI]);
-        x.perm("GetRouteServers", vec![ForgeAdminCLI]);
-        x.perm("AddRouteServers", vec![ForgeAdminCLI]);
-        x.perm("RemoveRouteServers", vec![ForgeAdminCLI]);
+        x.perm("GetMachineBootOverride", vec![NicoAdminCLI]);
+        x.perm("SetMachineBootOverride", vec![NicoAdminCLI]);
+        x.perm("ClearMachineBootOverride", vec![NicoAdminCLI]);
+        x.perm("GetNetworkTopology", vec![NicoAdminCLI]);
+        x.perm("FindNetworkDevicesByDeviceIds", vec![NicoAdminCLI]);
+        x.perm("CreateCredential", vec![NicoAdminCLI]);
+        x.perm("DeleteCredential", vec![NicoAdminCLI]);
+        x.perm("GetRouteServers", vec![NicoAdminCLI]);
+        x.perm("AddRouteServers", vec![NicoAdminCLI]);
+        x.perm("RemoveRouteServers", vec![NicoAdminCLI]);
         x.perm("ReplaceRouteServers", vec![]);
         x.perm("UpdateAgentReportedInventory", vec![Agent]);
         x.perm("UpdateInstancePhoneHomeLastContact", vec![Agent]);
-        x.perm("SetHostUefiPassword", vec![ForgeAdminCLI]);
-        x.perm("ClearHostUefiPassword", vec![ForgeAdminCLI]);
-        x.perm("AddExpectedMachine", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("DeleteExpectedMachine", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateExpectedMachine", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateExpectedMachines", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateExpectedMachines", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetExpectedMachine", vec![ForgeAdminCLI, Flow]);
+        x.perm("SetHostUefiPassword", vec![NicoAdminCLI]);
+        x.perm("ClearHostUefiPassword", vec![NicoAdminCLI]);
+        x.perm("AddExpectedMachine", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("DeleteExpectedMachine", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateExpectedMachine", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateExpectedMachines", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateExpectedMachines", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetExpectedMachine", vec![NicoAdminCLI, Flow]);
         x.perm(
             "GetAllExpectedMachines",
-            vec![ForgeAdminCLI, SiteAgent, Flow],
+            vec![NicoAdminCLI, SiteAgent, Flow],
         );
-        x.perm("ReplaceAllExpectedMachines", vec![ForgeAdminCLI]);
-        x.perm("DeleteAllExpectedMachines", vec![ForgeAdminCLI]);
+        x.perm("ReplaceAllExpectedMachines", vec![NicoAdminCLI]);
+        x.perm("DeleteAllExpectedMachines", vec![NicoAdminCLI]);
         x.perm(
             "GetAllExpectedMachinesLinked",
-            vec![ForgeAdminCLI, SiteAgent, Flow],
+            vec![NicoAdminCLI, SiteAgent, Flow],
         );
         x.perm(
             "GetAllUnexpectedMachines",
-            vec![ForgeAdminCLI, SiteAgent, Flow],
+            vec![NicoAdminCLI, SiteAgent, Flow],
         );
         x.perm("AttestQuote", vec![Anonymous]);
         x.perm("SignMachineIdentity", vec![Agent]);
         x.perm(
             "GetTenantIdentityConfiguration",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "SetTenantIdentityConfiguration",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "DeleteTenantIdentityConfiguration",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("GetTokenDelegation", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("SetTokenDelegation", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteTokenDelegation", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetJWKS", vec![Anonymous, Agent, ForgeAdminCLI, SiteAgent]);
+        x.perm("GetTokenDelegation", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("SetTokenDelegation", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteTokenDelegation", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetJWKS", vec![Anonymous, Agent, NicoAdminCLI, SiteAgent]);
         x.perm(
             "GetOpenIDConfiguration",
-            vec![Anonymous, Agent, ForgeAdminCLI, SiteAgent],
+            vec![Anonymous, Agent, NicoAdminCLI, SiteAgent],
         );
-        x.perm("CreateMeasurementBundle", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteMeasurementBundle", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("RenameMeasurementBundle", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateMeasurementBundle", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ShowMeasurementBundle", vec![ForgeAdminCLI]);
-        x.perm("ShowMeasurementBundles", vec![ForgeAdminCLI]);
-        x.perm("ListMeasurementBundles", vec![ForgeAdminCLI]);
-        x.perm("ListMeasurementBundleMachines", vec![ForgeAdminCLI]);
-        x.perm("FindClosestBundleMatch", vec![ForgeAdminCLI]);
-        x.perm("DeleteMeasurementJournal", vec![ForgeAdminCLI]);
-        x.perm("ShowMeasurementJournal", vec![ForgeAdminCLI]);
-        x.perm("ShowMeasurementJournals", vec![ForgeAdminCLI]);
-        x.perm("ListMeasurementJournal", vec![ForgeAdminCLI]);
-        x.perm("AttestCandidateMachine", vec![ForgeAdminCLI]);
-        x.perm("ShowCandidateMachine", vec![ForgeAdminCLI]);
-        x.perm("ShowCandidateMachines", vec![ForgeAdminCLI]);
-        x.perm("ListCandidateMachines", vec![ForgeAdminCLI]);
+        x.perm("CreateMeasurementBundle", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteMeasurementBundle", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("RenameMeasurementBundle", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateMeasurementBundle", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ShowMeasurementBundle", vec![NicoAdminCLI]);
+        x.perm("ShowMeasurementBundles", vec![NicoAdminCLI]);
+        x.perm("ListMeasurementBundles", vec![NicoAdminCLI]);
+        x.perm("ListMeasurementBundleMachines", vec![NicoAdminCLI]);
+        x.perm("FindClosestBundleMatch", vec![NicoAdminCLI]);
+        x.perm("DeleteMeasurementJournal", vec![NicoAdminCLI]);
+        x.perm("ShowMeasurementJournal", vec![NicoAdminCLI]);
+        x.perm("ShowMeasurementJournals", vec![NicoAdminCLI]);
+        x.perm("ListMeasurementJournal", vec![NicoAdminCLI]);
+        x.perm("AttestCandidateMachine", vec![NicoAdminCLI]);
+        x.perm("ShowCandidateMachine", vec![NicoAdminCLI]);
+        x.perm("ShowCandidateMachines", vec![NicoAdminCLI]);
+        x.perm("ListCandidateMachines", vec![NicoAdminCLI]);
         x.perm(
             "CreateMeasurementSystemProfile",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "DeleteMeasurementSystemProfile",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "RenameMeasurementSystemProfile",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("ShowMeasurementSystemProfile", vec![ForgeAdminCLI]);
-        x.perm("ShowMeasurementSystemProfiles", vec![ForgeAdminCLI]);
-        x.perm("ListMeasurementSystemProfiles", vec![ForgeAdminCLI]);
-        x.perm("ListMeasurementSystemProfileBundles", vec![ForgeAdminCLI]);
-        x.perm("ListMeasurementSystemProfileMachines", vec![ForgeAdminCLI]);
-        x.perm("CreateMeasurementReport", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteMeasurementReport", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("PromoteMeasurementReport", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("RevokeMeasurementReport", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ShowMeasurementReportForId", vec![ForgeAdminCLI]);
-        x.perm("ShowMeasurementReportsForMachine", vec![ForgeAdminCLI]);
-        x.perm("ShowMeasurementReports", vec![ForgeAdminCLI]);
-        x.perm("ListMeasurementReport", vec![ForgeAdminCLI]);
-        x.perm("MatchMeasurementReport", vec![ForgeAdminCLI]);
-        x.perm("ImportSiteMeasurements", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ExportSiteMeasurements", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("ShowMeasurementSystemProfile", vec![NicoAdminCLI]);
+        x.perm("ShowMeasurementSystemProfiles", vec![NicoAdminCLI]);
+        x.perm("ListMeasurementSystemProfiles", vec![NicoAdminCLI]);
+        x.perm("ListMeasurementSystemProfileBundles", vec![NicoAdminCLI]);
+        x.perm("ListMeasurementSystemProfileMachines", vec![NicoAdminCLI]);
+        x.perm("CreateMeasurementReport", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteMeasurementReport", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("PromoteMeasurementReport", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("RevokeMeasurementReport", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ShowMeasurementReportForId", vec![NicoAdminCLI]);
+        x.perm("ShowMeasurementReportsForMachine", vec![NicoAdminCLI]);
+        x.perm("ShowMeasurementReports", vec![NicoAdminCLI]);
+        x.perm("ListMeasurementReport", vec![NicoAdminCLI]);
+        x.perm("MatchMeasurementReport", vec![NicoAdminCLI]);
+        x.perm("ImportSiteMeasurements", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ExportSiteMeasurements", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "AddMeasurementTrustedMachine",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "RemoveMeasurementTrustedMachine",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "AddMeasurementTrustedProfile",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "RemoveMeasurementTrustedProfile",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "ListMeasurementTrustedMachines",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "ListMeasurementTrustedProfiles",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm("ListAttestationSummary", vec![SiteAgent]);
-        x.perm("ImportStorageCluster", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteStorageCluster", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ListStorageCluster", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetStorageCluster", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateStorageCluster", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateStoragePool", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteStoragePool", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ListStoragePool", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetStoragePool", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateStoragePool", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateStorageVolume", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteStorageVolume", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ListStorageVolume", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetStorageVolume", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateStorageVolume", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateOsImage", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteOsImage", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ListOsImage", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetOsImage", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateOsImage", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateOperatingSystem", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("GetOperatingSystem", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateOperatingSystem", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteOperatingSystem", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindOperatingSystemIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindOperatingSystemsByIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("ImportStorageCluster", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteStorageCluster", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ListStorageCluster", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetStorageCluster", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateStorageCluster", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateStoragePool", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteStoragePool", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ListStoragePool", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetStoragePool", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateStoragePool", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateStorageVolume", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteStorageVolume", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ListStorageVolume", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetStorageVolume", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateStorageVolume", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateOsImage", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteOsImage", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ListOsImage", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetOsImage", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateOsImage", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateOperatingSystem", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("GetOperatingSystem", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateOperatingSystem", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteOperatingSystem", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindOperatingSystemIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindOperatingSystemsByIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "GetOperatingSystemCachableIpxeTemplateArtifacts",
-            vec![ForgeAdminCLI],
+            vec![NicoAdminCLI],
         );
         x.perm(
             "UpdateOperatingSystemCachableIpxeTemplateArtifacts",
-            vec![ForgeAdminCLI],
+            vec![NicoAdminCLI],
         );
-        x.perm("GetIpxeTemplate", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ListIpxeTemplates", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindRackStateHistories", vec![ForgeAdminCLI, Machineatron]);
+        x.perm("GetIpxeTemplate", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ListIpxeTemplates", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindRackStateHistories", vec![NicoAdminCLI, Machineatron]);
         x.perm("RebootCompleted", vec![Machineatron, Scout]);
         x.perm("PersistValidationResult", vec![Scout, SiteAgent]);
         x.perm(
             "GetMachineValidationResults",
-            vec![ForgeAdminCLI, Scout, SiteAgent],
+            vec![NicoAdminCLI, Scout, SiteAgent],
         );
         x.perm("MachineValidationCompleted", vec![Machineatron, Scout]);
-        x.perm("MachineSetAutoUpdate", vec![ForgeAdminCLI, Flow]);
+        x.perm("MachineSetAutoUpdate", vec![NicoAdminCLI, Flow]);
         x.perm(
             "GetMachineValidationExternalConfig",
-            vec![ForgeAdminCLI, Scout],
+            vec![NicoAdminCLI, Scout],
         );
         x.perm(
             "AddUpdateMachineValidationExternalConfig",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("GetMachineValidationRuns", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("AdminBmcReset", vec![ForgeAdminCLI]);
-        x.perm("AdminPowerControl", vec![ForgeAdminCLI, Flow]);
-        x.perm("DisableSecureBoot", vec![ForgeAdminCLI]);
-        x.perm("MachineSetup", vec![ForgeAdminCLI]);
-        x.perm("SetDpuFirstBootOrder", vec![ForgeAdminCLI]);
-        x.perm("OnDemandMachineValidation", vec![ForgeAdminCLI]);
-        x.perm("OnDemandRackMaintenance", vec![ForgeAdminCLI]);
-        x.perm("TpmAddCaCert", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("TpmShowCaCerts", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("TpmShowUnmatchedEkCerts", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("TpmDeleteCaCert", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("RedfishListActions", vec![ForgeAdminCLI]);
-        x.perm("RedfishCreateAction", vec![ForgeAdminCLI]);
-        x.perm("RedfishApproveAction", vec![ForgeAdminCLI]);
-        x.perm("RedfishApplyAction", vec![ForgeAdminCLI]);
-        x.perm("RedfishCancelAction", vec![ForgeAdminCLI]);
-        x.perm("FindTenantOrganizationIds", vec![SiteAgent, ForgeAdminCLI]);
+        x.perm("GetMachineValidationRuns", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("AdminBmcReset", vec![NicoAdminCLI]);
+        x.perm("AdminPowerControl", vec![NicoAdminCLI, Flow]);
+        x.perm("DisableSecureBoot", vec![NicoAdminCLI]);
+        x.perm("MachineSetup", vec![NicoAdminCLI]);
+        x.perm("SetDpuFirstBootOrder", vec![NicoAdminCLI]);
+        x.perm("OnDemandMachineValidation", vec![NicoAdminCLI]);
+        x.perm("OnDemandRackMaintenance", vec![NicoAdminCLI]);
+        x.perm("TpmAddCaCert", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("TpmShowCaCerts", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("TpmShowUnmatchedEkCerts", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("TpmDeleteCaCert", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("RedfishListActions", vec![NicoAdminCLI]);
+        x.perm("RedfishCreateAction", vec![NicoAdminCLI]);
+        x.perm("RedfishApproveAction", vec![NicoAdminCLI]);
+        x.perm("RedfishApplyAction", vec![NicoAdminCLI]);
+        x.perm("RedfishCancelAction", vec![NicoAdminCLI]);
+        x.perm("FindTenantOrganizationIds", vec![SiteAgent, NicoAdminCLI]);
         x.perm(
             "FindTenantsByOrganizationIds",
-            vec![SiteAgent, ForgeAdminCLI],
+            vec![SiteAgent, NicoAdminCLI],
         );
         x.perm("FindMacAddressByBmcIp", vec![SiteAgent, BmcProxy]);
-        x.perm("FindBmcIps", vec![ForgeAdminCLI, BmcProxy]);
-        x.perm("BmcCredentialStatus", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("FindBmcIps", vec![NicoAdminCLI, BmcProxy]);
+        x.perm("BmcCredentialStatus", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "GetMachineValidationExternalConfigs",
-            vec![ForgeAdminCLI, Scout, SiteAgent],
+            vec![NicoAdminCLI, Scout, SiteAgent],
         );
         x.perm(
             "RemoveMachineValidationExternalConfig",
-            vec![ForgeAdminCLI, Scout, SiteAgent],
+            vec![NicoAdminCLI, Scout, SiteAgent],
         );
         x.perm(
             "GetMachineValidationTests",
-            vec![ForgeAdminCLI, SiteAgent, Agent, Scout],
+            vec![NicoAdminCLI, SiteAgent, Agent, Scout],
         );
-        x.perm("AddMachineValidationTest", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("AddMachineValidationTest", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "UpdateMachineValidationTest",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "MachineValidationTestVerfied",
-            vec![ForgeAdminCLI, Scout, SiteAgent],
+            vec![NicoAdminCLI, Scout, SiteAgent],
         );
         x.perm(
             "MachineValidationTestNextVersion",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "MachineValidationTestEnableDisableTest",
-            vec![ForgeAdminCLI, SiteAgent, Scout],
+            vec![NicoAdminCLI, SiteAgent, Scout],
         );
         x.perm("UpdateMachineValidationRun", vec![Scout, SiteAgent]);
-        x.perm("FindInstanceTypeIds", vec![SiteAgent, ForgeAdminCLI]);
-        x.perm("FindInstanceTypesByIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateInstanceType", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateInstanceType", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteInstanceType", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("FindInstanceTypeIds", vec![SiteAgent, NicoAdminCLI]);
+        x.perm("FindInstanceTypesByIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateInstanceType", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateInstanceType", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteInstanceType", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "AssociateMachinesWithInstanceType",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "RemoveMachineInstanceTypeAssociation",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("RedfishBrowse", vec![ForgeAdminCLI]);
-        x.perm("UfmBrowse", vec![ForgeAdminCLI]);
-        x.perm("NmxcBrowse", vec![ForgeAdminCLI]);
-        x.perm("UpdateMachineMetadata", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateRackMetadata", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateSwitchMetadata", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdatePowerShelfMetadata", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CreateNetworkSecurityGroup", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("RedfishBrowse", vec![NicoAdminCLI]);
+        x.perm("UfmBrowse", vec![NicoAdminCLI]);
+        x.perm("NmxcBrowse", vec![NicoAdminCLI]);
+        x.perm("UpdateMachineMetadata", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateRackMetadata", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateSwitchMetadata", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdatePowerShelfMetadata", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CreateNetworkSecurityGroup", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "FindNetworkSecurityGroupIds",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "FindNetworkSecurityGroupsByIds",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("UpdateNetworkSecurityGroup", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteNetworkSecurityGroup", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("UpdateNetworkSecurityGroup", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteNetworkSecurityGroup", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "GetNetworkSecurityGroupPropagationStatus",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "GetNetworkSecurityGroupAttachments",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "GetDesiredFirmwareVersions",
-            vec![ForgeAdminCLI, Machineatron, Flow],
+            vec![NicoAdminCLI, Machineatron, Flow],
         );
-        x.perm("CreateSku", vec![ForgeAdminCLI]);
-        x.perm("GenerateSkuFromMachine", vec![ForgeAdminCLI]);
-        x.perm("AssignSkuToMachine", vec![ForgeAdminCLI]);
-        x.perm("VerifySkuForMachine", vec![ForgeAdminCLI]);
-        x.perm("RemoveSkuAssociation", vec![ForgeAdminCLI]);
-        x.perm("GetAllSkuIds", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("FindSkusByIds", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("DeleteSku", vec![ForgeAdminCLI]);
-        x.perm("UpdateSkuMetadata", vec![ForgeAdminCLI]);
-        x.perm("UpdateMachineHardwareInfo", vec![ForgeAdminCLI]);
-        x.perm("ReplaceSku", vec![ForgeAdminCLI]);
+        x.perm("CreateSku", vec![NicoAdminCLI]);
+        x.perm("GenerateSkuFromMachine", vec![NicoAdminCLI]);
+        x.perm("AssignSkuToMachine", vec![NicoAdminCLI]);
+        x.perm("VerifySkuForMachine", vec![NicoAdminCLI]);
+        x.perm("RemoveSkuAssociation", vec![NicoAdminCLI]);
+        x.perm("GetAllSkuIds", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("FindSkusByIds", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("DeleteSku", vec![NicoAdminCLI]);
+        x.perm("UpdateSkuMetadata", vec![NicoAdminCLI]);
+        x.perm("UpdateMachineHardwareInfo", vec![NicoAdminCLI]);
+        x.perm("ReplaceSku", vec![NicoAdminCLI]);
         x.perm(
             "GetManagedHostQuarantineState",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "SetManagedHostQuarantineState",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "ClearManagedHostQuarantineState",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("CreateVpcPeering", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindVpcPeeringIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindVpcPeeringsByIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteVpcPeering", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ResetHostReprovisioning", vec![ForgeAdminCLI, Flow]);
-        x.perm("CopyBfbToDpuRshim", vec![ForgeAdminCLI]);
-        x.perm("GetPowerOptions", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("UpdatePowerOption", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("CreateBmcUser", vec![ForgeAdminCLI]);
-        x.perm("DeleteBmcUser", vec![ForgeAdminCLI]);
-        x.perm("SetFirmwareUpdateTimeWindow", vec![ForgeAdminCLI, Flow]);
-        x.perm("ListHostFirmware", vec![ForgeAdminCLI, Flow]);
-        x.perm("EnableInfiniteBoot", vec![ForgeAdminCLI]);
-        x.perm("IsInfiniteBootEnabled", vec![ForgeAdminCLI]);
-        x.perm("Lockdown", vec![ForgeAdminCLI]);
-        x.perm("LockdownStatus", vec![ForgeAdminCLI]);
+        x.perm("CreateVpcPeering", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindVpcPeeringIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindVpcPeeringsByIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteVpcPeering", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ResetHostReprovisioning", vec![NicoAdminCLI, Flow]);
+        x.perm("CopyBfbToDpuRshim", vec![NicoAdminCLI]);
+        x.perm("GetPowerOptions", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("UpdatePowerOption", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("CreateBmcUser", vec![NicoAdminCLI]);
+        x.perm("DeleteBmcUser", vec![NicoAdminCLI]);
+        x.perm("SetFirmwareUpdateTimeWindow", vec![NicoAdminCLI, Flow]);
+        x.perm("ListHostFirmware", vec![NicoAdminCLI, Flow]);
+        x.perm("EnableInfiniteBoot", vec![NicoAdminCLI]);
+        x.perm("IsInfiniteBootEnabled", vec![NicoAdminCLI]);
+        x.perm("Lockdown", vec![NicoAdminCLI]);
+        x.perm("LockdownStatus", vec![NicoAdminCLI]);
         x.perm(
             "PublishMlxDeviceReport",
-            vec![Agent, Scout, Machineatron, ForgeAdminCLI],
+            vec![Agent, Scout, Machineatron, NicoAdminCLI],
         );
         x.perm(
             "PublishMlxObservationReport",
-            vec![Agent, Scout, Machineatron, ForgeAdminCLI],
+            vec![Agent, Scout, Machineatron, NicoAdminCLI],
         );
-        x.perm("TrimTable", vec![ForgeAdminCLI, MaintenanceJobs]);
-        x.perm("ListNvlinkNmxcEndpoints", vec![ForgeAdminCLI]);
-        x.perm("CreateNvlinkNmxcEndpoint", vec![ForgeAdminCLI]);
-        x.perm("UpdateNvlinkNmxcEndpoint", vec![ForgeAdminCLI]);
-        x.perm("DeleteNvlinkNmxcEndpoint", vec![ForgeAdminCLI]);
-        x.perm("CreateRemediation", vec![ForgeAdminCLI]);
-        x.perm("ApproveRemediation", vec![ForgeAdminCLI]);
-        x.perm("RevokeRemediation", vec![ForgeAdminCLI]);
-        x.perm("EnableRemediation", vec![ForgeAdminCLI]);
-        x.perm("DisableRemediation", vec![ForgeAdminCLI]);
-        x.perm("FindRemediationIds", vec![ForgeAdminCLI]);
-        x.perm("FindRemediationsByIds", vec![ForgeAdminCLI]);
-        x.perm("FindAppliedRemediations", vec![ForgeAdminCLI]);
-        x.perm("FindAppliedRemediationIds", vec![ForgeAdminCLI]);
+        x.perm("TrimTable", vec![NicoAdminCLI, MaintenanceJobs]);
+        x.perm("ListNvlinkNmxcEndpoints", vec![NicoAdminCLI]);
+        x.perm("CreateNvlinkNmxcEndpoint", vec![NicoAdminCLI]);
+        x.perm("UpdateNvlinkNmxcEndpoint", vec![NicoAdminCLI]);
+        x.perm("DeleteNvlinkNmxcEndpoint", vec![NicoAdminCLI]);
+        x.perm("CreateRemediation", vec![NicoAdminCLI]);
+        x.perm("ApproveRemediation", vec![NicoAdminCLI]);
+        x.perm("RevokeRemediation", vec![NicoAdminCLI]);
+        x.perm("EnableRemediation", vec![NicoAdminCLI]);
+        x.perm("DisableRemediation", vec![NicoAdminCLI]);
+        x.perm("FindRemediationIds", vec![NicoAdminCLI]);
+        x.perm("FindRemediationsByIds", vec![NicoAdminCLI]);
+        x.perm("FindAppliedRemediations", vec![NicoAdminCLI]);
+        x.perm("FindAppliedRemediationIds", vec![NicoAdminCLI]);
         x.perm("GetNextRemediationForMachine", vec![Agent]);
         x.perm("RemediationApplied", vec![Agent]);
-        x.perm("DetermineMachineIngestionState", vec![ForgeAdminCLI, Flow]);
-        x.perm("AllowIngestionAndPowerOn", vec![ForgeAdminCLI, Flow]);
-        x.perm("SetPrimaryDpu", vec![ForgeAdminCLI]);
-        x.perm("CreateDpuExtensionService", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("UpdateDpuExtensionService", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteDpuExtensionService", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindDpuExtensionServiceIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("DetermineMachineIngestionState", vec![NicoAdminCLI, Flow]);
+        x.perm("AllowIngestionAndPowerOn", vec![NicoAdminCLI, Flow]);
+        x.perm("SetPrimaryDpu", vec![NicoAdminCLI]);
+        x.perm("CreateDpuExtensionService", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("UpdateDpuExtensionService", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteDpuExtensionService", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindDpuExtensionServiceIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "FindDpuExtensionServicesByIds",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "GetDpuExtensionServiceVersionsInfo",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "FindInstancesByDpuExtensionService",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("TriggerMachineAttestation", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("CancelMachineAttestation", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("TriggerMachineAttestation", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("CancelMachineAttestation", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "ListAttestationsForMachineId",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "GetMachineAttestationStatus",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "FindMachineIdsUnderAttestation",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("FindPowerShelves", vec![ForgeAdminCLI, Machineatron, Flow]);
-        x.perm("FindPowerShelfIds", vec![ForgeAdminCLI, Machineatron, Flow]);
+        x.perm("FindPowerShelves", vec![NicoAdminCLI, Machineatron, Flow]);
+        x.perm("FindPowerShelfIds", vec![NicoAdminCLI, Machineatron, Flow]);
         x.perm(
             "FindPowerShelvesByIds",
-            vec![ForgeAdminCLI, Machineatron, Flow],
+            vec![NicoAdminCLI, Machineatron, Flow],
         );
-        x.perm("CreatePowerShelf", vec![ForgeAdminCLI, Machineatron]);
-        x.perm("DeletePowerShelf", vec![ForgeAdminCLI, Machineatron]);
+        x.perm("CreatePowerShelf", vec![NicoAdminCLI, Machineatron]);
+        x.perm("DeletePowerShelf", vec![NicoAdminCLI, Machineatron]);
         x.perm(
             "AddExpectedPowerShelf",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "DeleteExpectedPowerShelf",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "UpdateExpectedPowerShelf",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "GetExpectedPowerShelf",
-            vec![ForgeAdminCLI, Machineatron, Flow],
+            vec![NicoAdminCLI, Machineatron, Flow],
         );
         x.perm(
             "GetAllExpectedPowerShelves",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "ReplaceAllExpectedPowerShelves",
-            vec![ForgeAdminCLI, Machineatron],
+            vec![NicoAdminCLI, Machineatron],
         );
         x.perm(
             "DeleteAllExpectedPowerShelves",
-            vec![ForgeAdminCLI, Machineatron],
+            vec![NicoAdminCLI, Machineatron],
         );
         x.perm(
             "GetAllExpectedPowerShelvesLinked",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "FindPowerShelfStateHistories",
-            vec![ForgeAdminCLI, Machineatron, Flow],
+            vec![NicoAdminCLI, Machineatron, Flow],
         );
         x.perm(
             "SetPowerShelfMaintenance",
-            vec![ForgeAdminCLI, Machineatron, Flow],
+            vec![NicoAdminCLI, Machineatron, Flow],
         );
         x.perm(
             "FindSwitches",
-            vec![ForgeAdminCLI, Machineatron, Flow, Health],
+            vec![NicoAdminCLI, Machineatron, Flow, Health],
         );
         x.perm(
             "FindSwitchIds",
-            vec![ForgeAdminCLI, Machineatron, Flow, Health],
+            vec![NicoAdminCLI, Machineatron, Flow, Health],
         );
         x.perm(
             "FindSwitchesByIds",
-            vec![ForgeAdminCLI, Machineatron, Flow, Health],
+            vec![NicoAdminCLI, Machineatron, Flow, Health],
         );
-        x.perm("CreateSwitch", vec![ForgeAdminCLI, Machineatron]);
-        x.perm("DeleteSwitch", vec![ForgeAdminCLI, Machineatron]);
+        x.perm("CreateSwitch", vec![NicoAdminCLI, Machineatron]);
+        x.perm("DeleteSwitch", vec![NicoAdminCLI, Machineatron]);
         x.perm(
             "AddExpectedSwitch",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "DeleteExpectedSwitch",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "UpdateExpectedSwitch",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
-        x.perm("GetExpectedSwitch", vec![ForgeAdminCLI, Machineatron, Flow]);
+        x.perm("GetExpectedSwitch", vec![NicoAdminCLI, Machineatron, Flow]);
         x.perm(
             "GetAllExpectedSwitches",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "ReplaceAllExpectedSwitches",
-            vec![ForgeAdminCLI, Machineatron],
+            vec![NicoAdminCLI, Machineatron],
         );
         x.perm(
             "DeleteAllExpectedSwitches",
-            vec![ForgeAdminCLI, Machineatron],
+            vec![NicoAdminCLI, Machineatron],
         );
         x.perm(
             "GetAllExpectedSwitchesLinked",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "AddExpectedRack",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "DeleteExpectedRack",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "UpdateExpectedRack",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "GetExpectedRack",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "GetAllExpectedRacks",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent, Flow],
+            vec![NicoAdminCLI, Machineatron, SiteAgent, Flow],
         );
         x.perm(
             "ReplaceAllExpectedRacks",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "DeleteAllExpectedRacks",
-            vec![ForgeAdminCLI, Machineatron, SiteAgent],
+            vec![NicoAdminCLI, Machineatron, SiteAgent],
         );
         x.perm(
             "FindSwitchStateHistories",
-            vec![ForgeAdminCLI, Machineatron, Flow],
+            vec![NicoAdminCLI, Machineatron, Flow],
         );
-        x.perm("FindRackIds", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("FindRacksByIds", vec![ForgeAdminCLI, SiteAgent, Flow]);
-        x.perm("GetRack", vec![ForgeAdminCLI, Flow]);
-        x.perm("DeleteRack", vec![ForgeAdminCLI, Flow]);
-        x.perm("GetRackProfile", vec![ForgeAdminCLI]);
-        x.perm("RackManagerCall", vec![ForgeAdminCLI]);
+        x.perm("FindRackIds", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("FindRacksByIds", vec![NicoAdminCLI, SiteAgent, Flow]);
+        x.perm("GetRack", vec![NicoAdminCLI, Flow]);
+        x.perm("DeleteRack", vec![NicoAdminCLI, Flow]);
+        x.perm("GetRackProfile", vec![NicoAdminCLI]);
+        x.perm("RackManagerCall", vec![NicoAdminCLI]);
         x.perm("ScoutStream", vec![Scout]);
-        x.perm("ScoutStreamShowConnections", vec![ForgeAdminCLI]);
-        x.perm("ScoutStreamDisconnect", vec![ForgeAdminCLI]);
-        x.perm("ScoutStreamPing", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminProfileSync", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminProfileShow", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminProfileCompare", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminProfileList", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminLockdownLock", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminLockdownUnlock", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminLockdownStatus", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminShowDevice", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminShowMachine", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminRegistryList", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminRegistryShow", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminConfigQuery", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminConfigSet", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminConfigSync", vec![ForgeAdminCLI]);
-        x.perm("MlxAdminConfigCompare", vec![ForgeAdminCLI]);
-        x.perm("FindNVLinkPartitionIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindNVLinkPartitionsByIds", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("NVLinkPartitionsForTenant", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("ScoutStreamShowConnections", vec![NicoAdminCLI]);
+        x.perm("ScoutStreamDisconnect", vec![NicoAdminCLI]);
+        x.perm("ScoutStreamPing", vec![NicoAdminCLI]);
+        x.perm("MlxAdminProfileSync", vec![NicoAdminCLI]);
+        x.perm("MlxAdminProfileShow", vec![NicoAdminCLI]);
+        x.perm("MlxAdminProfileCompare", vec![NicoAdminCLI]);
+        x.perm("MlxAdminProfileList", vec![NicoAdminCLI]);
+        x.perm("MlxAdminLockdownLock", vec![NicoAdminCLI]);
+        x.perm("MlxAdminLockdownUnlock", vec![NicoAdminCLI]);
+        x.perm("MlxAdminLockdownStatus", vec![NicoAdminCLI]);
+        x.perm("MlxAdminShowDevice", vec![NicoAdminCLI]);
+        x.perm("MlxAdminShowMachine", vec![NicoAdminCLI]);
+        x.perm("MlxAdminRegistryList", vec![NicoAdminCLI]);
+        x.perm("MlxAdminRegistryShow", vec![NicoAdminCLI]);
+        x.perm("MlxAdminConfigQuery", vec![NicoAdminCLI]);
+        x.perm("MlxAdminConfigSet", vec![NicoAdminCLI]);
+        x.perm("MlxAdminConfigSync", vec![NicoAdminCLI]);
+        x.perm("MlxAdminConfigCompare", vec![NicoAdminCLI]);
+        x.perm("FindNVLinkPartitionIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindNVLinkPartitionsByIds", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("NVLinkPartitionsForTenant", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "FindNVLinkLogicalPartitionIds",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "FindNVLinkLogicalPartitionsByIds",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "CreateNVLinkLogicalPartition",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "UpdateNVLinkLogicalPartition",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "DeleteNVLinkLogicalPartition",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "NVLinkLogicalPartitionsForTenant",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
         x.perm(
             "GetMachinePositionInfo",
-            vec![ForgeAdminCLI, SiteAgent, Flow],
+            vec![NicoAdminCLI, SiteAgent, Flow],
         );
-        x.perm("ModifyDPFState", vec![ForgeAdminCLI]);
-        x.perm("GetDPFState", vec![ForgeAdminCLI]);
-        x.perm("UpdateMachineNvLinkInfo", vec![ForgeAdminCLI]);
-        x.perm("CreateComputeAllocation", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("FindComputeAllocationIds", vec![ForgeAdminCLI, SiteAgent]);
+        x.perm("ModifyDPFState", vec![NicoAdminCLI]);
+        x.perm("GetDPFState", vec![NicoAdminCLI]);
+        x.perm("UpdateMachineNvLinkInfo", vec![NicoAdminCLI]);
+        x.perm("CreateComputeAllocation", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("FindComputeAllocationIds", vec![NicoAdminCLI, SiteAgent]);
         x.perm(
             "FindComputeAllocationsByIds",
-            vec![ForgeAdminCLI, SiteAgent],
+            vec![NicoAdminCLI, SiteAgent],
         );
-        x.perm("UpdateComputeAllocation", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("DeleteComputeAllocation", vec![ForgeAdminCLI, SiteAgent]);
-        x.perm("ComponentPowerControl", vec![ForgeAdminCLI, Flow]);
-        x.perm("GetComponentInventory", vec![ForgeAdminCLI, Flow]);
-        x.perm("UpdateComponentFirmware", vec![ForgeAdminCLI, Flow]);
-        x.perm("GetComponentFirmwareStatus", vec![ForgeAdminCLI, Flow]);
-        x.perm("ListComponentFirmwareVersions", vec![ForgeAdminCLI, Flow]);
-        x.perm("GetDPFHostSnapshot", vec![ForgeAdminCLI]);
-        x.perm("GetDPFServiceVersions", vec![ForgeAdminCLI]);
+        x.perm("UpdateComputeAllocation", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("DeleteComputeAllocation", vec![NicoAdminCLI, SiteAgent]);
+        x.perm("ComponentPowerControl", vec![NicoAdminCLI, Flow]);
+        x.perm("GetComponentInventory", vec![NicoAdminCLI, Flow]);
+        x.perm("UpdateComponentFirmware", vec![NicoAdminCLI, Flow]);
+        x.perm("GetComponentFirmwareStatus", vec![NicoAdminCLI, Flow]);
+        x.perm("ListComponentFirmwareVersions", vec![NicoAdminCLI, Flow]);
+        x.perm("GetDPFHostSnapshot", vec![NicoAdminCLI]);
+        x.perm("GetDPFServiceVersions", vec![NicoAdminCLI]);
         x
     }
     fn perm(&mut self, msg: &str, principals: Vec<RulePrincipal>) {
@@ -899,22 +899,22 @@ struct RuleInfo {
 
 impl RuleInfo {
     pub fn new(principals: Vec<RulePrincipal>) -> Self {
-        // Helper: emit both the nico-* and carbide-* SPIFFE service identifiers
+        // Helper: emit both the nico-* and nico-* SPIFFE service identifiers
         // for a renamed service. The matcher in `allowed()` walks this Vec with
         // `.any(...)`, so any cert presenting either string is accepted. Drop
-        // the carbide-* alias once every deployed site has rotated to a cert
+        // the nico-* alias once every deployed site has rotated to a cert
         // with the nico-* identifier.
-        let svc_compat = |nico_name: &str, carbide_name: &str| {
+        let svc_compat = |nico_name: &str, nico_name: &str| {
             vec![
                 Principal::SpiffeServiceIdentifier(nico_name.to_string()),
-                Principal::SpiffeServiceIdentifier(carbide_name.to_string()),
+                Principal::SpiffeServiceIdentifier(nico_name.to_string()),
             ]
         };
         Self {
             principals: principals
                 .iter()
                 .flat_map(|x| match *x {
-                    RulePrincipal::ForgeAdminCLI => {
+                    RulePrincipal::NicoAdminCLI => {
                         vec![Principal::ExternalUser(ExternalUserInfo::new(
                             None,
                             "Invalid".to_string(),
@@ -933,24 +933,24 @@ impl RuleInfo {
                     RulePrincipal::Scout => {
                         vec![Principal::SpiffeMachineIdentifier("".to_string())]
                     }
-                    RulePrincipal::Dns => svc_compat("nico-dns", "carbide-dns"),
-                    RulePrincipal::Dhcp => svc_compat("nico-dhcp", "carbide-dhcp"),
-                    RulePrincipal::Ssh => svc_compat("nico-ssh-console", "carbide-ssh-console"),
+                    RulePrincipal::Dns => svc_compat("nico-dns", "nico-dns"),
+                    RulePrincipal::Dhcp => svc_compat("nico-dhcp", "nico-dhcp"),
+                    RulePrincipal::Ssh => svc_compat("nico-ssh-console", "nico-ssh-console"),
                     RulePrincipal::SshRs => {
-                        svc_compat("nico-ssh-console-rs", "carbide-ssh-console-rs")
+                        svc_compat("nico-ssh-console-rs", "nico-ssh-console-rs")
                     }
-                    RulePrincipal::Pxe => svc_compat("nico-pxe", "carbide-pxe"),
-                    RulePrincipal::BmcProxy => svc_compat("nico-bmc-proxy", "carbide-bmc-proxy"),
+                    RulePrincipal::Pxe => svc_compat("nico-pxe", "nico-pxe"),
+                    RulePrincipal::BmcProxy => svc_compat("nico-bmc-proxy", "nico-bmc-proxy"),
                     RulePrincipal::Health => {
-                        svc_compat("nico-hardware-health", "carbide-hardware-health")
+                        svc_compat("nico-hardware-health", "nico-hardware-health")
                     }
-                    RulePrincipal::Flow => svc_compat("nico-flow", "carbide-flow"),
+                    RulePrincipal::Flow => svc_compat("nico-flow", "nico-flow"),
                     RulePrincipal::MaintenanceJobs => {
-                        svc_compat("nico-maintenance-jobs", "carbide-maintenance-jobs")
+                        svc_compat("nico-maintenance-jobs", "nico-maintenance-jobs")
                     }
                     RulePrincipal::DsxExchangeConsumer => svc_compat(
                         "nico-dsx-exchange-consumer",
-                        "carbide-dsx-exchange-consumer",
+                        "nico-dsx-exchange-consumer",
                     ),
                     RulePrincipal::Anonymous => vec![Principal::Anonymous],
                 })
@@ -1026,11 +1026,11 @@ mod rbac_rule_tests {
             &[Principal::SpiffeMachineIdentifier("foo".to_string())]
         ));
         assert!(InternalRBACRules::allowed_from_static(
-            "ReportForgeScoutError",
+            "ReportNicoScoutError",
             &[Principal::SpiffeMachineIdentifier("foo".to_string())]
         ));
         assert!(!InternalRBACRules::allowed_from_static(
-            "ReportForgeScoutError",
+            "ReportNicoScoutError",
             &[Principal::ExternalUser(ExternalUserInfo::new(
                 None,
                 "any".to_string(),
@@ -1144,30 +1144,30 @@ mod rbac_rule_tests {
             &Principal::SpiffeServiceIdentifier("nico-ssh-console-rs".to_string()),
         );
 
-        // Backward-compat: every renamed service's carbide-* SPIFFE identifier
+        // Backward-compat: every renamed service's nico-* SPIFFE identifier
         // must have *identical* permissions to its nico-* counterpart across
         // every rule. RuleInfo::new emits both names side-by-side; this guards
-        // against accidental skew while we keep accepting carbide-*. Drop this
-        // block (and the svc_compat() carbide-* entries) once every deployed
+        // against accidental skew while we keep accepting nico-*. Drop this
+        // block (and the svc_compat() nico-* entries) once every deployed
         // site has rotated to a nico-* cert.
-        for (nico, carbide) in [
-            ("nico-dns", "carbide-dns"),
-            ("nico-dhcp", "carbide-dhcp"),
-            ("nico-ssh-console", "carbide-ssh-console"),
-            ("nico-ssh-console-rs", "carbide-ssh-console-rs"),
-            ("nico-pxe", "carbide-pxe"),
-            ("nico-bmc-proxy", "carbide-bmc-proxy"),
-            ("nico-hardware-health", "carbide-hardware-health"),
-            ("nico-flow", "carbide-flow"),
-            ("nico-maintenance-jobs", "carbide-maintenance-jobs"),
+        for (nico, nico) in [
+            ("nico-dns", "nico-dns"),
+            ("nico-dhcp", "nico-dhcp"),
+            ("nico-ssh-console", "nico-ssh-console"),
+            ("nico-ssh-console-rs", "nico-ssh-console-rs"),
+            ("nico-pxe", "nico-pxe"),
+            ("nico-bmc-proxy", "nico-bmc-proxy"),
+            ("nico-hardware-health", "nico-hardware-health"),
+            ("nico-flow", "nico-flow"),
+            ("nico-maintenance-jobs", "nico-maintenance-jobs"),
             (
                 "nico-dsx-exchange-consumer",
-                "carbide-dsx-exchange-consumer",
+                "nico-dsx-exchange-consumer",
             ),
         ] {
             ensure_identical_permissions(
                 &Principal::SpiffeServiceIdentifier(nico.to_string()),
-                &Principal::SpiffeServiceIdentifier(carbide.to_string()),
+                &Principal::SpiffeServiceIdentifier(nico.to_string()),
             );
         }
 

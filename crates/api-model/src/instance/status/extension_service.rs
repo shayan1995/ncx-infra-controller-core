@@ -17,8 +17,8 @@
 
 use std::collections::HashMap;
 
-use carbide_uuid::extension_service::ExtensionServiceId;
-use carbide_uuid::machine::MachineId;
+use nico_uuid::extension_service::ExtensionServiceId;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use config_version::{ConfigVersion, Versioned};
 use serde::{Deserialize, Serialize};

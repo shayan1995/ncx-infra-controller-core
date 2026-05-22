@@ -16,12 +16,12 @@
  */
 
 use ::rpc::admin_cli::OutputFormat;
-use ::rpc::forge as forgerpc;
+use ::rpc::nico as nicorpc;
 use prettytable::{Cell, Row, Table};
 use serde::Serialize;
 
 use super::args::Args;
-use crate::errors::CarbideCliResult;
+use crate::errors::NicoCliResult;
 use crate::rpc::ApiClient;
 
 #[derive(Serialize)]
@@ -35,10 +35,10 @@ pub async fn handle_show_addresses(
     args: Args,
     output_format: OutputFormat,
     api_client: &ApiClient,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let resp = api_client
         .0
-        .find_interface_addresses(forgerpc::FindInterfaceAddressesRequest {
+        .find_interface_addresses(nicorpc::FindInterfaceAddressesRequest {
             interface_id: Some(args.interface_id),
         })
         .await?;

@@ -37,7 +37,7 @@ use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing::Span;
 
-/// Prometheus scrape + HTTP instrumentation matching forge-dpu-agent embedded FMDS (`http_requests`, `request_latency`).
+/// Prometheus scrape + HTTP instrumentation matching nico-dpu-agent embedded FMDS (`http_requests`, `request_latency`).
 pub struct HttpRequestMetrics {
     http_counter: Counter<u64>,
     http_req_latency_histogram: Histogram<f64>,
@@ -74,8 +74,8 @@ pub fn init() -> eyre::Result<(Registry, HttpRequestMetrics)> {
 
     let resource_attributes = opentelemetry_sdk::Resource::builder()
         .with_attributes([
-            KeyValue::new(SERVICE_NAME, "carbide-fmds"),
-            KeyValue::new(SERVICE_NAMESPACE, "forge-system"),
+            KeyValue::new(SERVICE_NAME, "nico-fmds"),
+            KeyValue::new(SERVICE_NAMESPACE, "nico-system"),
         ])
         .build();
 
@@ -84,7 +84,7 @@ pub fn init() -> eyre::Result<(Registry, HttpRequestMetrics)> {
         .with_resource(resource_attributes)
         .build();
 
-    let meter = meter_provider.meter("carbide-fmds");
+    let meter = meter_provider.meter("nico-fmds");
     let http_metrics = HttpRequestMetrics::new(&meter);
     opentelemetry::global::set_meter_provider(meter_provider);
 
@@ -116,7 +116,7 @@ async fn export_metrics(State(registry): State<Registry>) -> Response<Full<Bytes
     .unwrap()
 }
 
-/// Same HTTP instrumentation as forge-dpu-agent `WithTracingLayer` (request count + latency + tracing logs).
+/// Same HTTP instrumentation as nico-dpu-agent `WithTracingLayer` (request count + latency + tracing logs).
 pub fn with_http_request_trace_layer(router: Router, metrics: Arc<HttpRequestMetrics>) -> Router {
     let metrics_request = metrics.clone();
     let metrics_response = metrics;

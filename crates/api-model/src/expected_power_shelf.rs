@@ -18,8 +18,8 @@
 use std::collections::HashMap;
 use std::net::IpAddr;
 
-use carbide_uuid::power_shelf::PowerShelfId;
-use carbide_uuid::rack::RackId;
+use nico_uuid::power_shelf::PowerShelfId;
+use nico_uuid::rack::RackId;
 use mac_address::MacAddress;
 use serde::Deserialize;
 use sqlx::postgres::PgRow;

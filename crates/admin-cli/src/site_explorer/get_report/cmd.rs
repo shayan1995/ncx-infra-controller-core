@@ -22,7 +22,7 @@ use ::rpc::site_explorer::{ExploredEndpoint, ExploredManagedHost, SiteExploratio
 use prettytable::{Cell, Row, Table, format, row};
 
 use super::args::Args;
-use crate::errors::{CarbideCliError, CarbideCliResult};
+use crate::errors::{NicoCliError, NicoCliResult};
 use crate::rpc::ApiClient;
 use crate::{async_write, async_writeln};
 
@@ -153,7 +153,7 @@ async fn get_exploration_report_for_bmc_address(
     ip: &String,
     api_client: &ApiClient,
     page_size: usize,
-) -> CarbideCliResult<SiteExplorationReport> {
+) -> NicoCliResult<SiteExplorationReport> {
     // get managed host with host bmc
     let mut managed_host = api_client
         .0
@@ -193,7 +193,7 @@ pub async fn show_discovered_managed_host(
     output_format: OutputFormat,
     internal_page_size: usize,
     mode: Args,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     match mode {
         Args::All => {
             let exploration_report = api_client
@@ -266,7 +266,7 @@ pub async fn show_discovered_managed_host(
                     .into_iter()
                     .find(|x| x.address == address)
                     .ok_or_else(|| {
-                        CarbideCliError::GenericError("Endpoint not found.".to_string())
+                        NicoCliError::GenericError("Endpoint not found.".to_string())
                     })?;
 
                 if output_format == OutputFormat::Json {
@@ -366,7 +366,7 @@ async fn print_managed_host_info(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     managed_host: &ExploredManagedHost,
     endpoints: HashMap<&str, &ExploredEndpoint>,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let host_report = endpoints
         .get(&managed_host.host_bmc_ip.as_str())
         .and_then(|x| x.report.as_ref());
@@ -536,7 +536,7 @@ fn endpoint_to_row(endpoint: &ExploredEndpoint) -> Row {
 async fn display_endpoint(
     output_file: &mut Box<dyn tokio::io::AsyncWrite + Unpin>,
     endpoint: ExploredEndpoint,
-) -> CarbideCliResult<()> {
+) -> NicoCliResult<()> {
     let report = &endpoint.report;
 
     let mut table = Table::new();
