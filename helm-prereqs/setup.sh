@@ -37,10 +37,6 @@
 #                          preloaded, or use existing imagePullSecrets.
 #   REGISTRY_PULL_USERNAME Username for generated pull secrets.
 #                          Default: $oauthtoken
-#   NICO_REST_REPO          Path to infra-controller-rest. Required only when
-#                          REST is not skipped; preflight can auto-discover or
-#                          clone it if missing. NICO_REPO is accepted as a
-#                          deprecated alias.
 #   NICO_SITE_UUID          Stable REST site UUID. Used only when REST is
 #                          deployed. Default is a dev placeholder.
 #   VAULT_NS               Vault namespace. Default: vault
@@ -108,8 +104,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ---------------------------------------------------------------------------
-# Pre-flight checks — env vars, tools, config files, NICo REST repo
-# Exports NICO_REST_REPO if resolved. Exits 1 if user declines to continue.
+# Pre-flight checks — env vars, tools, config files. Exits 1 if user declines
+# to continue. NICo REST source lives in-tree at ../rest-api.
 # ---------------------------------------------------------------------------
 export AUTO_YES SKIP_CORE SKIP_REST
 # shellcheck source=preflight.sh
@@ -501,13 +497,18 @@ if "${SKIP_REST}"; then
     exit 0
 fi
 
-# --- 7a. NICo REST repo (resolved and exported by preflight.sh) -------------------
-if [[ -z "${NICO_REST_REPO:-}" ]]; then
-    echo "ERROR: NICo REST repo is not set. Re-run setup.sh and choose to clone, or:"
-    echo "  export NICO_REST_REPO=/path/to/infra-controller-rest"
+# --- 7a. NICo REST source tree (in-repo at ../rest-api) ---------------------
+# The REST stack used to live in a separate ncx-infra-controller-rest repo;
+# it has since been merged into core under rest-api/. setup.sh consumes its
+# helm charts, kustomize bases, and scripts directly from that subdirectory —
+# no separate clone or NICO_REST_REPO env var.
+NICO_REST_REPO="$(cd "${SCRIPT_DIR}/.." && pwd)/rest-api"
+if [[ ! -d "${NICO_REST_REPO}/helm/charts/nico-rest" ]]; then
+    echo "ERROR: rest-api/ not found or incomplete at ${NICO_REST_REPO}"
+    echo "Expected helm/charts/nico-rest under it."
     exit 1
 fi
-echo "NICo REST repo: ${NICO_REST_REPO}"
+echo "NICo REST source: ${NICO_REST_REPO}"
 
 # Create NICo REST namespace
 kubectl create namespace nico-rest 2>/dev/null || true

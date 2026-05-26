@@ -496,41 +496,18 @@ if [[ -n "${NICO_IMAGE_REGISTRY:-}" ]] && command -v curl &>/dev/null; then
 fi
 
 # ---------------------------------------------------------------------------
-# 9. NICo REST repo
+# 9. NICo REST source tree (in-repo at ../rest-api)
 # ---------------------------------------------------------------------------
 NICO_REST_REPO_RESOLVED=""
 _NICO_REST_ENABLED=true
 [[ "${SKIP_REST:-false}" == "true" ]] && _NICO_REST_ENABLED=false
 
-NICO_CLONE_URL="https://github.com/NVIDIA/infra-controller-rest.git"
-NICO_CLONE_PARENT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-
 if ${_NICO_REST_ENABLED}; then
-    _NICO_REST_REPO_INPUT="${NICO_REST_REPO:-${NICO_REPO:-}}"
-    _NICO_REST_REPO_VAR="NICO_REST_REPO"
-    [[ -z "${NICO_REST_REPO:-}" && -n "${NICO_REPO:-}" ]] && _NICO_REST_REPO_VAR="NICO_REPO"
-
-    if [[ -n "${_NICO_REST_REPO_INPUT:-}" ]]; then
-        if [[ -d "${_NICO_REST_REPO_INPUT}/helm/charts/nico-rest" ]]; then
-            NICO_REST_REPO_RESOLVED="$(cd "${_NICO_REST_REPO_INPUT}" && pwd)"
-        else
-            ERRORS+=("${_NICO_REST_REPO_VAR}='${_NICO_REST_REPO_INPUT}' but helm/charts/nico-rest was not found there")
-        fi
+    _NICO_REST_CANDIDATE="$(cd "${SCRIPT_DIR}/.." && pwd)/rest-api"
+    if [[ -d "${_NICO_REST_CANDIDATE}/helm/charts/nico-rest" ]]; then
+        NICO_REST_REPO_RESOLVED="${_NICO_REST_CANDIDATE}"
     else
-        for _candidate in \
-            "${SCRIPT_DIR}/../../infra-controller-rest" \
-            "${SCRIPT_DIR}/../../nico-rest" \
-            "${SCRIPT_DIR}/../../ncx-infra-controller-rest" \
-            "${SCRIPT_DIR}/../../ncx"; do
-            if [[ -d "${_candidate}/helm/charts/nico-rest" ]]; then
-                NICO_REST_REPO_RESOLVED="$(cd "${_candidate}" && pwd)"
-                break
-            fi
-        done
-    fi
-
-    if [[ -z "${NICO_REST_REPO_RESOLVED}" ]]; then
-        WARNINGS+=("NICo REST repo not found — expected a sibling directory with helm/charts/nico-rest")
+        ERRORS+=("rest-api/ not found in repo root — expected ${_NICO_REST_CANDIDATE}/helm/charts/nico-rest")
     fi
 fi
 
@@ -571,49 +548,6 @@ if [[ ${#WARNINGS[@]} -gt 0 ]]; then
     for _w in "${WARNINGS[@]}"; do
         echo "    ⚠  ${_w}"
     done
-fi
-
-# Offer to clone NICo REST repo if missing
-if ${_NICO_REST_ENABLED} && [[ -z "${NICO_REST_REPO_RESOLVED}" ]]; then
-    echo ""
-    echo "  NICo REST repo not found."
-    echo ""
-    echo "  setup.sh Phase 7 deploys the NICo REST stack (API, workflow engine, site-agent)"
-    echo "  using Helm charts and kustomize bases from a separate repository:"
-    echo "    ${NICO_CLONE_URL}"
-    echo ""
-    echo "  Options:"
-    echo "    c) Clone it now into ${NICO_CLONE_PARENT}/infra-controller-rest"
-    echo "    s) Skip — Phase 7 will be skipped or will fail"
-    echo "    q) Quit setup entirely"
-    echo ""
-    echo "  (You can also clone it manually and re-run with:"
-    echo "   export NICO_REST_REPO=/path/to/infra-controller-rest)"
-    if [[ "${AUTO_YES:-false}" == "true" ]]; then
-        _clone_reply="s"
-    else
-        echo ""
-        read -r -p "  ➤  Clone NICo REST repo now? [c=clone / s=skip / q=quit]: " _clone_reply
-        echo ""
-    fi
-    case "${_clone_reply:-s}" in
-        c|C)
-            echo "  Cloning ${NICO_CLONE_URL} ..."
-            git clone "${NICO_CLONE_URL}" "${NICO_CLONE_PARENT}/infra-controller-rest"
-            NICO_REST_REPO_RESOLVED="${NICO_CLONE_PARENT}/infra-controller-rest"
-            export NICO_REST_REPO="${NICO_REST_REPO_RESOLVED}"
-            export NICO_REPO="${NICO_REST_REPO_RESOLVED}"
-            echo "  Cloned OK — NICO_REST_REPO=${NICO_REST_REPO}"
-            WARNINGS=("${WARNINGS[@]/NICo REST repo not found*/}")
-            ;;
-        q|Q)
-            echo "  Aborted."
-            if ${_SOURCED}; then return 1; else exit 1; fi
-            ;;
-        *)
-            echo "  Skipping NICo REST repo — step [7/7] will fail."
-            ;;
-    esac
 fi
 
 echo ""
