@@ -142,7 +142,7 @@ impl<B> From<&Request<B>> for RequestClass {
 
         if let Some((service_name, method_name)) = endpoint_path.split_once('/') {
             match (service_name, method_name) {
-                ("forge.Forge", m) => ForgeMethod(m.into()),
+                ("forge.Forge" | "core.Core", m) => ForgeMethod(m.into()),
                 (s, "ServerReflectionInfo") if s.ends_with(".ServerReflection") => GrpcReflection,
                 _ => Unrecognized,
             }
