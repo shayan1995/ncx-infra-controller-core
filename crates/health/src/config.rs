@@ -1682,7 +1682,7 @@ power_shelf = { id = "fps100htjtiaehv1n5vh67tbmqq4eabcjdng40f7jupsadbedhruh6rag1
     #[test]
     fn test_static_switch_host_accepts_primary_without_nmxt_override() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [[endpoint_sources.static_bmc_endpoints]]
@@ -1712,7 +1712,7 @@ switch = { id = "fsw100htjtiaehv1n5vh67tbmqq4eabcjdng40f7jupsadbedhruh6rag1l0", 
     #[test]
     fn test_static_switch_host_accepts_nmxt_override() {
         let toml_content = r#"
-[endpoint_sources.carbide_api]
+[endpoint_sources.nico_api]
 enabled = false
 
 [[endpoint_sources.static_bmc_endpoints]]

@@ -4012,7 +4012,7 @@ paths:
       description: |-
         Create an Expected Rack to pre-register a rack expected to be discovered at a Site. The `rackId` is an operator-supplied string identifier (not a UUID) that uniquely identifies the rack within the Site.
 
-        Org must have an Infrastructure Provider entity. User must have `FORGE_PROVIDER_ADMIN` role.
+        Org must have an Infrastructure Provider entity. User must have `NICO_PROVIDER_ADMIN` role.
 
         Alternatively, Tenant Admins with `TargetedInstanceCreation` capability can also create Expected Racks if they have an account with the Site's Infrastructure Provider.
 
@@ -4061,7 +4061,7 @@ paths:
       description: |-
         Retrieve all Expected Racks.
 
-        Org must have an Infrastructure Provider entity. User must have `FORGE_PROVIDER_ADMIN` or `FORGE_PROVIDER_VIEWER` role.
+        Org must have an Infrastructure Provider entity. User must have `NICO_PROVIDER_ADMIN` or `NICO_PROVIDER_VIEWER` role.
 
         Alternatively, Tenant Admins with `TargetedInstanceCreation` capability can also retrieve Expected Racks if they have an account with the Site's Infrastructure Provider (siteId query parameter is required for Tenants).
       parameters:
@@ -4137,7 +4137,7 @@ paths:
 
         Every entry in `expectedRacks` must reference the same `siteId` as the top-level `siteId`. `rackId` values must be unique within the request. The `expectedRacks` array may be empty to clear all Expected Racks for the Site.
 
-        Org must have an Infrastructure Provider entity. User must have `FORGE_PROVIDER_ADMIN` role.
+        Org must have an Infrastructure Provider entity. User must have `NICO_PROVIDER_ADMIN` role.
 
         Alternatively, Tenant Admins with `TargetedInstanceCreation` capability can also replace Expected Racks if they have an account with the Site's Infrastructure Provider.
       requestBody:
@@ -4203,7 +4203,7 @@ paths:
       description: |-
         Delete all Expected Racks for a Site.
 
-        Org must have an Infrastructure Provider entity. User must have `FORGE_PROVIDER_ADMIN` role.
+        Org must have an Infrastructure Provider entity. User must have `NICO_PROVIDER_ADMIN` role.
 
         Infrastructure Provider must own the Expected Racks.
 
@@ -4246,7 +4246,7 @@ paths:
       description: |-
         Retrieve a specific Expected Rack by its `id`.
 
-        Org must have an Infrastructure Provider entity. User must have `FORGE_PROVIDER_ADMIN` or `FORGE_PROVIDER_VIEWER` role.
+        Org must have an Infrastructure Provider entity. User must have `NICO_PROVIDER_ADMIN` or `NICO_PROVIDER_VIEWER` role.
 
         Alternatively, Tenant Admins with `TargetedInstanceCreation` capability can also retrieve Expected Racks if they have an account with the Site's Infrastructure Provider.
       parameters:
@@ -4278,7 +4278,7 @@ paths:
       description: |-
         Update an existing Expected Rack identified by its `id`.
 
-        Org must have an Infrastructure Provider entity. User must have `FORGE_PROVIDER_ADMIN` role.
+        Org must have an Infrastructure Provider entity. User must have `NICO_PROVIDER_ADMIN` role.
 
         Infrastructure Provider must own the Expected Rack.
 
@@ -4323,7 +4323,7 @@ paths:
       description: |-
         Delete an existing Expected Rack identified by its `id`.
 
-        Org must have an Infrastructure Provider entity. User must have `FORGE_PROVIDER_ADMIN` role.
+        Org must have an Infrastructure Provider entity. User must have `NICO_PROVIDER_ADMIN` role.
 
         Infrastructure Provider must own the Expected Rack.
 
@@ -10317,7 +10317,7 @@ paths:
 
         Tasks are site-scoped; `siteId` must be the Site where the task was
         created. Org must have an Infrastructure Provider entity. User must
-        have `FORGE_PROVIDER_ADMIN` authorization role.
+        have `NICO_PROVIDER_ADMIN` authorization role.
       requestBody:
         required: true
         content:

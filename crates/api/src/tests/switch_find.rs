@@ -277,7 +277,7 @@ async fn test_find_switches_by_ids_includes_resolved_nvos_info(
 
     let response = env
         .api
-        .find_switches_by_ids(tonic::Request::new(rpc::forge::SwitchesByIdsRequest {
+        .find_switches_by_ids(tonic::Request::new(rpc::nico::SwitchesByIdsRequest {
             switch_ids: vec![switch_id],
         }))
         .await?
@@ -296,7 +296,7 @@ async fn test_find_switches_by_ids_includes_resolved_nvos_info(
     );
 
     let nvos_info = switch.nvos_info.as_ref().expect("nvos info");
-    let _: &rpc::forge::SwitchNvosInfo = nvos_info;
+    let _: &rpc::nico::SwitchNvosInfo = nvos_info;
     assert_eq!(nvos_info.mac, Some(host_mac.to_string()));
     assert_eq!(nvos_info.ip, Some(host_ip.to_string()));
 
@@ -317,7 +317,7 @@ async fn test_find_switches_includes_resolved_nvos_info(
 
     let response = env
         .api
-        .find_switches(tonic::Request::new(rpc::forge::SwitchQuery {
+        .find_switches(tonic::Request::new(rpc::nico::SwitchQuery {
             name: None,
             switch_id: Some(switch_id),
         }))
@@ -326,7 +326,7 @@ async fn test_find_switches_includes_resolved_nvos_info(
 
     assert_eq!(response.switches.len(), 1);
     let nvos_info = response.switches[0].nvos_info.as_ref().expect("nvos info");
-    let _: &rpc::forge::SwitchNvosInfo = nvos_info;
+    let _: &rpc::nico::SwitchNvosInfo = nvos_info;
     assert_eq!(nvos_info.mac, Some(host_mac.to_string()));
     assert_eq!(nvos_info.ip, Some(host_ip.to_string()));
 
@@ -350,7 +350,7 @@ async fn test_find_switches_by_ids_returns_no_nvos_info_when_unresolved(
 
     let response = env
         .api
-        .find_switches_by_ids(tonic::Request::new(rpc::forge::SwitchesByIdsRequest {
+        .find_switches_by_ids(tonic::Request::new(rpc::nico::SwitchesByIdsRequest {
             switch_ids: vec![switch_id],
         }))
         .await?

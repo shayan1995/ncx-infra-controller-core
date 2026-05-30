@@ -53,7 +53,7 @@ pub async fn create_fnn(
 }
 
 pub async fn create_flat(
-    carbide_api_addrs: &[SocketAddr],
+    nico_api_addrs: &[SocketAddr],
     tenant_org_id: &str,
 ) -> eyre::Result<String> {
     tracing::info!("Creating Flat VPC");
@@ -65,7 +65,7 @@ pub async fn create_flat(
         "tenantOrganizationId": tenant_org_id,
         "network_virtualization_type": 6, // FLAT
     });
-    let vpc_id = grpcurl_id(carbide_api_addrs, "CreateVpc", &data.to_string()).await?;
+    let vpc_id = grpcurl_id(nico_api_addrs, "CreateVpc", &data.to_string()).await?;
     tracing::info!("Flat VPC created with ID {vpc_id}");
     Ok(vpc_id)
 }

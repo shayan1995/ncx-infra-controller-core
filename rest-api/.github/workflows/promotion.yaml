@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "Received build artifacts: ${{ inputs.build_artifacts }}"  
           echo "Approve Promote to NICo Registry"
-          echo "Promote Carbide REST to registry ngcr.io/0837451325059433/carbide"
+          echo "Promote NICo REST to registry ngcr.io/0837451325059433/nico"
 
   # ============================================================================
   # Prepare Promotion Matrix
@@ -75,7 +75,7 @@ jobs:
           jq -c '[ .[] | {
             source: .image_ref | split(":") | .[0],
             source_tag: .image_ref | split(":") | .[1],
-            destination: (.image_ref | split(":") | .[0] | sub("carbide-dev"; "carbide")),
+            destination: (.image_ref | split(":") | .[0] | sub("nico-dev"; "nico")),
             destination_tag: "${{ inputs.semantic_version }}"
           } ]' artifacts.json > image_matrix.json
           

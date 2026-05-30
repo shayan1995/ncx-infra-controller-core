@@ -230,14 +230,14 @@ impl MockAPIServer {
         fail: Arc<Mutex<bool>>,
         address_overrides: Arc<Mutex<HashMap<String, String>>>,
     ) -> Result<Response<GrpcBody>, MockAPIServerError> {
-        // Accept both legacy /forge.Forge/* and renamed /core.Core/* request
+        // Accept both legacy /nico.NICo/* and renamed /core.Core/* request
         // paths. Clients built from the renamed core.proto hit the new path;
         // existing clients keep hitting the old one. The match arms below
-        // continue to be expressed in terms of /forge.Forge/* so the change
+        // continue to be expressed in terms of /nico.NICo/* so the change
         // is local. To be collapsed once all callers have migrated.
         let raw_path = req.uri().path();
         let path: String = if let Some(rest) = raw_path.strip_prefix("/core.Core/") {
-            format!("/forge.Forge/{rest}")
+            format!("/nico.NICo/{rest}")
         } else {
             raw_path.to_owned()
         };

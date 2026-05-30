@@ -15,20 +15,20 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-power-shelf-controller"
+name = "nico-power-shelf-controller"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
 [dependencies]
-carbide-api-db = { path = "../api-db", default-features = false }
-carbide-api-model = { path = "../api-model", default-features = false }
-carbide-health-metrics = { path = "../health-metrics", default-features = false }
-carbide-rack = { path = "../rack", default-features = false }
-carbide-secrets = { path = "../secrets", default-features = false }
-carbide-utils = { path = "../utils", default-features = false }
-carbide-uuid = { path = "../uuid", default-features = false }
+nico-api-db = { path = "../api-db", default-features = false }
+nico-api-model = { path = "../api-model", default-features = false }
+nico-health-metrics = { path = "../health-metrics", default-features = false }
+nico-rack = { path = "../rack", default-features = false }
+nico-secrets = { path = "../secrets", default-features = false }
+nico-utils = { path = "../utils", default-features = false }
+nico-uuid = { path = "../uuid", default-features = false }
 config-version = { path = "../config-version", default-features = false }
 state-controller = { path = "../state-controller", default-features = false }
 

@@ -62,7 +62,7 @@ vault:
   kvMount: "secrets"
   ## Seed KV-v2 entries written after the KV mount is enabled. Mirrors the
   ## publicly-documented DPU factory defaults that the Terraform path
-  ## (forged/terraform/v2/modules/vault) writes via vault_kv_secret_v2.
+  ## (nicod/terraform/v2/modules/vault) writes via vault_kv_secret_v2.
   ## Set kvSeeds: [] to disable seeding.
   kvSeeds:
     - path: "machines/all_dpus/factory_default/bmc-metadata-items/root"
@@ -99,8 +99,8 @@ azureSSOClientSecretSecret:
 ## Set via --set or export before running setup.sh
 ## ---------------------------------------------------------------------------
 imagePullSecrets:
-  ngcCarbidePull: ""     # nvcr.io/0837451325059433/carbide-dev
-  ngcNvidianKey: ""      # nvcr.io/nvidian/nvforge (optional, for unbound)
+  ngcNicoPull: ""     # nvcr.io/0837451325059433/nico-dev
+  ngcNvidianKey: ""      # nvcr.io/nvidian/nvnico (optional, for unbound)
 
 ## ---------------------------------------------------------------------------
 ## flow — NICo Flow (rack lifecycle orchestrator, formerly RLA).

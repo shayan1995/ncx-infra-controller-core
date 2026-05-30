@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-mqtt-common"
+name = "nico-mqtt-common"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true

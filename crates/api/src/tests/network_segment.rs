@@ -1453,11 +1453,11 @@ async fn flat_vpc_accepts_host_inband_segment(
     // Use a fixture-tenant gateway since it's guaranteed to be in TEST_SITE_PREFIXES;
     // the segment type (HostInband) is what's being tested here, not the prefix.
     let gw = FIXTURE_TENANT_NETWORK_SEGMENT_GATEWAYS[0];
-    let request = rpc::forge::NetworkSegmentCreationRequest {
+    let request = rpc::nico::NetworkSegmentCreationRequest {
         id: None,
         mtu: Some(1500),
         name: "FLAT_HOST_INBAND".to_string(),
-        prefixes: vec![rpc::forge::NetworkPrefix {
+        prefixes: vec![rpc::nico::NetworkPrefix {
             id: None,
             prefix: gw.network().to_string() + "/24",
             gateway: Some(gw.ip().to_string()),
@@ -1467,7 +1467,7 @@ async fn flat_vpc_accepts_host_inband_segment(
         }],
         subdomain_id: None,
         vpc_id: vpc.id,
-        segment_type: rpc::forge::NetworkSegmentType::HostInband as i32,
+        segment_type: rpc::nico::NetworkSegmentType::HostInband as i32,
     };
 
     env.api
@@ -1494,11 +1494,11 @@ async fn flat_vpc_rejects_tenant_segment(
     )
     .await;
 
-    let request = rpc::forge::NetworkSegmentCreationRequest {
+    let request = rpc::nico::NetworkSegmentCreationRequest {
         id: None,
         mtu: Some(1500),
         name: "FLAT_TENANT_REJECTED".to_string(),
-        prefixes: vec![rpc::forge::NetworkPrefix {
+        prefixes: vec![rpc::nico::NetworkPrefix {
             id: None,
             prefix: FIXTURE_TENANT_NETWORK_SEGMENT_GATEWAYS[0].to_string(),
             gateway: Some(FIXTURE_TENANT_NETWORK_SEGMENT_GATEWAYS[0].ip().to_string()),
@@ -1508,7 +1508,7 @@ async fn flat_vpc_rejects_tenant_segment(
         }],
         subdomain_id: None,
         vpc_id: vpc.id,
-        segment_type: rpc::forge::NetworkSegmentType::Tenant as i32,
+        segment_type: rpc::nico::NetworkSegmentType::Tenant as i32,
     };
 
     let err = env
@@ -1546,11 +1546,11 @@ async fn etv_vpc_rejects_host_inband_segment(
     .await;
 
     let gw = FIXTURE_TENANT_NETWORK_SEGMENT_GATEWAYS[0];
-    let request = rpc::forge::NetworkSegmentCreationRequest {
+    let request = rpc::nico::NetworkSegmentCreationRequest {
         id: None,
         mtu: Some(1500),
         name: "ETV_HOST_INBAND_REJECTED".to_string(),
-        prefixes: vec![rpc::forge::NetworkPrefix {
+        prefixes: vec![rpc::nico::NetworkPrefix {
             id: None,
             prefix: gw.network().to_string() + "/24",
             gateway: Some(gw.ip().to_string()),
@@ -1560,7 +1560,7 @@ async fn etv_vpc_rejects_host_inband_segment(
         }],
         subdomain_id: None,
         vpc_id: vpc.id,
-        segment_type: rpc::forge::NetworkSegmentType::HostInband as i32,
+        segment_type: rpc::nico::NetworkSegmentType::HostInband as i32,
     };
 
     let err = env

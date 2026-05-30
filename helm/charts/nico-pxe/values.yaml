@@ -62,11 +62,11 @@ certificate:
   extraUris: []
 
 env:
-  FORGE_ROOT_CAFILE_PATH: "/var/run/secrets/spiffe.io/ca.crt"
   NICO_ROOT_CAFILE_PATH: "/var/run/secrets/spiffe.io/ca.crt"
-  FORGE_CLIENT_CERT_PATH: "/var/run/secrets/spiffe.io/tls.crt"
+  NICO_ROOT_CAFILE_PATH: "/var/run/secrets/spiffe.io/ca.crt"
   NICO_CLIENT_CERT_PATH: "/var/run/secrets/spiffe.io/tls.crt"
-  FORGE_CLIENT_KEY_PATH: "/var/run/secrets/spiffe.io/tls.key"
+  NICO_CLIENT_CERT_PATH: "/var/run/secrets/spiffe.io/tls.crt"
+  NICO_CLIENT_KEY_PATH: "/var/run/secrets/spiffe.io/tls.key"
   NICO_CLIENT_KEY_PATH: "/var/run/secrets/spiffe.io/tls.key"
   RUST_BACKTRACE: "full"
   RUST_LIB_BACKTRACE: "0"

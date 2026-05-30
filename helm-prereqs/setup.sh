@@ -422,7 +422,7 @@ else
         helm upgrade --install nico ./helm
         --namespace nico-system
         -f "${_CORE_VALUES_ARG}"
-        --set-string "global.image.repository=${NICO_IMAGE_REGISTRY}/nvmetal-carbide"
+        --set-string "global.image.repository=${NICO_IMAGE_REGISTRY}/nvmetal-nico"
         --set-string "global.image.tag=${NICO_CORE_IMAGE_TAG}"
         --timeout 300s --wait
     )
@@ -449,7 +449,7 @@ else
     echo "    ${_CORE_VALUES_FILE}"
     echo ""
     echo "  Key fields:"
-    echo "    global.image.repository   — ${NICO_IMAGE_REGISTRY}/nvmetal-carbide"
+    echo "    global.image.repository   — ${NICO_IMAGE_REGISTRY}/nvmetal-nico"
     echo "    global.image.tag          — ${NICO_CORE_IMAGE_TAG}"
     echo "    nico-api.hostname      — your site hostname"
     echo "    nico-api.siteConfig    — site-specific network/pool/IB config"
@@ -488,7 +488,7 @@ fi
 #    Order of operations:
 #      7a. Resolve NICo REST repo + CA signing secret
 #      7b. NICo REST CA issuer ClusterIssuer (cert-manager.io)
-#      7c. NICo REST postgres (simple StatefulSet — temporal + forge DBs)
+#      7c. NICo REST postgres (simple StatefulSet — temporal + nico DBs)
 #      7d. Keycloak (dev IdP)
 #      7e. Temporal namespace + TLS certs (issued by the NICo REST CA issuer)
 #      7f. Temporal helm chart
@@ -534,7 +534,7 @@ echo "=== [7b/7] NICo REST CA issuer ClusterIssuer ==="
 
 # --- 7c. NICo REST postgres --------------------------------------------------------
 # Simple postgres StatefulSet with all NICo databases pre-initialised:
-# forge, temporal, temporal_visibility, keycloak.
+# nico, temporal, temporal_visibility, keycloak.
 # Lives alongside nico-pg-cluster in the postgres namespace — different
 # service name ("postgres") so Temporal and NICo values work without changes.
 _SETUP_PHASE="[7c/7] NICo REST postgres"
@@ -730,7 +730,7 @@ kubectl exec -n temporal deploy/temporal-admintools -- \
 echo "Temporal namespace ready"
 
 # FLOW_GRPC_ENABLED toggles the site-agent's Flow gRPC client (see
-# carbide-rest/site-agent/pkg/components/config/config_manager.go —
+# nico-rest/site-agent/pkg/components/config/config_manager.go —
 # strings.ToLower(env)=="true"). Without it, site-agent never opens a
 # connection to the Flow pod deployed in phase 7i. We default it ON when
 # Flow itself is being deployed; users can flip it back via --set when
@@ -814,7 +814,7 @@ NICO_FLOW_ARGS=(
     --set "global.image.repository=${NICO_IMAGE_REGISTRY}"
     ## Flow (nico-flow / nico-psm / nico-nsm) ships on the same image release
     ## line as NICo REST — they're built and tagged together — so reuse
-    ## NICO_REST_IMAGE_TAG, not NICO_CORE_IMAGE_TAG (which is carbide-api).
+    ## NICO_REST_IMAGE_TAG, not NICO_CORE_IMAGE_TAG (which is nico-api).
     --set "global.image.tag=${NICO_REST_IMAGE_TAG}"
 )
 

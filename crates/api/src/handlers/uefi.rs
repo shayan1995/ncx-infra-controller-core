@@ -102,7 +102,7 @@ pub(crate) async fn clear_host_uefi_password(
         .await
         .map_err(|e| {
             tracing::error!(%e, "Failed to run clear_host_uefi_password call");
-            CarbideError::internal(format!(
+            NicoError::internal(format!(
                 "Failed redfish clear_host_uefi_password subtask: {e}"
             ))
         })?;
@@ -186,7 +186,7 @@ pub(crate) async fn set_host_uefi_password(
         .await
         .map_err(|e| {
             tracing::error!(%e, "Failed to run uefi_setup call");
-            CarbideError::internal(format!("Failed redfish uefi_setup subtask: {e}"))
+            NicoError::internal(format!("Failed redfish uefi_setup subtask: {e}"))
         })?;
     api.with_txn(|txn| db::machine::update_bios_password_set_time(&machine_id, txn).boxed())
         .await?

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-//! Common functions of carbide MQTT publishing.
+//! Common functions of nico MQTT publishing.
 
 pub mod hook;
 pub mod metrics;

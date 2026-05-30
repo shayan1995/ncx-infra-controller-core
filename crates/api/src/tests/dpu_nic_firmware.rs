@@ -17,7 +17,7 @@
 use std::collections::HashSet;
 use std::string::ToString;
 
-use carbide_machine_controller::health_report::create_host_update_health_report_dpufw;
+use nico_machine_controller::health_report::create_host_update_health_report_dpufw;
 use common::api_fixtures::{create_managed_host, create_managed_host_multi_dpu, create_test_env};
 use model::machine::LoadSnapshotOptions;
 use model::machine_update_module::{

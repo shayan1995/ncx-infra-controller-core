@@ -933,15 +933,15 @@ async fn test_site_explorer_skips_unexpected_zero_dpu_host(
     );
     assert_eq!(
         test_meter
-            .formatted_metric("carbide_site_exploration_identified_managed_hosts_count")
+            .formatted_metric("nico_site_exploration_identified_managed_hosts_count")
             .unwrap(),
         "0"
     );
 
     // The pairing-blocker metric should have ticked for `NoDpuReportedByHost`.
     let blocker_metric = test_meter
-        .formatted_metric("carbide_host_dpu_pairing_blockers_count")
-        .expect("expected `carbide_host_dpu_pairing_blockers_count` to be emitted");
+        .formatted_metric("nico_host_dpu_pairing_blockers_count")
+        .expect("expected `nico_host_dpu_pairing_blockers_count` to be emitted");
     assert!(
         blocker_metric.contains("no_dpu_reported_by_host"),
         "expected pairing-blocker metric to mention `no_dpu_reported_by_host`, got {blocker_metric}",
@@ -5984,7 +5984,7 @@ async fn power_shelf_skips_creation_when_bmc_mac_already_used(
 /// `machine_interface` rows by calling `try_preallocate_one` per static IP during
 /// `update_explored_endpoints`. This test drives the same per-row materialization directly,
 /// covering the static-assignments-segment counterpart to the DHCP `discover()` recovery hook:
-/// devices whose IP lives outside any Carbide-managed network never reach `discover()`, so this
+/// devices whose IP lives outside any NICo-managed network never reach `discover()`, so this
 /// per-row preallocation is what gets their rows onto the books.
 #[crate::sqlx_test]
 async fn test_site_explorer_reconcile_creates_missing_preallocations(
@@ -6072,7 +6072,7 @@ async fn test_site_explorer_reconcile_creates_missing_preallocations(
             "expected_power_shelf BMC",
         ),
     ] {
-        carbide_site_explorer::try_preallocate_one(
+        nico_site_explorer::try_preallocate_one(
             &env.pool,
             mac,
             ip,
@@ -6141,7 +6141,7 @@ async fn test_site_explorer_reconcile_preallocates_host_nic_fixed_ip(
     txn.commit().await?;
 
     let parsed_fixed_ip: IpAddr = fixed_ip.parse().unwrap();
-    carbide_site_explorer::try_preallocate_one(
+    nico_site_explorer::try_preallocate_one(
         &env.pool,
         nic_mac,
         parsed_fixed_ip,
@@ -6199,7 +6199,7 @@ async fn test_site_explorer_reconcile_is_idempotent(
     txn.commit().await?;
 
     for _ in 0..2 {
-        carbide_site_explorer::try_preallocate_one(
+        nico_site_explorer::try_preallocate_one(
             &env.pool,
             bmc_mac,
             bmc_ip,
@@ -6263,7 +6263,7 @@ async fn test_site_explorer_reconcile_tolerates_per_entry_conflicts(
     // try_preallocate_one swallows per-entry errors -- the conflict between mac_a and mac_b
     // gets logged and the third call still succeeds.
     for (mac, ip) in [(mac_a, shared_ip), (mac_b, shared_ip), (mac_c, ok_ip)] {
-        carbide_site_explorer::try_preallocate_one(
+        nico_site_explorer::try_preallocate_one(
             &env.pool,
             mac,
             ip,
@@ -6340,7 +6340,7 @@ async fn test_site_explorer_reconcile_preallocates_nvos_ip(
     );
     txn.commit().await?;
 
-    carbide_site_explorer::try_preallocate_one(
+    nico_site_explorer::try_preallocate_one(
         &env.pool,
         nvos_mac,
         nvos_ip,

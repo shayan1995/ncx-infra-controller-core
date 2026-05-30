@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Example configuration for carbide-dns (TOML).
+# Example configuration for nico-dns (TOML).
 #
 # Every setting is shown commented out with its built-in default; uncomment a
 # line to override that default. Key names must match the fields on `Config` in

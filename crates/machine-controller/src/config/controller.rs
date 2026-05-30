@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-use carbide_state_controller_common::config::StateControllerConfig;
-use carbide_utils::config::as_duration;
+use nico_state_controller_common::config::StateControllerConfig;
+use nico_utils::config::as_duration;
 use chrono::Duration;
 use duration_str::deserialize_duration_chrono;
 use serde::{Deserialize, Serialize};

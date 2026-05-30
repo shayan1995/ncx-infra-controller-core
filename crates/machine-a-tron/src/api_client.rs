@@ -507,7 +507,7 @@ impl ApiClient {
         &self,
         bmc_mac_address: String,
         chassis_serial_number: String,
-        dpu_mode: Option<rpc::forge::DpuMode>,
+        dpu_mode: Option<rpc::nico::DpuMode>,
     ) -> ClientApiResult<()> {
         self.0
             .add_expected_machine(ExpectedMachine {

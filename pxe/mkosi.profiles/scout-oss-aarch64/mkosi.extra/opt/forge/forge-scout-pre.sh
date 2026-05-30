@@ -38,17 +38,17 @@ do
                 cli_cmd=`echo $line|cut -d'=' -f2`
         fi
 done
-rm "/opt/forge/forge-scout.env"
-cat "/opt/forge/forge-scout.env.template" > "/opt/forge/forge-scout.env"
-echo server_uri=$server_uri >> "/opt/forge/forge-scout.env"
-echo machine_id=$machine_id >> "/opt/forge/forge-scout.env"
-echo cli_cmd=$cli_cmd >> "/opt/forge/forge-scout.env"
+rm "/opt/nico/nico-scout.env"
+cat "/opt/nico/nico-scout.env.template" > "/opt/nico/nico-scout.env"
+echo server_uri=$server_uri >> "/opt/nico/nico-scout.env"
+echo machine_id=$machine_id >> "/opt/nico/nico-scout.env"
+echo cli_cmd=$cli_cmd >> "/opt/nico/nico-scout.env"
 
 # Use the PXE URL from the kernel command line if available (supports
 # external hosts that can't resolve internal hostnames), otherwise fall
 # back to the default internal hostname.
-pxe_base_url=${pxe_uri:-http://carbide-pxe.forge}
-curl --retry 5 --retry-all-errors -v -o /opt/forge/forge_root.pem ${pxe_base_url}/api/v0/tls/root_ca
+pxe_base_url=${pxe_uri:-http://nico-pxe.nico}
+curl --retry 5 --retry-all-errors -v -o /opt/nico/nico_root.pem ${pxe_base_url}/api/v0/tls/root_ca
 
 mkdir -p ~/.ssh
 
@@ -63,5 +63,5 @@ udevadm settle
 modprobe mlx5_ib || true
 udevadm settle
 chown nvidia-dcgm:nvidia-dcgm /var/log/nvidia-dcgm
-/opt/forge/load_modules.sh || true
+/opt/nico/load_modules.sh || true
 udevadm settle

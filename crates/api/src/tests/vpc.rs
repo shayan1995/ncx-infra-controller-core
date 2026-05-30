@@ -67,7 +67,7 @@ async fn create_vpc_for_tenant_without_profile(
                         name: "NICo".to_string(),
                         ..Default::default()
                     })
-                    .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                    .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                     .routing_profile_type("PRIVILEGED_INTERNAL".to_string())
                     .tonic_request(),
             )
@@ -86,7 +86,7 @@ async fn create_vpc_for_tenant_without_profile(
                         name: "NICo".to_string(),
                         ..Default::default()
                     })
-                    .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                    .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                     .routing_profile_type("PRIVILEGED_INTERNAL".to_string())
                     .tonic_request(),
             )
@@ -233,7 +233,7 @@ async fn create_vpc(pool: sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>
                         name: "NICo".to_string(),
                         ..Default::default()
                     })
-                    .network_virtualization_type(rpc::forge::VpcVirtualizationType::Fnn as i32)
+                    .network_virtualization_type(rpc::nico::VpcVirtualizationType::Fnn as i32)
                     .routing_profile_type("PRIVILEGED_INTERNAL".to_string())
                     .tonic_request(),
             )
@@ -565,7 +565,7 @@ async fn create_vpc_without_fnn_rejects_explicit_routing_profile(
 
     // Requesting a VPC routing profile on a non-FNN VPC type (default
     // is ETV) should fail early at the API gate. The REST API enforces
-    // this upstream; carbide-core enforces it as defense-in-depth via
+    // this upstream; nico-core enforces it as defense-in-depth via
     // `ensure_supports_routing_profiles`.
     assert!(
         env.api
@@ -941,7 +941,7 @@ async fn create_admin_vpc_rejects_existing_tenant_vpc_vni(
         .create_vpc(
             VpcCreationRequest::builder("tenant-admin-vni-conflict")
                 .vni(vni)
-                .metadata(rpc::forge::Metadata {
+                .metadata(rpc::nico::Metadata {
                     name: "tenant-admin-vni-conflict".to_string(),
                     ..Default::default()
                 })
@@ -1177,17 +1177,17 @@ async fn test_increment_vpc_version_detects_concurrent_writes(
 async fn create_flat_vpc_succeeds_without_routing_profile(
     pool: sqlx::PgPool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Flat VPCs are for zero-DPU hosts and don't have a Carbide-managed
+    // Flat VPCs are for zero-DPU hosts and don't have a NICo-managed
     // routing layer. The create handler should skip the FNN-flavored
     // routing-profile validation entirely and still allocate a VNI.
     let env = create_test_env(pool).await;
 
     let tenant = env
         .api
-        .create_tenant(tonic::Request::new(rpc::forge::CreateTenantRequest {
+        .create_tenant(tonic::Request::new(rpc::nico::CreateTenantRequest {
             organization_id: "flat-tenant".to_string(),
             routing_profile_type: None,
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "flat-tenant".to_string(),
                 description: "".to_string(),
                 labels: vec![],
@@ -1202,8 +1202,8 @@ async fn create_flat_vpc_succeeds_without_routing_profile(
         .api
         .create_vpc(
             VpcCreationRequest::builder(tenant.organization_id.clone())
-                .network_virtualization_type(rpc::forge::VpcVirtualizationType::Flat as i32)
-                .metadata(rpc::forge::Metadata {
+                .network_virtualization_type(rpc::nico::VpcVirtualizationType::Flat as i32)
+                .metadata(rpc::nico::Metadata {
                     name: "flat".to_string(),
                     ..Default::default()
                 })
@@ -1214,7 +1214,7 @@ async fn create_flat_vpc_succeeds_without_routing_profile(
 
     assert_eq!(
         vpc.network_virtualization_type,
-        Some(rpc::forge::VpcVirtualizationType::Flat as i32),
+        Some(rpc::nico::VpcVirtualizationType::Flat as i32),
     );
     assert!(vpc.routing_profile_type.is_none());
     assert!(
@@ -1235,10 +1235,10 @@ async fn create_flat_vpc_rejects_routing_profile_type(
 
     let tenant = env
         .api
-        .create_tenant(tonic::Request::new(rpc::forge::CreateTenantRequest {
+        .create_tenant(tonic::Request::new(rpc::nico::CreateTenantRequest {
             organization_id: "flat-tenant".to_string(),
             routing_profile_type: None,
-            metadata: Some(rpc::forge::Metadata {
+            metadata: Some(rpc::nico::Metadata {
                 name: "flat-tenant".to_string(),
                 description: "".to_string(),
                 labels: vec![],
@@ -1253,9 +1253,9 @@ async fn create_flat_vpc_rejects_routing_profile_type(
         .api
         .create_vpc(
             VpcCreationRequest::builder(tenant.organization_id)
-                .network_virtualization_type(rpc::forge::VpcVirtualizationType::Flat as i32)
+                .network_virtualization_type(rpc::nico::VpcVirtualizationType::Flat as i32)
                 .routing_profile_type("EXTERNAL".to_string())
-                .metadata(rpc::forge::Metadata {
+                .metadata(rpc::nico::Metadata {
                     name: "flat".to_string(),
                     ..Default::default()
                 })

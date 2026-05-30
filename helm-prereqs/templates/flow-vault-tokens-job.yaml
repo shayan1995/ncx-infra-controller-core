@@ -3,7 +3,7 @@
 ## Flow Vault Tokens — psm-vault-token, nsm-vault-token
 ## =============================================================================
 ## PSM and NSM containers in the flow pod authenticate to Vault with a
-## periodic token (VAULT_TOKEN env var).  Forged provisions these out-of-band;
+## periodic token (VAULT_TOKEN env var).  NICod provisions these out-of-band;
 ## here we mint them with a scoped policy as a post-install Helm hook so
 ## `./setup.sh` brings flow up end-to-end with no manual secret juggling.
 ##

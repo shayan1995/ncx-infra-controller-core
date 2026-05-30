@@ -120,17 +120,17 @@ spec:
                 configMapKeyRef:
                   name: {{ .Values.envFrom.databaseConfig.configMapName }}
                   key: DB_NAME
-            # Set both CARBIDE_* (carbide image) and NICO_* (nico image) names so the
+            # Set both NICO_* (nico image) and NICO_* (nico image) names so the
             # chart works with either image variant; binary reads only its expected name.
-            - name: CARBIDE_API_DATABASE_URL
+            - name: NICO_API_DATABASE_URL
               value: "postgres://$(DATASTORE_USER):$(DATASTORE_PASSWORD)@$(DATASTORE_HOST):$(DATASTORE_PORT)/$(DATASTORE_NAME)"
             - name: NICO_API_DATABASE_URL
               value: "postgres://$(DATASTORE_USER):$(DATASTORE_PASSWORD)@$(DATASTORE_HOST):$(DATASTORE_PORT)/$(DATASTORE_NAME)"
-            - name: CARBIDE_WEB_PRIVATE_COOKIEJAR_KEY
+            - name: NICO_WEB_PRIVATE_COOKIEJAR_KEY
               value: "$(DATASTORE_PASSWORD)"
             - name: NICO_WEB_PRIVATE_COOKIEJAR_KEY
               value: "$(DATASTORE_PASSWORD)"
-            - name: CARBIDE_WEB_HOSTNAME
+            - name: NICO_WEB_HOSTNAME
               valueFrom:
                 configMapKeyRef:
                   name: {{ .Values.envFrom.nicoWebHostname.configMapName }}
@@ -157,15 +157,15 @@ spec:
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           volumeMounts:
-            # Mount config + secrets at both legacy /etc/forge,/var/run/secrets/forge-roots,/opt/carbide
+            # Mount config + secrets at both legacy /etc/nico,/var/run/secrets/nico-roots,/opt/nico
             # and renamed /etc/nico,/var/run/secrets/nico-roots,/opt/nico paths so the chart works
-            # whether the binary inside the image looks up its files under forge/carbide or nico names.
+            # whether the binary inside the image looks up its files under nico/nico or nico names.
             - name: nico-api-config-files
-              mountPath: /etc/forge/carbide-api
+              mountPath: /etc/nico/nico-api
             - name: nico-api-config-files
               mountPath: /etc/nico/nico-api
             - name: nico-api-site-config-files
-              mountPath: /etc/forge/carbide-api/site
+              mountPath: /etc/nico/nico-api/site
             - name: nico-api-site-config-files
               mountPath: /etc/nico/nico-api/site
             - name: persistence
@@ -174,13 +174,13 @@ spec:
               mountPath: "/var/run/secrets/spiffe.io"
               readOnly: true
             - name: nico-roots
-              mountPath: "/var/run/secrets/forge-roots"
+              mountPath: "/var/run/secrets/nico-roots"
               readOnly: true
             - name: nico-roots
               mountPath: "/var/run/secrets/nico-roots"
               readOnly: true
             - name: firmware
-              mountPath: "/opt/carbide/firmware"
+              mountPath: "/opt/nico/firmware"
               readOnly: true
             - name: firmware
               mountPath: "/opt/nico/firmware"

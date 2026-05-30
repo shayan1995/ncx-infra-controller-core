@@ -70,7 +70,7 @@ pub async fn run(
         }
     }
 
-    let log_history_max_bytes = carbide_config
+    let log_history_max_bytes = nico_config
         .log_history
         .max_megabytes
         .saturating_mul(1024 * 1024);
@@ -79,7 +79,7 @@ pub async fn run(
     } else {
         setup_logging(
             debug,
-            carbide_machine_controller::extra_logfmt_logging_fields(),
+            nico_machine_controller::extra_logfmt_logging_fields(),
             None::<NoSubscriber>,
             log_history_max_bytes,
         )

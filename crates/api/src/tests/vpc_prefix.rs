@@ -388,7 +388,7 @@ async fn flat_vpc_accepts_ipv4_prefix(pool: PgPool) -> Result<(), Box<dyn std::e
         id: None,
         prefix: String::new(),
         vpc_id: vpc.id,
-        config: Some(rpc::forge::VpcPrefixConfig {
+        config: Some(rpc::nico::VpcPrefixConfig {
             prefix: "192.0.2.0/25".to_string(),
         }),
         metadata: Some(Metadata {
@@ -432,7 +432,7 @@ async fn flat_vpc_accepts_ipv6_prefix(pool: PgPool) -> Result<(), Box<dyn std::e
         id: None,
         prefix: String::new(),
         vpc_id: vpc.id,
-        config: Some(rpc::forge::VpcPrefixConfig {
+        config: Some(rpc::nico::VpcPrefixConfig {
             prefix: "2001:db8::/64".to_string(),
         }),
         metadata: Some(Metadata {

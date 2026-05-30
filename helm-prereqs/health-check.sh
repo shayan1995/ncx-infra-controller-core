@@ -645,15 +645,15 @@ else
       fail "nico-unbound: recursive resolution failed (example.com via ${_UNBOUND_VIP})"
     fi
 
-    # Compatibility .forge records are still consumed by DPU agents, boot
+    # Compatibility .nico records are still consumed by DPU agents, boot
     # artifacts, DHCP, and extension services.
-    _check_dns_name "carbide-api.forge"
-    _check_dns_name "carbide-pxe.forge"
-    _check_dns_name "carbide-static-pxe.forge"
-    _check_dns_name "carbide-ntp.forge"
-    _check_dns_name "unbound.forge"
-    _check_dns_name "otel-receiver.forge"
-    _check_dns_name "socks.forge"
+    _check_dns_name "nico-api.nico"
+    _check_dns_name "nico-pxe.nico"
+    _check_dns_name "nico-static-pxe.nico"
+    _check_dns_name "nico-ntp.nico"
+    _check_dns_name "unbound.nico"
+    _check_dns_name "otel-receiver.nico"
+    _check_dns_name "socks.nico"
   elif [[ -z "${_SPEAKER:-}" || -z "${_UNBOUND_VIP:-}" ]]; then
     warn "nico-unbound: resolution tests skipped (no MetalLB speaker or VIP available)"
   fi
@@ -678,20 +678,20 @@ else
 fi
 
 # --------------------------------------------------------------------------
-# .forge DNS endpoint reference
+# .nico DNS endpoint reference
 # --------------------------------------------------------------------------
-section ".forge DNS Endpoint Reference"
+section ".nico DNS Endpoint Reference"
 printf "  %s\n" "The following hostnames must resolve on the OOB management network:"
 printf "  %s\n" "These compatibility names remain required until hardcoded agent/container references move to .nico."
 printf "  %-36s %-6s %s\n" "Hostname" "Port" "Protocol"
 printf "  %-36s %-6s %s\n" "--------" "----" "--------"
-printf "  %-36s %-6s %s\n" "carbide-api.forge"        "443"  "gRPC/TLS (DPU agents, CLI, PXE, DHCP)"
-printf "  %-36s %-6s %s\n" "carbide-pxe.forge"        "80"   "HTTP     (DPU agents - hardcoded in agent binary)"
-printf "  %-36s %-6s %s\n" "carbide-static-pxe.forge" "80"   "HTTP     (host PXE loader - hardcoded in boot images)"
-printf "  %-36s %-6s %s\n" "carbide-ntp.forge"        "123"  "NTP/UDP  (DPU agents - hardcoded in agent binary)"
-printf "  %-36s %-6s %s\n" "unbound.forge"            "53"   "DNS      (distributed via DHCP option 6)"
-printf "  %-36s %-6s %s\n" "otel-receiver.forge"      "443"  "gRPC/TLS (otel-collector sidecars)"
-printf "  %-36s %-6s %s\n" "socks.forge"              "1888" "SOCKS5   (DPU extension services - hardcoded in agent binary)"
+printf "  %-36s %-6s %s\n" "nico-api.nico"        "443"  "gRPC/TLS (DPU agents, CLI, PXE, DHCP)"
+printf "  %-36s %-6s %s\n" "nico-pxe.nico"        "80"   "HTTP     (DPU agents - hardcoded in agent binary)"
+printf "  %-36s %-6s %s\n" "nico-static-pxe.nico" "80"   "HTTP     (host PXE loader - hardcoded in boot images)"
+printf "  %-36s %-6s %s\n" "nico-ntp.nico"        "123"  "NTP/UDP  (DPU agents - hardcoded in agent binary)"
+printf "  %-36s %-6s %s\n" "unbound.nico"            "53"   "DNS      (distributed via DHCP option 6)"
+printf "  %-36s %-6s %s\n" "otel-receiver.nico"      "443"  "gRPC/TLS (otel-collector sidecars)"
+printf "  %-36s %-6s %s\n" "socks.nico"              "1888" "SOCKS5   (DPU extension services - hardcoded in agent binary)"
 printf "\n  %s\n" "Verify with: dig +short <hostname> @<UNBOUND_VIP>"
 
 # --------------------------------------------------------------------------

@@ -50,7 +50,7 @@
 
 use std::fmt;
 
-use carbide_network::virtualization::VpcVirtualizationType;
+use nico_network::virtualization::VpcVirtualizationType;
 
 use crate::network_segment::{NetworkSegmentType, NewNetworkSegment};
 
@@ -129,7 +129,7 @@ impl DataPlaneKind {
     ///
     /// The REST API at `infra-controller-rest/api/pkg/api/handler/vpc.go`
     /// rejects `routingProfile` on non-FNN VPC create requests; this
-    /// capability is the defense-in-depth gate at the carbide-core layer.
+    /// capability is the defense-in-depth gate at the nico-core layer.
     pub const fn supports_routing_profiles(self) -> bool {
         matches!(self, Self::DpuOverlayL3)
     }
@@ -143,7 +143,7 @@ impl DataPlaneKind {
     /// [`VpcVirtualizationTypeCapabilities::allocates_svi_for`].
     ///
     /// L3-overlay only today (see
-    /// `carbide_network::virtualization::get_svi_ip`).
+    /// `nico_network::virtualization::get_svi_ip`).
     pub const fn allocates_svi_ip(self) -> bool {
         matches!(self, Self::DpuOverlayL3)
     }
@@ -601,7 +601,7 @@ mod tests {
         // and Flat both reject the field at the API and short-circuit
         // resolution to defaults (no profile stored, internal VNI
         // pool). The REST API enforces this same gate upstream; this
-        // is the defense-in-depth at carbide-core.
+        // is the defense-in-depth at nico-core.
         assert!(VpcVirtualizationType::Fnn.supports_routing_profiles());
         assert!(!VpcVirtualizationType::EthernetVirtualizer.supports_routing_profiles());
         assert!(!VpcVirtualizationType::EthernetVirtualizerWithNvue.supports_routing_profiles());
@@ -670,7 +670,7 @@ mod tests {
         );
     }
 
-    /// Guards against forgetting to declare a reciprocal entry in
+    /// Guards against nicotting to declare a reciprocal entry in
     /// another variant's `peers_with` slice. If A says it peers with
     /// B, B must say it peers with A.
     #[test]

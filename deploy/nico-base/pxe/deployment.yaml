@@ -37,7 +37,7 @@ spec:
         - name: nico-pxe
           image: yourdockerregistry.com/path/to/nico-core:latest
           command:
-            - /opt/carbide/carbide
+            - /opt/nico/nico
           args:
             - -s
             - /nico-boot-artifacts
@@ -45,14 +45,14 @@ spec:
             - name: ROCKET_CONFIG
               value: "/tmp/nico/Rocket.toml"
             - name: ROCKET_TEMPLATE_DIR
-              value: "/opt/carbide/pxe/templates"
+              value: "/opt/nico/pxe/templates"
             - name: ROCKET_ENV
               value: "production"
-            - name: FORGE_ROOT_CAFILE_PATH
+            - name: NICO_ROOT_CAFILE_PATH
               value: "/var/run/secrets/spiffe.io/ca.crt"
-            - name: FORGE_CLIENT_CERT_PATH
+            - name: NICO_CLIENT_CERT_PATH
               value: "/var/run/secrets/spiffe.io/tls.crt"
-            - name: FORGE_CLIENT_KEY_PATH
+            - name: NICO_CLIENT_KEY_PATH
               value: "/var/run/secrets/spiffe.io/tls.key"
             - name: RUST_BACKTRACE
               value: "full"

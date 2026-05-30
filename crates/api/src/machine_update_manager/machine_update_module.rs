@@ -52,5 +52,5 @@ pub trait MachineUpdateModule: Send + Sync + fmt::Display {
         &self,
         pool: &sqlx::Pool<sqlx::Postgres>,
         snapshots: &HashMap<MachineId, ManagedHostStateSnapshot>,
-    ) -> CarbideResult<()>;
+    ) -> NicoResult<()>;
 }

@@ -18,7 +18,7 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use carbide_dpa_interface_controller::rpc::SetVni;
+use nico_dpa_interface_controller::rpc::SetVni;
 use config_version::ConfigVersion;
 use mac_address::MacAddress;
 use model::dpa_interface::DpaInterfaceNetworkStatusObservation;

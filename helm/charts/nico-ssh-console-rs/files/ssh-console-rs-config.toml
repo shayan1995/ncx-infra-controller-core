@@ -2,14 +2,14 @@
 listen_address = "[::]:22"
 metrics_address = "[::]:9009"
 
-## Address for the API. Both `nico_url` (renamed binary) and `carbide_url` (carbide
+## Address for the API. Both `nico_url` (renamed binary) and `nico_url` (nico
 ## binary) are set so the chart works with either image; binary reads its expected key.
 nico_url = "https://nico-api.nico-system.svc.cluster.local:1079"
-carbide_url = "https://nico-api.nico-system.svc.cluster.local:1079"
+nico_url = "https://nico-api.nico-system.svc.cluster.local:1079"
 
 ## Path to root CA cert. Both names set for dual-image support.
 nico_root_ca_path = "/var/run/secrets/spiffe.io/ca.crt"
-forge_root_ca_path = "/var/run/secrets/spiffe.io/ca.crt"
+nico_root_ca_path = "/var/run/secrets/spiffe.io/ca.crt"
 
 ## Client cert path to communicate with nico-api
 client_cert_path = "/var/run/secrets/spiffe.io/tls.crt"

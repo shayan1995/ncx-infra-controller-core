@@ -297,7 +297,7 @@ pub async fn discover_dhcp(
                     } else if let Some(s) =
                         db::expected_switch::find_by_nvos_mac_address(&mut txn, parsed_mac)
                             .await
-                            .map_err(CarbideError::from)?
+                            .map_err(NicoError::from)?
                         && let Some(nvos_ip) = s.nvos_ip_address
                     {
                         // The parsed MAC matches the single wired NVOS port of an expected

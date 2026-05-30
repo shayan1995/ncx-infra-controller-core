@@ -29,9 +29,9 @@ use crate::handlers::machine_interface_address::update_preallocated_machine_inte
 /// caller that sets it alongside zero-or-multiple `nvos_mac_addresses`, so the
 /// (mac, ip) pairing stays unambiguous for the discover hook and the
 /// reconciliation pass.
-fn validate_nvos_ip_pairing(switch: &ExpectedSwitch) -> Result<(), CarbideError> {
+fn validate_nvos_ip_pairing(switch: &ExpectedSwitch) -> Result<(), NicoError> {
     if switch.nvos_ip_address.is_some() && switch.nvos_mac_addresses.len() != 1 {
-        return Err(CarbideError::InvalidArgument(format!(
+        return Err(NicoError::InvalidArgument(format!(
             "nvos_ip_address requires exactly one nvos_mac_addresses entry, got {}",
             switch.nvos_mac_addresses.len(),
         )));

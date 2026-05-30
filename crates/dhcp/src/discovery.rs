@@ -42,7 +42,7 @@ pub enum DiscoveryBuilderResult {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn discovery_builder_result_as_str(result: DiscoveryBuilderResult) -> *const c_char {
-    // If you add a variant here, please don't nicot adding \0 at the end of the
+    // If you add a variant here, please don't forget adding \0 at the end of the
     // string to make it null terminated and compatible to what C expects
     CStr::from_bytes_with_nul(
         match result {
@@ -500,7 +500,7 @@ unsafe fn discovery_fetch_machine_at(
 /// This function dereferences a pointer to a Discovery object which is an opaque pointer
 /// consumed in C code.
 ///
-/// This does not nicot the memory afterwards, so the opaque pointer in the C code is now
+/// This does not forget the memory afterwards, so the opaque pointer in the C code is now
 /// unusable.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn discovery_builder_free(ctx: *mut DiscoveryBuilderFFI) {

@@ -40,7 +40,7 @@ spec:
             - /bin/sh
             - -c
             # yamllint disable-line rule:line-length
-            - /opt/carbide/carbide-api migrate --datastore="postgres://${DATASTORE_USER}:${DATASTORE_PASSWORD}@${DATASTORE_HOST}:${DATASTORE_PORT}/${DATASTORE_NAME}"
+            - /opt/nico/nico-api migrate --datastore="postgres://${DATASTORE_USER}:${DATASTORE_PASSWORD}@${DATASTORE_HOST}:${DATASTORE_PORT}/${DATASTORE_NAME}"
           env:
             - name: DATASTORE_USER
               valueFrom:

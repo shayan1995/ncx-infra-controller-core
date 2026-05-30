@@ -11,8 +11,8 @@
 # `scenario_config_path`.
 #
 # Environment variable overrides: all fields can be overridden with
-# CARBIDE_RVS__<SECTION>__<FIELD> (double underscore as separator).
-# For example: CARBIDE_RVS__NICC__URL=https://...
+# NICO_RVS__<SECTION>__<FIELD> (double underscore as separator).
+# For example: NICO_RVS__NICC__URL=https://...
 #
 # =============================================================================
 
@@ -32,13 +32,13 @@ poll_interval_secs = 30
 # -----------------------------------------------------------------------------
 # NICC CONNECTION
 # -----------------------------------------------------------------------------
-# RVS connects to NICC (Carbide API) to query rack/partition info, request
+# RVS connects to NICC (NICo API) to query rack/partition info, request
 # instance provisioning, and report validation results.
 
 [nicc]
 
 # NICC gRPC endpoint URL
-url = "https://carbide-api.forge-system.svc.cluster.local:1079"
+url = "https://nico-api.nico-system.svc.cluster.local:1079"
 
 # Timeout for individual NICC RPCs
 rpc_timeout_secs = 30
@@ -61,7 +61,7 @@ root_cafile_path = "/var/run/secrets/spiffe.io/ca.crt"
 # Path to the scenario definition file (the rack validation TOML).
 # Mounted into the pod as a ConfigMap.
 
-scenario_config_path = "/etc/forge/rvs/scenario.toml"
+scenario_config_path = "/etc/nico/rvs/scenario.toml"
 
 # -----------------------------------------------------------------------------
 # ARTIFACT CACHE

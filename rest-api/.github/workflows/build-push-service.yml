@@ -72,7 +72,7 @@ on:
         description: 'NGC path for resource uploads'
         required: false
         # TODO: change to '0837451325059433/nico-dev' once the NGC nico team is created under the org
-        default: '0837451325059433/carbide-dev'
+        default: '0837451325059433/nico-dev'
         type: string
     secrets:
       NVCR_USERNAME:

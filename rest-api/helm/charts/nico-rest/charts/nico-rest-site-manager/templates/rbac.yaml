@@ -36,11 +36,11 @@ rules:
   - apiGroups: ["nico.nvidia.io"]
     resources: ["sites/status"]
     verbs: ["get", "update", "patch"]
-  # TODO: remove forge.nvidia.io rules once all site agents have migrated to nico.nvidia.io.
-  - apiGroups: ["forge.nvidia.io"]
+  # TODO: remove nico.nvidia.io rules once all site agents have migrated to nico.nvidia.io.
+  - apiGroups: ["nico.nvidia.io"]
     resources: ["sites"]
     verbs: ["get", "list", "watch", "update", "patch", "delete"]
-  - apiGroups: ["forge.nvidia.io"]
+  - apiGroups: ["nico.nvidia.io"]
     resources: ["sites/status"]
     verbs: ["get", "update", "patch"]
   - apiGroups: [""]
@@ -78,11 +78,11 @@ rules:
   - apiGroups: ["nico.nvidia.io"]
     resources: ["sites/status"]
     verbs: ["get", "update", "patch"]
-  # TODO: remove forge.nvidia.io rules once all site agents have migrated to nico.nvidia.io.
-  - apiGroups: ["forge.nvidia.io"]
+  # TODO: remove nico.nvidia.io rules once all site agents have migrated to nico.nvidia.io.
+  - apiGroups: ["nico.nvidia.io"]
     resources: ["sites"]
     verbs: ["get", "list", "watch", "update", "patch", "delete"]
-  - apiGroups: ["forge.nvidia.io"]
+  - apiGroups: ["nico.nvidia.io"]
     resources: ["sites/status"]
     verbs: ["get", "update", "patch"]
 ---

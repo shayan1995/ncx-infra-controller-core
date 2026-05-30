@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Runtime image for forge-dhcp-server on arm64 DPUs.
+# Runtime image for nico-dhcp-server on arm64 DPUs.
 #
 # The binary is cross-compiled externally using the
 # build-artifacts-container-cross-aarch64 image and copied into this
@@ -28,6 +28,6 @@ ARG DISTROLESS_DEBUG_TAG=${DEBUG_DISTROLESS:+"dev"} # 'dev' provides a busybox s
 # NVIDIA Distroless Container
 FROM --platform=linux/arm64 ${IMG}:${TAG}-${DISTROLESS_DEBUG_TAG}
 
-COPY --chmod=755 target/aarch64-unknown-linux-gnu/release/forge-dhcp-server /var/support/forge-dhcp/bin/forge-dhcp-server
+COPY --chmod=755 target/aarch64-unknown-linux-gnu/release/nico-dhcp-server /var/support/nico-dhcp/bin/nico-dhcp-server
 
-ENTRYPOINT ["/var/support/forge-dhcp/bin/forge-dhcp-server"]
+ENTRYPOINT ["/var/support/nico-dhcp/bin/nico-dhcp-server"]

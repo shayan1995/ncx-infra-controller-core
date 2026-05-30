@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Runtime image for carbide-fmds on arm64 DPUs.
+# Runtime image for nico-fmds on arm64 DPUs.
 #
 # The binary is cross-compiled externally using the
 # build-artifacts-container-cross-aarch64 image and copied into this
@@ -28,6 +28,6 @@ ARG DISTROLESS_DEBUG_TAG=${DEBUG_DISTROLESS:+"dev"} # 'dev' provides a busybox s
 # NVIDIA Distroless Container
 FROM ${IMG}:${TAG}-${DISTROLESS_DEBUG_TAG}
 
-COPY --chmod=755 target/aarch64-unknown-linux-gnu/release/carbide-fmds /usr/bin/carbide-fmds
+COPY --chmod=755 target/aarch64-unknown-linux-gnu/release/nico-fmds /usr/bin/nico-fmds
 
-ENTRYPOINT ["/usr/bin/carbide-fmds"]
+ENTRYPOINT ["/usr/bin/nico-fmds"]

@@ -30,7 +30,7 @@ SOURCE_TAG="$4"
 SEMANTIC_VERSION="$5"
 
 # TODO: rename to "nico" once the NGC team is created under the org
-DEST_TEAM="carbide"
+DEST_TEAM="nico"
 
 mkdir -p ~/.ngc
 mkdir -p download_temp

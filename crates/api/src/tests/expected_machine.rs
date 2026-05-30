@@ -2104,7 +2104,7 @@ async fn test_add_with_host_nic_fixed_ip_creates_interface(
 
     // Add doesn't preallocate inline; mimic what site-explorer does on the next iteration --
     // materialize the host NIC's static fixed_ip.
-    carbide_site_explorer::try_preallocate_one(
+    nico_site_explorer::try_preallocate_one(
         &env.pool,
         nic_mac,
         fixed_ip.parse().unwrap(),
@@ -2968,7 +2968,7 @@ async fn test_create_missing_from_preallocates_interfaces(
 
     // Mimic site-explorer's per-row materialization: one preallocate per static IP on the
     // entity we just inserted.
-    carbide_site_explorer::try_preallocate_one(
+    nico_site_explorer::try_preallocate_one(
         &env.pool,
         bmc_mac,
         bmc_ip,
@@ -2976,7 +2976,7 @@ async fn test_create_missing_from_preallocates_interfaces(
         "expected_machine BMC",
     )
     .await;
-    carbide_site_explorer::try_preallocate_one(
+    nico_site_explorer::try_preallocate_one(
         &env.pool,
         nic_mac,
         host_ip,

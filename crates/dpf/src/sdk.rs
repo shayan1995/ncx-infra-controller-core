@@ -1412,7 +1412,7 @@ impl<R: DpuDeploymentRepository + DpuRepository, L> DpfSdk<R, L> {
     /// label to look up the owning DPUDeployment and read `spec.dpus.bfb`
     /// (BFB CR name) and `spec.dpus.flavor` from it for the comparison.
     ///
-    /// Reading from the deployment — rather than from carbide config —
+    /// Reading from the deployment — rather than from nico config —
     /// keeps the comparison correct when multiple DPUDeployments coexist,
     /// each pinning their DPUs to a different BFB or flavor.
     ///

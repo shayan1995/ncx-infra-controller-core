@@ -2,7 +2,7 @@
 ## nico-core.yaml — values for: helm upgrade --install nico ./helm
 ##
 ## Image registry and tag are injected at install time via --set flags:
-##   --set global.image.repository=<your-registry>/nvmetal-carbide
+##   --set global.image.repository=<your-registry>/nvmetal-nico
 ##   --set global.image.tag=<tag>
 ## In setup.sh these come from NICO_IMAGE_REGISTRY and NICO_CORE_IMAGE_TAG.
 ## =============================================================================
@@ -248,4 +248,4 @@ nico-dsx-exchange-consumer:
 unbound:
   enabled: false
   # imagePullSecrets:
-  #   - name: nvcr-nvidian-nvforge
+  #   - name: nvcr-nvidian-nvnico

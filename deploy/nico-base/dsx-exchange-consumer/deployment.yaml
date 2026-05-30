@@ -41,7 +41,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - /opt/carbide/carbide-dsx-exchange-consumer
+            - /opt/nico/nico-dsx-exchange-consumer
           env:
             - name: RUST_BACKTRACE
               value: "full"

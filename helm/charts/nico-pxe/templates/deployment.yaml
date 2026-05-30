@@ -52,12 +52,12 @@ spec:
       containers:
         - name: nico-pxe
           image: "{{ include "nico-pxe.image" . }}"
-          # Pick whichever binary is in the image (nico-named or carbide-named).
+          # Pick whichever binary is in the image (nico-named or nico-named).
           command:
             - /bin/sh
             - -c
             - |
-              if [ -x /opt/nico/nico ]; then BIN=/opt/nico/nico; else BIN=/opt/carbide/carbide; fi
+              if [ -x /opt/nico/nico ]; then BIN=/opt/nico/nico; else BIN=/opt/nico/nico; fi
               exec "$BIN" -s {{ .Values.bootArtifacts.servePath }}
           env:
             {{- range $key, $value := .Values.env }}

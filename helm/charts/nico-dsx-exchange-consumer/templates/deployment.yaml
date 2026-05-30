@@ -37,7 +37,7 @@ spec:
               if [ -x /opt/nico/nico-dsx-exchange-consumer ]; then
                 exec /opt/nico/nico-dsx-exchange-consumer
               else
-                exec /opt/carbide/carbide-dsx-exchange-consumer
+                exec /opt/nico/nico-dsx-exchange-consumer
               fi
           env:
             {{- range $key, $value := .Values.env }}

@@ -990,7 +990,7 @@ async fn test_add_with_bmc_ip_creates_static_interface(
 
     // Add doesn't preallocate inline; mimic what site-explorer does on the next iteration --
     // materialize the static BMC interface for this entity.
-    carbide_site_explorer::try_preallocate_one(
+    nico_site_explorer::try_preallocate_one(
         &env.pool,
         bmc_mac,
         bmc_ip.parse().unwrap(),
@@ -1186,7 +1186,7 @@ async fn test_add_expected_switch_rejects_nvos_ip_without_mac(
 
     let err = env
         .api
-        .add_expected_switch(tonic::Request::new(rpc::forge::ExpectedSwitch {
+        .add_expected_switch(tonic::Request::new(rpc::nico::ExpectedSwitch {
             expected_switch_id: None,
             bmc_mac_address: bmc_mac.to_string(),
             bmc_username: "ADMIN".into(),
@@ -1197,7 +1197,7 @@ async fn test_add_expected_switch_rejects_nvos_ip_without_mac(
             nvos_password: None,
             bmc_ip_address: String::new(),
             nvos_ip_address: Some("192.0.2.250".into()),
-            metadata: Some(rpc::forge::Metadata::default()),
+            metadata: Some(rpc::nico::Metadata::default()),
             rack_id: None,
             bmc_retain_credentials: None,
         }))
@@ -1219,7 +1219,7 @@ async fn test_add_expected_switch_rejects_nvos_ip_with_multiple_macs(
 
     let err = env
         .api
-        .add_expected_switch(tonic::Request::new(rpc::forge::ExpectedSwitch {
+        .add_expected_switch(tonic::Request::new(rpc::nico::ExpectedSwitch {
             expected_switch_id: None,
             bmc_mac_address: bmc_mac.to_string(),
             bmc_username: "ADMIN".into(),
@@ -1233,7 +1233,7 @@ async fn test_add_expected_switch_rejects_nvos_ip_with_multiple_macs(
             nvos_password: None,
             bmc_ip_address: String::new(),
             nvos_ip_address: Some("192.0.2.251".into()),
-            metadata: Some(rpc::forge::Metadata::default()),
+            metadata: Some(rpc::nico::Metadata::default()),
             rack_id: None,
             bmc_retain_credentials: None,
         }))
@@ -1256,7 +1256,7 @@ async fn test_add_expected_switch_with_nvos_ip_round_trips(
     let nvos_ip = "192.0.2.252";
 
     env.api
-        .add_expected_switch(tonic::Request::new(rpc::forge::ExpectedSwitch {
+        .add_expected_switch(tonic::Request::new(rpc::nico::ExpectedSwitch {
             expected_switch_id: None,
             bmc_mac_address: bmc_mac.to_string(),
             bmc_username: "ADMIN".into(),
@@ -1267,7 +1267,7 @@ async fn test_add_expected_switch_with_nvos_ip_round_trips(
             nvos_password: None,
             bmc_ip_address: String::new(),
             nvos_ip_address: Some(nvos_ip.into()),
-            metadata: Some(rpc::forge::Metadata::default()),
+            metadata: Some(rpc::nico::Metadata::default()),
             rack_id: None,
             bmc_retain_credentials: None,
         }))
@@ -1275,7 +1275,7 @@ async fn test_add_expected_switch_with_nvos_ip_round_trips(
 
     let retrieved = env
         .api
-        .get_expected_switch(tonic::Request::new(rpc::forge::ExpectedSwitchRequest {
+        .get_expected_switch(tonic::Request::new(rpc::nico::ExpectedSwitchRequest {
             bmc_mac_address: bmc_mac.to_string(),
             expected_switch_id: None,
         }))
@@ -1303,7 +1303,7 @@ async fn test_update_expected_switch_rejects_invalid_nvos_pairing(
     let nvos_mac: MacAddress = "8A:8B:8C:8D:8E:20".parse().unwrap();
 
     env.api
-        .add_expected_switch(tonic::Request::new(rpc::forge::ExpectedSwitch {
+        .add_expected_switch(tonic::Request::new(rpc::nico::ExpectedSwitch {
             expected_switch_id: None,
             bmc_mac_address: bmc_mac.to_string(),
             bmc_username: "ADMIN".into(),
@@ -1314,7 +1314,7 @@ async fn test_update_expected_switch_rejects_invalid_nvos_pairing(
             nvos_password: None,
             bmc_ip_address: String::new(),
             nvos_ip_address: None,
-            metadata: Some(rpc::forge::Metadata::default()),
+            metadata: Some(rpc::nico::Metadata::default()),
             rack_id: None,
             bmc_retain_credentials: None,
         }))
@@ -1322,7 +1322,7 @@ async fn test_update_expected_switch_rejects_invalid_nvos_pairing(
 
     let err = env
         .api
-        .update_expected_switch(tonic::Request::new(rpc::forge::ExpectedSwitch {
+        .update_expected_switch(tonic::Request::new(rpc::nico::ExpectedSwitch {
             expected_switch_id: None,
             bmc_mac_address: bmc_mac.to_string(),
             bmc_username: "ADMIN".into(),
@@ -1334,7 +1334,7 @@ async fn test_update_expected_switch_rejects_invalid_nvos_pairing(
             nvos_password: None,
             bmc_ip_address: String::new(),
             nvos_ip_address: Some("192.0.2.253".into()),
-            metadata: Some(rpc::forge::Metadata::default()),
+            metadata: Some(rpc::nico::Metadata::default()),
             rack_id: None,
             bmc_retain_credentials: None,
         }))
@@ -1360,7 +1360,7 @@ async fn test_dhcp_discover_preallocates_nvos_ip_for_unknown_mac(
     let nvos_ip = "192.0.2.254";
 
     env.api
-        .add_expected_switch(tonic::Request::new(rpc::forge::ExpectedSwitch {
+        .add_expected_switch(tonic::Request::new(rpc::nico::ExpectedSwitch {
             expected_switch_id: None,
             bmc_mac_address: bmc_mac.to_string(),
             bmc_username: "ADMIN".into(),
@@ -1371,7 +1371,7 @@ async fn test_dhcp_discover_preallocates_nvos_ip_for_unknown_mac(
             nvos_password: None,
             bmc_ip_address: String::new(),
             nvos_ip_address: Some(nvos_ip.into()),
-            metadata: Some(rpc::forge::Metadata::default()),
+            metadata: Some(rpc::nico::Metadata::default()),
             rack_id: None,
             bmc_retain_credentials: None,
         }))

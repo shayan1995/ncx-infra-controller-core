@@ -2,7 +2,7 @@ suite: cert directory overrides
 templates:
   - daemonset.yaml
 tests:
-  - it: should mount certs at /opt/forge in init container by default
+  - it: should mount certs at /opt/nico in init container by default
     set:
       image:
         repository: test
@@ -12,9 +12,9 @@ tests:
           path: spec.template.spec.initContainers[0].volumeMounts
           content:
             name: nico-certs
-            mountPath: /opt/forge
+            mountPath: /opt/nico
 
-  - it: should mount certs at /opt/forge in main container by default
+  - it: should mount certs at /opt/nico in main container by default
     set:
       image:
         repository: test
@@ -24,9 +24,9 @@ tests:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             name: nico-certs
-            mountPath: /opt/forge
+            mountPath: /opt/nico
 
-  - it: should hostPath-mount /opt/forge by default
+  - it: should hostPath-mount /opt/nico by default
     set:
       image:
         repository: test
@@ -37,7 +37,7 @@ tests:
           content:
             name: nico-certs
             hostPath:
-              path: /opt/forge
+              path: /opt/nico
               type: DirectoryOrCreate
 
   - it: should fall back to /opt/nico when certsDir is cleared

@@ -17,7 +17,7 @@
 
 use std::path::PathBuf;
 
-use carbide_utils::config::as_duration;
+use nico_utils::config::as_duration;
 use chrono::Duration;
 use duration_str::deserialize_duration_chrono;
 use serde::{Deserialize, Serialize};
@@ -57,7 +57,7 @@ pub struct FirmwareGlobal {
     #[serde(default = "FirmwareGlobal::concurrency_limit_default")]
     pub concurrency_limit: usize,
     /// Local directory where firmware binaries are stored.
-    /// Default is `/opt/carbide/firmware`.
+    /// Default is `/opt/nico/firmware`.
     #[serde(default = "FirmwareGlobal::firmware_directory_default")]
     pub firmware_directory: PathBuf,
     /// Delay before retrying a failed host firmware
@@ -134,7 +134,7 @@ impl FirmwareGlobal {
         16
     }
     pub fn firmware_directory_default() -> PathBuf {
-        PathBuf::from("/opt/carbide/firmware")
+        PathBuf::from("/opt/nico/firmware")
     }
     pub fn host_firmware_upgrade_retry_interval_default() -> Duration {
         Duration::minutes(60)

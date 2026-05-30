@@ -41,7 +41,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - /opt/carbide/forge-hw-health
+            - /opt/nico/nico-hw-health
           env:
             - name: RUST_BACKTRACE
               value: "full"

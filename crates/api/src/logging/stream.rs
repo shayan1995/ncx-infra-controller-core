@@ -53,7 +53,7 @@ use tracing_subscriber::registry::LookupSpan;
 const BROADCAST_CAPACITY: usize = 1024;
 
 /// Default in-memory byte budget for retained history, used when no config is
-/// supplied. Overridden by `CarbideConfig.log_history.max_megabytes`. 128 MiB.
+/// supplied. Overridden by `NicoConfig.log_history.max_megabytes`. 128 MiB.
 const DEFAULT_MAX_BYTES: usize = 128 * 1024 * 1024;
 
 /// A single structured log line, serialized to the browser as JSON. Produced
@@ -113,7 +113,7 @@ impl LogStream {
     }
 
     /// Construct with the default broadcast capacity and the given history byte
-    /// budget (from `CarbideConfig.log_history.max_megabytes`).
+    /// budget (from `NicoConfig.log_history.max_megabytes`).
     pub fn with_max_bytes(max_bytes: usize) -> Self {
         Self::new(BROADCAST_CAPACITY, max_bytes)
     }

@@ -21,7 +21,7 @@ Here we have e.g. engine `system` installed at path `sys`, and engine `kv` insta
 
 Now, the engine responsible for generating client certificates has type pki. You need to use `vault secrets list` to see what path that engine is mapped to. In the example above it is `nicoca`. Below are the steps that are necessary to undertake in order to create a new issuer, set it as default and (maybe) remove the old issuer.
 
-1. Obtain root login token for the vault: `kubectl get secret -n nico-system nico-vault-token -o yaml` (don't nicot to do base64 decode!).
+1. Obtain root login token for the vault: `kubectl get secret -n nico-system nico-vault-token -o yaml` (don't forget to do base64 decode!).
 2. Exec into vault-0 container: `kubectl exec -n vault vault-0 -it  -- /bin/sh`.
 3. Inside the vault container login using that token: `vault login --tls-skip-verify <token>`. (Without this, you will not have root permission to carry out steps below)
 4. Figure out what path pki engine is mapped to: `vault secrets list -tls-skip-verify`. In this example it is `nicoca` (it will also be the value of `VAULT_PKI_MOUNT_LOCATION` env var in nico-api deployment/pod).

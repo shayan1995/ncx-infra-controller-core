@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-rack"
+name = "nico-rack"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
@@ -27,12 +27,12 @@ test-support = []
 
 [dependencies]
 bms-dsx-exchange = { path = "../bms-dsx-exchange", default-features = false }
-carbide-api-db = { path = "../api-db", default-features = false }
-carbide-api-model = { path = "../api-model", default-features = false }
-carbide-health-report = { path = "../health-report", default-features = false }
-carbide-mqtt-common = { path = "../mqtt-common", default-features = false }
-carbide-secrets = { path = "../secrets", default-features = false }
-carbide-uuid = { path = "../uuid", default-features = false }
+nico-api-db = { path = "../api-db", default-features = false }
+nico-api-model = { path = "../api-model", default-features = false }
+nico-health-report = { path = "../health-report", default-features = false }
+nico-mqtt-common = { path = "../mqtt-common", default-features = false }
+nico-secrets = { path = "../secrets", default-features = false }
+nico-uuid = { path = "../uuid", default-features = false }
 mqttea = { path = "../mqttea" }
 state-controller = { path = "../state-controller" }
 

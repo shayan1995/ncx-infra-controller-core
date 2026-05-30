@@ -18,9 +18,9 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use carbide_redfish::libredfish::RedfishClientPool;
-use carbide_redfish::libredfish::error::state_handler_redfish_error as redfish_error;
-use carbide_uuid::machine::MachineId;
+use nico_redfish::libredfish::RedfishClientPool;
+use nico_redfish::libredfish::error::state_handler_redfish_error as redfish_error;
+use nico_uuid::machine::MachineId;
 use chrono::{DateTime, Utc};
 use config_version::ConfigVersion;
 use itertools::Itertools;

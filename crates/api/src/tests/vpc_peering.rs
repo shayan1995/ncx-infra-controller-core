@@ -626,7 +626,7 @@ async fn flat_vpc_can_peer_with_etv_under_exclusive_policy(
     pool: sqlx::PgPool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Flat VPCs short-circuit the ETV<->FNN exclusion under Exclusive policy
-    // because Flat VPCs do not own a Carbide-managed data plane.
+    // because Flat VPCs do not own a NICo-managed data plane.
     let env = api_fixtures::create_test_env(pool).await;
 
     let (_, etv_vpc) = api_fixtures::vpc::create_vpc(
@@ -783,7 +783,7 @@ async fn test_fnn_vpc_with_flat_peer_exchanges_prefixes_and_vnis(
         "FLAT_HOST_INBAND",
         &flat_prefix,
         &flat_gateway.ip().to_string(),
-        rpc::forge::NetworkSegmentType::HostInband,
+        rpc::nico::NetworkSegmentType::HostInband,
         Some(flat_vpc_id),
         true,
     )
@@ -823,7 +823,7 @@ async fn test_fnn_vpc_with_flat_peer_exchanges_prefixes_and_vnis(
     // Pull the Flat VPC's VNI so we can assert it shows up.
     let flat_vpc = env
         .api
-        .find_vpcs_by_ids(Request::new(rpc::forge::VpcsByIdsRequest {
+        .find_vpcs_by_ids(Request::new(rpc::nico::VpcsByIdsRequest {
             vpc_ids: vec![flat_vpc_id],
         }))
         .await?

@@ -58,7 +58,7 @@ pub enum VpcVirtualizationType {
 
 // Per-variant policy ("how does this type behave with respect to segments,
 // peering, routing profiles, IPv6, host fabric interfaces") is declared
-// as data in `carbide_api_model::vpc::capability` and consulted via the
+// as data in `nico_api_model::vpc::capability` and consulted via the
 // `VpcVirtualizationTypeCapabilities` extension trait. There are no
 // inherent methods here; adding a new variant means filling in one
 // `VpcCapabilities` literal in that module, not editing handler logic.

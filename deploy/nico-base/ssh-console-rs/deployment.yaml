@@ -40,8 +40,8 @@ spec:
       containers:
         - name: ssh-console-rs
           image: yourdockerregistry.com/path/to/nico-core:latest
-          command: ["/opt/carbide/ssh-console"]
-          args: ["run", "-c", "/etc/forge/ssh-console/config.toml"]
+          command: ["/opt/nico/ssh-console"]
+          args: ["run", "-c", "/etc/nico/ssh-console/config.toml"]
           imagePullPolicy: IfNotPresent
           # russh uses memlock(2) for preventing sensitive data from getting
           # swapped. Allow it to mlock more than the default 64kb limit.
@@ -63,7 +63,7 @@ spec:
           resources: {}
           volumeMounts:
             - name: ssh-console-rs-config-files
-              mountPath: /etc/forge/ssh-console
+              mountPath: /etc/nico/ssh-console
             - name: spiffe
               mountPath: "/var/run/secrets/spiffe.io"
               readOnly: true

@@ -17,7 +17,7 @@
 
 //! BIOS configuration: machine_setup, Dell job wait/recovery, and PollingBiosSetup escalation.
 
-use carbide_redfish::libredfish::error::state_handler_redfish_error as redfish_error;
+use nico_redfish::libredfish::error::state_handler_redfish_error as redfish_error;
 use chrono::Utc;
 use eyre::eyre;
 use libredfish::{Redfish, SystemPowerControl};

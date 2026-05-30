@@ -35,11 +35,11 @@ spec:
           image: yourdockerregistry.com/path/to/nico-core:latest
           command: ['sh', '-c', 'mkdir -vp /var/run/kea /var/lib/kea && /sbin/kea-dhcp4 -c /tmp/kea_config.json']
           env:
-            - name: FORGE_ROOT_CAFILE_PATH
+            - name: NICO_ROOT_CAFILE_PATH
               value: /var/run/secrets/spiffe.io/ca.crt
-            - name: FORGE_CLIENT_CERT_PATH
+            - name: NICO_CLIENT_CERT_PATH
               value: /var/run/secrets/spiffe.io/tls.crt
-            - name: FORGE_CLIENT_KEY_PATH
+            - name: NICO_CLIENT_KEY_PATH
               value: /var/run/secrets/spiffe.io/tls.key
             - name: RUST_BACKTRACE
               value: "full"

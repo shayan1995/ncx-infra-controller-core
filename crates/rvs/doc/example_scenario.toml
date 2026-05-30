@@ -42,7 +42,7 @@
 [rack]
 
 # The rack model identifier (e.g., "gb200nvl", "dgx", etc.)
-# Must match the rack model registered in Carbide's inventory.
+# Must match the rack model registered in NICo's inventory.
 model = "gb200nvl"
 
 # The SOT (Source of Truth) release version this scenario is designed for.
@@ -94,7 +94,7 @@ output = "deps.tar.gz"
 
 [[artifacts]]
 name = "install_deps"
-uri = "http://internal.nvidia.com/carbide/extra_scripts/gb200nvl_install.sh"
+uri = "http://internal.nvidia.com/nico/extra_scripts/gb200nvl_install.sh"
 output = "install.sh"
 
 # -----------------------------------------------------------------------------
@@ -142,12 +142,12 @@ output = "imex.run"
 
 [[artifacts]]
 name = "test_nvlink"
-uri = "http://internal.nvidia.com/carbide/test_script/nvlink_slurm_test.sh"
+uri = "http://internal.nvidia.com/nico/test_script/nvlink_slurm_test.sh"
 output = "nvlink_slurm_test.sh"
 
 [[artifacts]]
 name = "test_basic"
-uri = "http://internal.nvidia.com/carbide/test_script/nv_basic.sh"
+uri = "http://internal.nvidia.com/nico/test_script/nv_basic.sh"
 output = "nv_basic.sh"
 
 # =============================================================================

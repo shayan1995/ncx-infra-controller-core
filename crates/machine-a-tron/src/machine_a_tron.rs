@@ -112,9 +112,9 @@ impl MachineATron {
                     .get(machine.machine_config_section())
                     .and_then(|config| {
                         if config.dpu_per_host_count == 0 {
-                            Some(rpc::forge::DpuMode::NoDpu)
+                            Some(rpc::nico::DpuMode::NoDpu)
                         } else if config.dpus_in_nic_mode {
-                            Some(rpc::forge::DpuMode::NicMode)
+                            Some(rpc::nico::DpuMode::NicMode)
                         } else {
                             None
                         }

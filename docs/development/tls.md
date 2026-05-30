@@ -6,7 +6,7 @@
   `roles`, and `rolebindings` to build the SVID, e.g., spiffe://nico.local/nico-system/nico-api
 - Certificates are available in pods at `/run/secrets/spiffe.io/{tls.crt,tls.key,ca.crt}`
 - To retrieve a certificate, you must first create a `serviceAccount`, `role`, and `roleBinding` (example below)
-- Don't nicot to update the `namespace` to the correct value
+- Don't forget to update the `namespace` to the correct value
 - Helm upgrade/install generates the `Labels` you see in the
   example below; you can omit those.
 - The `role` associated with the `serviceAccount` grants enough permissions to request a certificate from `cert-manager-csi-driver-spiffe`

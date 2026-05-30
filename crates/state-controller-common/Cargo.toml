@@ -15,14 +15,14 @@
 # limitations under the License.
 #
 [package]
-name = "carbide-state-controller-common"
+name = "nico-state-controller-common"
 version = "0.0.0"
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 
 [dependencies]
-carbide-utils = { path = "../utils" }
+nico-utils = { path = "../utils" }
 state-controller = { path = "../state-controller" }
 
 duration-str = { workspace = true }

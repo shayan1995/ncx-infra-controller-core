@@ -37,7 +37,7 @@ spec:
               if [ -x /opt/nico/nico-hw-health ]; then
                 exec /opt/nico/nico-hw-health
               else
-                exec /opt/carbide/forge-hw-health
+                exec /opt/nico/nico-hw-health
               fi
           env:
             {{- range $key, $value := .Values.env }}

@@ -32,19 +32,19 @@ pub struct Args {
     pub action: PowerActionArg,
 }
 
-impl From<Args> for rpc::forge::ComponentPowerControlRequest {
+impl From<Args> for rpc::nico::ComponentPowerControlRequest {
     fn from(args: Args) -> Self {
         let action = ::rpc::common::SystemPowerControl::from(args.action) as i32;
         match args.target {
             PowerControlTargetArgs::Switch(target) => Self {
                 target: Some(
-                    rpc::forge::component_power_control_request::Target::SwitchIds(target.into()),
+                    rpc::nico::component_power_control_request::Target::SwitchIds(target.into()),
                 ),
                 action,
             },
             PowerControlTargetArgs::PowerShelf(target) => Self {
                 target: Some(
-                    rpc::forge::component_power_control_request::Target::PowerShelfIds(
+                    rpc::nico::component_power_control_request::Target::PowerShelfIds(
                         target.into(),
                     ),
                 ),
@@ -52,7 +52,7 @@ impl From<Args> for rpc::forge::ComponentPowerControlRequest {
             },
             PowerControlTargetArgs::ComputeTray(target) => Self {
                 target: Some(
-                    rpc::forge::component_power_control_request::Target::MachineIds(target.into()),
+                    rpc::nico::component_power_control_request::Target::MachineIds(target.into()),
                 ),
                 action,
             },

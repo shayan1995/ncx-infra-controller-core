@@ -17,8 +17,8 @@
 
 use std::sync::Arc;
 
-use carbide_ipmi::IPMITool;
-use carbide_redfish::libredfish::RedfishClientPool;
+use nico_ipmi::IPMITool;
+use nico_redfish::libredfish::RedfishClientPool;
 use db::db_read::PgPoolReader;
 use libredfish::Redfish;
 use model::machine::Machine;

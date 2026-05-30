@@ -415,7 +415,7 @@ pub extern "C" fn machine_get_interface_mtu(ctx: *mut Machine) -> u16 {
 /// This function dereferences a pointer to a Machine object which is an opaque pointer
 /// consumed in C code.
 ///
-/// This does not nicot the memory afterwards, so the opaque pointer in the C code is now
+/// This does not forget the memory afterwards, so the opaque pointer in the C code is now
 /// unusable.
 #[unsafe(no_mangle)]
 pub extern "C" fn machine_free(ctx: *mut Machine) {

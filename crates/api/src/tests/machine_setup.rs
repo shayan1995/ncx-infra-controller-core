@@ -22,8 +22,8 @@ use std::collections::HashMap;
 /// This test catches regressions where the argument gets dropped or replaced with an empty map.
 #[tokio::test]
 async fn test_oem_manager_profiles_passed_to_machine_setup() {
-    use carbide_redfish::libredfish::RedfishClientPool;
-    use carbide_redfish::libredfish::test_support::{RedfishSim, RedfishSimAction};
+    use nico_redfish::libredfish::RedfishClientPool;
+    use nico_redfish::libredfish::test_support::{RedfishSim, RedfishSimAction};
     use libredfish::BiosProfileType;
     use libredfish::model::service_root::RedfishVendor;
 
@@ -44,8 +44,8 @@ async fn test_oem_manager_profiles_passed_to_machine_setup() {
         )]),
     )]);
 
-    use carbide_redfish::libredfish::RedfishAuth;
-    use forge_secrets::credentials::{CredentialKey, CredentialType};
+    use nico_redfish::libredfish::RedfishAuth;
+    use nico_secrets::credentials::{CredentialKey, CredentialType};
 
     let sim = RedfishSim::default();
     let timepoint = sim.timepoint();
@@ -61,7 +61,7 @@ async fn test_oem_manager_profiles_passed_to_machine_setup() {
         .await
         .unwrap();
 
-    let result = carbide_machine_controller::handler::call_machine_setup_and_handle_no_dpu_error(
+    let result = nico_machine_controller::handler::call_machine_setup_and_handle_no_dpu_error(
         client.as_ref(),
         None,
         1,
