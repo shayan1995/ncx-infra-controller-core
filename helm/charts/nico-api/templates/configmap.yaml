@@ -7,18 +7,18 @@ metadata:
     {{- include "nico-api.labels" . | nindent 4 }}
 data:
   # Both filenames are populated with the same content so the chart works
-  # whether the binary expects nico-api-config.toml or nico-api-config.toml.
-  nico-api-config.toml: |
+  # whether the binary expects carbide-api-config.toml or nico-api-config.toml.
+  carbide-api-config.toml: |
     {{- if .Values.configFiles.nicoApiConfig }}
     {{- .Values.configFiles.nicoApiConfig | nindent 4 }}
     {{- else }}
-    {{- .Files.Get "files/nico-api-config.toml" | nindent 4 }}
+    {{- .Files.Get "files/carbide-api-config.toml" | nindent 4 }}
     {{- end }}
   nico-api-config.toml: |
     {{- if .Values.configFiles.nicoApiConfig }}
     {{- .Values.configFiles.nicoApiConfig | nindent 4 }}
     {{- else }}
-    {{- .Files.Get "files/nico-api-config.toml" | nindent 4 }}
+    {{- .Files.Get "files/carbide-api-config.toml" | nindent 4 }}
     {{- end }}
   casbin-policy.csv: |
     {{- if .Values.configFiles.casbinPolicy }}
@@ -36,8 +36,8 @@ metadata:
   labels:
     {{- include "nico-api.labels" . | nindent 4 }}
 data:
-  # Both filenames populated for dual nico/nico image support.
-  nico-api-site-config.toml: {{ .Values.siteConfig.nicoApiSiteConfig | default "" | quote }}
+  # Both filenames populated for dual carbide/nico image support.
+  carbide-api-site-config.toml: {{ .Values.siteConfig.nicoApiSiteConfig | default "" | quote }}
   nico-api-site-config.toml:    {{ .Values.siteConfig.nicoApiSiteConfig | default "" | quote }}
 {{- end }}
 {{- if .Values.vaultClusterInfo }}

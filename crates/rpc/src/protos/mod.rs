@@ -37,13 +37,12 @@ pub mod core {
     include!(concat!(env!("OUT_DIR"), "/core.rs"));
 }
 
-// Backward-compat alias module. The proto file was renamed nico.proto →
-// core.proto with `package nico → package core` and `service NICo → service
-// Core`, but message/field names were intentionally left unchanged in this
-// PR. To avoid a sweeping rename of every `crate::protos::nico::*` callsite
-// in one go, this alias re-exports the generated `core::*` items under the
-// `nico::*` name so existing imports keep working unchanged. To be removed
-// in a follow-up PR after downstream callers are migrated to `core::*`.
+// Backward-compat alias module. The proto file was renamed forge.proto →
+// core.proto with `package forge → package core` and `service Forge →
+// service Core`. This alias re-exports the generated `core::*` items under
+// the `nico::*` name so Rust imports of `crate::protos::nico::*` keep
+// working without sweeping every callsite in one go. To be removed in a
+// follow-up PR after downstream callers migrate to `core::*`.
 #[allow(unused_imports)]
 #[rustfmt::skip]
 pub mod nico {

@@ -6,18 +6,18 @@ metadata:
   labels:
     {{- include "nico-bmc-proxy.labels" . | nindent 4 }}
 data:
-  # Both filenames populated for dual nico/nico image support.
-  nico-bmc-proxy.toml: |
+  # Both filenames populated for dual carbide/nico image support.
+  carbide-bmc-proxy.toml: |
     {{- if .Values.configFiles.nicoBmcProxyConfig }}
     {{- .Values.configFiles.nicoBmcProxyConfig | nindent 4 }}
     {{- else }}
-    {{- .Files.Get "files/nico-bmc-proxy.toml" | nindent 4 }}
+    {{- .Files.Get "files/carbide-bmc-proxy.toml" | nindent 4 }}
     {{- end }}
   nico-bmc-proxy.toml: |
     {{- if .Values.configFiles.nicoBmcProxyConfig }}
     {{- .Values.configFiles.nicoBmcProxyConfig | nindent 4 }}
     {{- else }}
-    {{- .Files.Get "files/nico-bmc-proxy.toml" | nindent 4 }}
+    {{- .Files.Get "files/carbide-bmc-proxy.toml" | nindent 4 }}
     {{- end }}
 {{- if .Values.databaseConfig }}
 ---

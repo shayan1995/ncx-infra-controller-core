@@ -42,7 +42,7 @@ automountServiceAccountToken: true
 
 ## flow's GetDeploymentEnv requires FLOW_ENV to be set to one of
 ## "development", "staging", or "production". There is no implicit default in
-## nico-rest/flow/internal/service/config.go — an unset value causes the
+## carbide-rest/flow/internal/service/config.go — an unset value causes the
 ## flow container to exit on startup validation. Override per environment.
 flowEnv: production
 
@@ -111,7 +111,7 @@ certificate:
   ## SPIFFE URI components — emitted as the single URI SAN on the cert.
   ## Defaults target nico-api with the upstream RBAC rename (PR #1907) in
   ## place: serviceName `nico-flow` is accepted by the matcher alongside the
-  ## legacy `nico-flow` alias. Override if your deployment uses different
+  ## legacy `carbide-flow` alias. Override if your deployment uses different
   ## base paths or principal names.
   apiIdentity:
     namespace: nico-system

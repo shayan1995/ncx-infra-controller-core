@@ -899,15 +899,15 @@ struct RuleInfo {
 
 impl RuleInfo {
     pub fn new(principals: Vec<RulePrincipal>) -> Self {
-        // Helper: emit both the nico-* and nico-* SPIFFE service identifiers
+        // Helper: emit both the nico-* and carbide-* SPIFFE service identifiers
         // for a renamed service. The matcher in `allowed()` walks this Vec with
         // `.any(...)`, so any cert presenting either string is accepted. Drop
-        // the nico-* alias once every deployed site has rotated to a cert
+        // the carbide-* alias once every deployed site has rotated to a cert
         // with the nico-* identifier.
-        let svc_compat = |nico_name: &str, nico_name: &str| {
+        let svc_compat = |nico_name: &str, carbide_name: &str| {
             vec![
                 Principal::SpiffeServiceIdentifier(nico_name.to_string()),
-                Principal::SpiffeServiceIdentifier(nico_name.to_string()),
+                Principal::SpiffeServiceIdentifier(carbide_name.to_string()),
             ]
         };
         Self {
@@ -933,24 +933,24 @@ impl RuleInfo {
                     RulePrincipal::Scout => {
                         vec![Principal::SpiffeMachineIdentifier("".to_string())]
                     }
-                    RulePrincipal::Dns => svc_compat("nico-dns", "nico-dns"),
-                    RulePrincipal::Dhcp => svc_compat("nico-dhcp", "nico-dhcp"),
-                    RulePrincipal::Ssh => svc_compat("nico-ssh-console", "nico-ssh-console"),
+                    RulePrincipal::Dns => svc_compat("nico-dns", "carbide-dns"),
+                    RulePrincipal::Dhcp => svc_compat("nico-dhcp", "carbide-dhcp"),
+                    RulePrincipal::Ssh => svc_compat("nico-ssh-console", "carbide-ssh-console"),
                     RulePrincipal::SshRs => {
-                        svc_compat("nico-ssh-console-rs", "nico-ssh-console-rs")
+                        svc_compat("nico-ssh-console-rs", "carbide-ssh-console-rs")
                     }
-                    RulePrincipal::Pxe => svc_compat("nico-pxe", "nico-pxe"),
-                    RulePrincipal::BmcProxy => svc_compat("nico-bmc-proxy", "nico-bmc-proxy"),
+                    RulePrincipal::Pxe => svc_compat("nico-pxe", "carbide-pxe"),
+                    RulePrincipal::BmcProxy => svc_compat("nico-bmc-proxy", "carbide-bmc-proxy"),
                     RulePrincipal::Health => {
-                        svc_compat("nico-hardware-health", "nico-hardware-health")
+                        svc_compat("nico-hardware-health", "carbide-hardware-health")
                     }
-                    RulePrincipal::Flow => svc_compat("nico-flow", "nico-flow"),
+                    RulePrincipal::Flow => svc_compat("nico-flow", "carbide-flow"),
                     RulePrincipal::MaintenanceJobs => {
-                        svc_compat("nico-maintenance-jobs", "nico-maintenance-jobs")
+                        svc_compat("nico-maintenance-jobs", "carbide-maintenance-jobs")
                     }
                     RulePrincipal::DsxExchangeConsumer => svc_compat(
                         "nico-dsx-exchange-consumer",
-                        "nico-dsx-exchange-consumer",
+                        "carbide-dsx-exchange-consumer",
                     ),
                     RulePrincipal::Anonymous => vec![Principal::Anonymous],
                 })
@@ -1145,29 +1145,29 @@ mod rbac_rule_tests {
         );
 
         // Backward-compat: every renamed service's nico-* SPIFFE identifier
-        // must have *identical* permissions to its nico-* counterpart across
+        // must have *identical* permissions to its carbide-* counterpart across
         // every rule. RuleInfo::new emits both names side-by-side; this guards
-        // against accidental skew while we keep accepting nico-*. Drop this
-        // block (and the svc_compat() nico-* entries) once every deployed
+        // against accidental skew while we keep accepting carbide-*. Drop this
+        // block (and the svc_compat() carbide-* entries) once every deployed
         // site has rotated to a nico-* cert.
-        for (nico, nico) in [
-            ("nico-dns", "nico-dns"),
-            ("nico-dhcp", "nico-dhcp"),
-            ("nico-ssh-console", "nico-ssh-console"),
-            ("nico-ssh-console-rs", "nico-ssh-console-rs"),
-            ("nico-pxe", "nico-pxe"),
-            ("nico-bmc-proxy", "nico-bmc-proxy"),
-            ("nico-hardware-health", "nico-hardware-health"),
-            ("nico-flow", "nico-flow"),
-            ("nico-maintenance-jobs", "nico-maintenance-jobs"),
+        for (nico, carbide) in [
+            ("nico-dns", "carbide-dns"),
+            ("nico-dhcp", "carbide-dhcp"),
+            ("nico-ssh-console", "carbide-ssh-console"),
+            ("nico-ssh-console-rs", "carbide-ssh-console-rs"),
+            ("nico-pxe", "carbide-pxe"),
+            ("nico-bmc-proxy", "carbide-bmc-proxy"),
+            ("nico-hardware-health", "carbide-hardware-health"),
+            ("nico-flow", "carbide-flow"),
+            ("nico-maintenance-jobs", "carbide-maintenance-jobs"),
             (
                 "nico-dsx-exchange-consumer",
-                "nico-dsx-exchange-consumer",
+                "carbide-dsx-exchange-consumer",
             ),
         ] {
             ensure_identical_permissions(
                 &Principal::SpiffeServiceIdentifier(nico.to_string()),
-                &Principal::SpiffeServiceIdentifier(nico.to_string()),
+                &Principal::SpiffeServiceIdentifier(carbide.to_string()),
             );
         }
 

@@ -34,7 +34,7 @@ spec:
           image: {{ include "nico-flow.image" (dict "component" "flow" "Values" .Values) | quote }}
           imagePullPolicy: {{ .Values.global.image.pullPolicy }}
           env:
-            ## flow's GetDeploymentEnv (nico-rest/flow/internal/service/config.go)
+            ## flow's GetDeploymentEnv (carbide-rest/flow/internal/service/config.go)
             ## requires FLOW_ENV ∈ {development, staging, production}; empty/unset
             ## causes the pod to fail startup validation with
             ## "FLOW_ENV is required". No implicit default in code, so set one here.

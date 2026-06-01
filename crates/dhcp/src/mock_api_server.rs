@@ -42,8 +42,8 @@ use tokio::task::JoinHandle;
 
 use crate::machine::Machine;
 
-pub const ENDPOINT_DISCOVER_DHCP: &str = "/nico.NICo/DiscoverDhcp";
-pub const ENDPOINT_EXPIRE_DHCP_LEASE: &str = "/nico.NICo/ExpireDhcpLease";
+pub const ENDPOINT_DISCOVER_DHCP: &str = "/forge.Forge/DiscoverDhcp";
+pub const ENDPOINT_EXPIRE_DHCP_LEASE: &str = "/forge.Forge/ExpireDhcpLease";
 
 // Contents of the response
 const DHCP_RESPONSE_FQDN: &str = "december-nitrogen.nico.local";
@@ -230,14 +230,14 @@ impl MockAPIServer {
         fail: Arc<Mutex<bool>>,
         address_overrides: Arc<Mutex<HashMap<String, String>>>,
     ) -> Result<Response<GrpcBody>, MockAPIServerError> {
-        // Accept both legacy /nico.NICo/* and renamed /core.Core/* request
+        // Accept both legacy /forge.Forge/* and renamed /core.Core/* request
         // paths. Clients built from the renamed core.proto hit the new path;
         // existing clients keep hitting the old one. The match arms below
-        // continue to be expressed in terms of /nico.NICo/* so the change
+        // continue to be expressed in terms of /forge.Forge/* so the change
         // is local. To be collapsed once all callers have migrated.
         let raw_path = req.uri().path();
         let path: String = if let Some(rest) = raw_path.strip_prefix("/core.Core/") {
-            format!("/nico.NICo/{rest}")
+            format!("/forge.Forge/{rest}")
         } else {
             raw_path.to_owned()
         };
@@ -267,10 +267,10 @@ impl MockAPIServer {
                     status: rpc::ExpireDhcpLeaseStatus::Released.into(),
                 })
             }
-            "/nico.NICo/Echo" => respond(rpc::EchoResponse {
+            "/forge.Forge/Echo" => respond(rpc::EchoResponse {
                 message: "dhcp_echo".into(),
             }),
-            "/nico.NICo/Version" => respond(rpc::BuildInfo::default()),
+            "/forge.Forge/Version" => respond(rpc::BuildInfo::default()),
             _ => panic!("DHCP -> API wrong uri: {}", req.uri().path()),
         }
     }

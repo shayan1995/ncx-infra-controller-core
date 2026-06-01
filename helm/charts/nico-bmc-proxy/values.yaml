@@ -58,7 +58,7 @@ command:
     if [ -x /opt/nico/nico-bmc-proxy ]; then
       exec /opt/nico/nico-bmc-proxy --config-path /etc/nico/nico-bmc-proxy/nico-bmc-proxy.toml
     else
-      exec /opt/nico/nico-bmc-proxy --config-path /etc/nico/nico-bmc-proxy/nico-bmc-proxy.toml
+      exec /opt/carbide/carbide-bmc-proxy --config-path /etc/forge/carbide-bmc-proxy/carbide-bmc-proxy.toml
     fi
 
 env:

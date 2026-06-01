@@ -44,7 +44,7 @@ pub async fn grpcurl_for<T: ToString>(
         .to_string();
     // grpcurl performs reflection against the server before sending, and the
     // generated FileDescriptorSet only registers the renamed service (core.Core);
-    // it does not know about the legacy /nico.NICo/* path even though the
+    // it does not know about the legacy /forge.Forge/* path even though the
     // listener accepts it. Use the canonical core.Core path for test traffic.
     let grpc_endpoint = format!("core.Core/{endpoint}");
     let mut args = vec![

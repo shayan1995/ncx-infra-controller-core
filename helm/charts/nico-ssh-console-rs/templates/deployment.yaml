@@ -30,7 +30,7 @@ spec:
       containers:
         - name: ssh-console-rs
           image: "{{ include "nico-ssh-console-rs.image" . }}"
-          # Pick whichever binary path is in the image (nico or nico). Same config file is mounted at both /etc/nico and /etc/nico paths.
+          # Pick whichever binary path is in the image (nico or carbide). Same config file is mounted at both /etc/nico and /etc/forge paths.
           command:
             - /bin/sh
             - -c
@@ -38,7 +38,7 @@ spec:
               if [ -x /opt/nico/ssh-console ]; then
                 exec /opt/nico/ssh-console run -c /etc/nico/ssh-console/config.toml
               else
-                exec /opt/nico/ssh-console run -c /etc/nico/ssh-console/config.toml
+                exec /opt/carbide/ssh-console run -c /etc/forge/ssh-console/config.toml
               fi
           imagePullPolicy: {{ .Values.global.image.pullPolicy }}
           securityContext:
@@ -53,9 +53,9 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources: {}
           volumeMounts:
-            # Mount config at both paths so the binary finds it regardless of nico/nico image variant.
+            # Mount config at both paths so the binary finds it regardless of nico/carbide image variant.
             - name: ssh-console-rs-config-files
-              mountPath: /etc/nico/ssh-console
+              mountPath: /etc/forge/ssh-console
             - name: ssh-console-rs-config-files
               mountPath: /etc/nico/ssh-console
             - name: spiffe

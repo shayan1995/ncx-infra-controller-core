@@ -82,8 +82,8 @@ migrationJob:
   sslMode: require
 
 ## Container command (override to customise startup).
-## Picks /opt/nico/nico-api if present (renamed image), else /opt/nico/nico-api
-## (current image). Configmaps are mounted at both /etc/nico and /etc/nico paths
+## Picks /opt/nico/nico-api if present (renamed image), else /opt/carbide/carbide-api
+## (current image). Configmaps are mounted at both /etc/nico and /etc/forge paths
 ## so the binary finds its expected config regardless of which it picks.
 command:
   - /bin/sh
@@ -94,9 +94,9 @@ command:
         --config-path /etc/nico/nico-api/nico-api-config.toml \
         --site-config-path /etc/nico/nico-api/site/nico-api-site-config.toml
     else
-      exec /opt/nico/nico-api run \
-        --config-path /etc/nico/nico-api/nico-api-config.toml \
-        --site-config-path /etc/nico/nico-api/site/nico-api-site-config.toml
+      exec /opt/carbide/carbide-api run \
+        --config-path /etc/forge/carbide-api/carbide-api-config.toml \
+        --site-config-path /etc/forge/carbide-api/site/carbide-api-site-config.toml
     fi
 
 ## Environment variables for nico-api

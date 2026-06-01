@@ -249,17 +249,17 @@ pub async fn start(
             "/core.Core/{*rpc}",
             rpc::nico_server::NicoServer::from_arc(api_service.clone()),
         )
-        // Backward-compat alias: accept legacy /nico.NICo/* paths by
+        // Backward-compat alias: accept legacy /forge.Forge/* paths by
         // rewriting them to /core.Core/* before dispatch. The generated
         // gRPC server (CoreServer, exposed via the NicoServer type alias)
         // matches on the full URI path internally, so the rewrite is
         // required for the legacy path to find its handler. Wire payload
         // bytes are untouched — only the URI path is substituted.
         .route_service(
-            "/nico.NICo/{*rpc}",
+            "/forge.Forge/{*rpc}",
             tower::ServiceBuilder::new()
                 .map_request(|mut req: http::Request<axum::body::Body>| {
-                    let new_path = req.uri().path().replacen("/nico.NICo/", "/core.Core/", 1);
+                    let new_path = req.uri().path().replacen("/forge.Forge/", "/core.Core/", 1);
                     let pq: http::uri::PathAndQuery = match req.uri().query() {
                         Some(q) => format!("{new_path}?{q}")
                             .parse()

@@ -34,7 +34,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              if [ -x /opt/nico/nico-api ]; then BIN=/opt/nico/nico-api; else BIN=/opt/nico/nico-api; fi
+              if [ -x /opt/nico/nico-api ]; then BIN=/opt/nico/nico-api; else BIN=/opt/carbide/carbide-api; fi
               exec "$BIN" migrate --datastore="postgres://${DATASTORE_USER}:${DATASTORE_PASSWORD}@${DATASTORE_HOST}:${DATASTORE_PORT}/${DATASTORE_NAME}?sslmode={{ .Values.migrationJob.sslMode }}"
           env:
             - name: DATASTORE_USER

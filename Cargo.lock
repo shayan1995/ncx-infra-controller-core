@@ -33,7 +33,7 @@ version = "0.6.0-rc.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b657e772794c6b04730ea897b66a058ccd866c16d1967da05eeeecec39043fe"
 dependencies = [
- "crypto-common 0.2.1",
+ "crypto-common 0.2.2",
  "inout 0.2.2",
 ]
 
@@ -50,11 +50,11 @@ dependencies = [
 
 [[package]]
 name = "aes"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66bd29a732b644c0431c6140f370d097879203d79b80c94a6747ba0872adaef8"
+checksum = "f1fc76eaeac4c9164506c466d4ffdd8ec9d0c5bf57ee97177c4d8eceb3a0e138"
 dependencies = [
- "cipher 0.5.1",
+ "cipher 0.5.2",
  "cpubits",
  "cpufeatures 0.3.0",
 ]
@@ -80,9 +80,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e22c0c90bbe8d4f77c3ca9ddabe41a1f8382d6fc1f7cea89459d0f320371f972"
 dependencies = [
  "aead 0.6.0-rc.10",
- "aes 0.9.0",
- "cipher 0.5.1",
- "ctr 0.10.0",
+ "aes 0.9.1",
+ "cipher 0.5.2",
+ "ctr 0.10.1",
  "ghash 0.6.0",
  "subtle",
 ]
@@ -153,12 +153,12 @@ checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
 
 [[package]]
 name = "ansi-to-html"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12e283a4fc285735ef99577e81a125f738429516161ac33977e466d0d8d40764"
+checksum = "1747e9bde0e06cdfa780fcba909df1fa220f82421ead1fd4a93427763d2cbda6"
 dependencies = [
+ "memchr",
  "regex",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -312,14 +312,14 @@ dependencies = [
  "serde",
  "serde_derive",
  "unicode-ident",
- "winnow 1.0.2",
+ "winnow 1.0.3",
 ]
 
 [[package]]
 name = "asn1-rs"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56624a96882bb8c26d61312ae18cb45868e5a9992ea73c58e45c3101e56a1e60"
+checksum = "b7f43a50ac4fdca5df8e885c21b835997f0a1cdee65494a6847694a98652d9d8"
 dependencies = [
  "asn1-rs-derive",
  "asn1-rs-impl",
@@ -446,15 +446,15 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "autocfg"
-version = "1.5.0"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
+checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
 name = "aws-lc-rs"
-version = "1.16.3"
+version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ec6fb3fe69024a75fa7e1bfb48aa6cf59706a101658ea01bfd33b2b248a038f"
+checksum = "5ec2f1fc3ec205783a5da9a7e6c1509cc69dedf09a1949e412c1e18469326d00"
 dependencies = [
  "aws-lc-sys",
  "untrusted 0.7.1",
@@ -463,9 +463,9 @@ dependencies = [
 
 [[package]]
 name = "aws-lc-sys"
-version = "0.40.0"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f50037ee5e1e41e7b8f9d161680a725bd1626cb6f8c7e901f91f942850852fe7"
+checksum = "1a2f9779ce85b93ab6170dd940ad0169b5766ff848247aff13bb788b832fe3f4"
 dependencies = [
  "cc",
  "cmake",
@@ -681,7 +681,7 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0700ddab506f33b20a03b13996eccd309a48e5ff77d0d95926aa0210fb4e95f1"
 dependencies = [
- "bit-vec",
+ "bit-vec 0.6.3",
 ]
 
 [[package]]
@@ -689,6 +689,15 @@ name = "bit-vec"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
+
+[[package]]
+name = "bit-vec"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b71798fca2c1fe1086445a7258a4bc81e6e49dcd24c8d0dd9a1e57395b603f51"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "bitfield"
@@ -833,11 +842,11 @@ dependencies = [
  "axum",
  "bmc-mock",
  "bmc-vendor",
- "nico-api-model",
- "nico-network",
  "itertools 0.14.0",
  "lazy_static",
  "mac_address",
+ "nico-api-model",
+ "nico-network",
  "nv-redfish",
  "regex",
  "tokio",
@@ -849,13 +858,13 @@ name = "bmc-explorer-cli"
 version = "0.1.0"
 dependencies = [
  "arc-swap",
+ "clap",
+ "libredfish",
+ "mac_address",
  "nico-ipmi",
  "nico-redfish",
  "nico-secrets",
  "nico-site-explorer",
- "clap",
- "libredfish",
- "mac_address",
  "serde_json",
  "tokio",
  "tracing-subscriber",
@@ -871,8 +880,6 @@ dependencies = [
  "axum-server",
  "bmc-vendor",
  "bytes",
- "nico-rpc",
- "nico-utils",
  "chrono",
  "clap",
  "duration-str",
@@ -886,6 +893,8 @@ dependencies = [
  "itertools 0.14.0",
  "lazy_static",
  "mac_address",
+ "nico-rpc",
+ "nico-utils",
  "nv-redfish",
  "rand 0.10.1",
  "regex",
@@ -946,6 +955,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bs58"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf88ba1141d185c399bee5288d850d63b8369520c1eafc32a0430b5b6c287bf4"
+dependencies = [
+ "tinyvec",
+]
+
+[[package]]
 name = "bstr"
 version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -957,9 +975,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.20.2"
+version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
+checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
 
 [[package]]
 name = "byte-unit"
@@ -1012,1949 +1030,6 @@ name = "bytes"
 version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
-
-[[package]]
-name = "nico-admin-cli"
-version = "0.0.1"
-dependencies = [
- "bmc-vendor",
- "nico-health-report",
- "nico-libmlx",
- "nico-libmlx-model",
- "nico-macros",
- "nico-measured-boot",
- "nico-network",
- "nico-rpc",
- "nico-rpc-utils",
- "nico-secrets",
- "nico-ssh",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "chrono",
- "clap",
- "clap_complete",
- "color-eyre",
- "csv",
- "eyre",
- "futures",
- "ipnet",
- "libredfish",
- "librms",
- "mac_address",
- "prettytable-rs",
- "reqwest 0.13.3",
- "serde",
- "serde_json",
- "serde_yaml",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "urlencoding",
- "uuid",
- "x509-parser",
- "zip",
-]
-
-[[package]]
-name = "nico-agent"
-version = "0.1.0"
-dependencies = [
- "arc-swap",
- "async-trait",
- "axum",
- "axum-server",
- "backon",
- "blake3",
- "nico-certs",
- "nico-dpu-agent-utils",
- "nico-dpu-fmds-shared",
- "nico-dpu-remediation",
- "nico-health-report",
- "nico-host-support",
- "nico-http-connector",
- "nico-metrics-utils",
- "nico-network",
- "nico-rpc",
- "nico-rpc-utils",
- "nico-systemd",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "chrono",
- "clap",
- "colored",
- "config-version",
- "containerd-client",
- "ctor",
- "data-encoding",
- "diff",
- "eyre",
- "futures",
- "futures-util",
- "governor",
- "gtmpl",
- "gtmpl_derive",
- "gtmpl_value",
- "hex",
- "hickory-resolver",
- "http-body",
- "http-body-util",
- "humantime",
- "hyper",
- "hyper-util",
- "ipnetwork",
- "lazy_static",
- "libc",
- "mac_address",
- "mockall",
- "netlink-packet-route 0.19.0",
- "nix 0.31.2",
- "nonzero_ext",
- "nvue-client",
- "opentelemetry",
- "opentelemetry-prometheus",
- "opentelemetry-semantic-conventions",
- "opentelemetry_sdk",
- "prometheus",
- "prost",
- "rand 0.10.1",
- "regex",
- "reqwest 0.13.3",
- "resolv-conf",
- "rtnetlink",
- "rustls",
- "rustls-pemfile",
- "rustls-pki-types",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2 0.11.0",
- "similar 3.1.0",
- "surge-ping",
- "tempfile",
- "tokio",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
- "tower",
- "tower-http",
- "tracing",
- "url",
- "uuid",
- "uzers",
- "version-compare 0.2.1",
-]
-
-[[package]]
-name = "nico-api"
-version = "0.0.1"
-dependencies = [
- "ansi-to-html",
- "arc-swap",
- "askama",
- "askama_escape",
- "asn1-rs",
- "async-trait",
- "axum",
- "axum-extra",
- "base64",
- "bmc-vendor",
- "byteorder",
- "bytes",
- "nico-api-db",
- "nico-api-model",
- "nico-authn",
- "nico-dpa-interface-controller",
- "nico-dpf",
- "nico-firmware",
- "nico-health-report",
- "nico-host-support",
- "nico-ib-fabric",
- "nico-ib-partition-controller",
- "nico-ipmi",
- "nico-ipxe-renderer",
- "nico-libmlx",
- "nico-machine-controller",
- "nico-macros",
- "nico-measured-boot",
- "nico-metrics-utils",
- "nico-mqtt-common",
- "nico-network",
- "nico-network-segment-controller",
- "nico-nvlink-manager",
- "nico-power-shelf-controller",
- "nico-preingestion-manager",
- "nico-prost-builder",
- "nico-rack",
- "nico-rack-controller",
- "nico-redfish",
- "nico-rpc",
- "nico-rpc-utils",
- "nico-secrets",
- "nico-site-explorer",
- "nico-spdm-controller",
- "nico-sqlx-testing",
- "nico-state-controller-common",
- "nico-switch-controller",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "casbin",
- "chrono",
- "clap",
- "component-manager",
- "config-version",
- "const_format",
- "ctor",
- "dashmap",
- "data-encoding",
- "dns-record",
- "duration-str",
- "eyre",
- "figment",
- "futures",
- "futures-util",
- "hex",
- "hkdf 0.13.0",
- "hostname",
- "http",
- "http-body-util",
- "hyper",
- "hyper-util",
- "ipnetwork",
- "itertools 0.14.0",
- "jsonwebtoken",
- "lazy_static",
- "libnmxc",
- "libredfish",
- "librms",
- "logfmt",
- "mac_address",
- "mockito",
- "mqttea",
- "nras",
- "num_cpus",
- "oauth2",
- "opentelemetry",
- "opentelemetry-otlp",
- "opentelemetry-prometheus",
- "opentelemetry-semantic-conventions",
- "opentelemetry_sdk",
- "p256 0.14.0-rc.7",
- "pkcs1 0.7.5",
- "prometheus",
- "prometheus-text-parser",
- "prost",
- "rand 0.10.1",
- "rcgen",
- "regex",
- "reqwest 0.13.3",
- "rsa 0.9.10",
- "rumqttc",
- "rustls",
- "rustls-pemfile",
- "rustls-pki-types",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2 0.11.0",
- "spancounter",
- "sqlx",
- "sqlx-query-tracing",
- "state-controller",
- "strum 0.28.0",
- "temp-dir",
- "tempfile",
- "thiserror 2.0.18",
- "time",
- "tokio",
- "tokio-rustls",
- "tokio-stream",
- "tokio-util",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tonic-reflection",
- "tower",
- "tower-http",
- "tracing",
- "tracing-log",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "tss-esapi",
- "url",
- "urlencoding",
- "uuid",
- "x509-parser",
-]
-
-[[package]]
-name = "nico-api-db"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "base64",
- "nico-api-model",
- "nico-health-report",
- "nico-ipxe-renderer",
- "nico-libmlx-model",
- "nico-macros",
- "nico-measured-boot",
- "nico-network",
- "nico-secrets",
- "nico-sqlx-testing",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "chrono",
- "config-version",
- "ctor",
- "dns-record",
- "domain",
- "eyre",
- "futures",
- "futures-util",
- "hickory-proto",
- "ipnetwork",
- "itertools 0.14.0",
- "lazy_static",
- "mac_address",
- "names",
- "octseq",
- "regex",
- "rustc-hash",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 2.0.18",
- "time",
- "tokio",
- "tokio-util",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "version-compare 0.2.1",
-]
-
-[[package]]
-name = "nico-api-integration-tests"
-version = "0.0.0"
-dependencies = [
- "askama_escape",
- "bmc-mock",
- "nico-api-test-helper",
- "nico-machine-a-tron",
- "nico-secrets",
- "nico-utils",
- "ctor",
- "eyre",
- "futures",
- "itertools 0.14.0",
- "mac_address",
- "opentelemetry",
- "serde_json",
- "serial_test",
- "sqlx",
- "temp-dir",
- "tokio",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "nico-api-model"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "base64",
- "bmc-vendor",
- "nico-health-report",
- "nico-ipxe-renderer",
- "nico-libmlx-model",
- "nico-network",
- "nico-secrets",
- "nico-sqlx-testing",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "chrono",
- "config-version",
- "dns-record",
- "duration-str",
- "eyre",
- "hex",
- "ipnetwork",
- "itertools 0.14.0",
- "lazy_static",
- "libnmxm",
- "mac_address",
- "nras",
- "once_cell",
- "p256 0.14.0-rc.7",
- "prost",
- "rand 0.10.1",
- "regex",
- "serde",
- "serde_json",
- "serde_regex",
- "sha2 0.11.0",
- "sqlx",
- "strum 0.28.0",
- "strum_macros 0.28.0",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tracing",
- "url",
- "uuid",
- "version-compare 0.2.1",
-]
-
-[[package]]
-name = "nico-api-test-helper"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "bmc-mock",
- "nico-api",
- "nico-machine-a-tron",
- "nico-rpc",
- "nico-secrets",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "chrono",
- "ctor",
- "eyre",
- "futures",
- "itertools 0.14.0",
- "lazy_static",
- "librms",
- "metrics-endpoint",
- "rand 0.10.1",
- "serde",
- "serde_json",
- "serial_test",
- "sqlx",
- "temp-dir",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "nico-authn"
-version = "0.0.0"
-dependencies = [
- "hyper",
- "serde",
- "thiserror 2.0.18",
- "tonic",
- "tower",
- "tracing",
- "x509-parser",
-]
-
-[[package]]
-name = "nico-bmc-proxy"
-version = "0.0.0"
-dependencies = [
- "axum",
- "axum-extra",
- "bytes",
- "nico-authn",
- "nico-rpc",
- "nico-tls",
- "nico-utils",
- "nico-version",
- "casbin",
- "clap",
- "figment",
- "futures",
- "futures-util",
- "http",
- "http-body-util",
- "hyper",
- "hyper-rustls",
- "hyper-timeout",
- "hyper-util",
- "lazy_static",
- "logfmt",
- "mac_address",
- "metrics-endpoint",
- "opentelemetry",
- "opentelemetry-otlp",
- "opentelemetry-prometheus",
- "opentelemetry-semantic-conventions",
- "opentelemetry_sdk",
- "reqwest 0.13.3",
- "rustls-pemfile",
- "rustls-pki-types",
- "serde",
- "thiserror 2.0.18",
- "tokio",
- "tokio-rustls",
- "tokio-stream",
- "tokio-util",
- "tonic",
- "tower",
- "tower-http",
- "tracing",
- "tracing-log",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "url",
- "urlencoding",
- "uuid",
- "x509-parser",
-]
-
-[[package]]
-name = "nico-certs"
-version = "0.0.0"
-dependencies = [
- "nico-host-support",
- "nico-rpc",
- "nico-tls",
- "eyre",
- "rand 0.10.1",
- "tonic",
- "tracing",
-]
-
-[[package]]
-name = "nico-dhcp"
-version = "0.0.0"
-dependencies = [
- "nico-rpc",
- "nico-tls",
- "cbindgen",
- "cc",
- "chrono",
- "derive_builder",
- "dhcproto",
- "eyre",
- "http-body-util",
- "hyper",
- "hyper-util",
- "ipnetwork",
- "lazy_static",
- "libc",
- "log",
- "lru 0.18.0",
- "mac_address",
- "metrics-endpoint",
- "once_cell",
- "opentelemetry",
- "prometheus",
- "prost",
- "serde_json",
- "tempfile",
- "test-cdylib",
- "tokio",
- "tokio-util",
- "tonic",
-]
-
-[[package]]
-name = "nico-dhcp-server"
-version = "0.1.0"
-dependencies = [
- "nico-rpc",
- "nico-rpc-utils",
- "nico-tls",
- "nico-uuid",
- "chrono",
- "clap",
- "dhcproto",
- "futures",
- "ipnetwork",
- "logfmt",
- "lru 0.18.0",
- "prost",
- "serde",
- "serde_yaml",
- "socket2",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "nico-dns"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "nico-rpc",
- "nico-tls",
- "nico-version",
- "clap",
- "dns-record",
- "eyre",
- "metrics-endpoint",
- "opentelemetry",
- "opentelemetry-otlp",
- "opentelemetry_sdk",
- "serde",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tracing",
- "tracing-opentelemetry",
- "tracing-subscriber",
- "trust-dns-resolver",
- "trust-dns-server",
-]
-
-[[package]]
-name = "nico-dpa-interface-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "config-version",
- "duration-str",
- "eyre",
- "mac_address",
- "mqttea",
- "opentelemetry",
- "prost",
- "serde",
- "sqlx",
- "state-controller",
- "tonic-prost-build",
- "tracing",
-]
-
-[[package]]
-name = "nico-dpf"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "nico-uuid",
- "clap",
- "dashmap",
- "eyre",
- "futures",
- "hex",
- "http",
- "hyper",
- "k8s-openapi",
- "kopium",
- "kube",
- "libredfish",
- "once_cell",
- "rand 0.10.1",
- "rustls",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2 0.11.0",
- "strum_macros 0.28.0",
- "thiserror 2.0.18",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tower-test",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "nico-dpu-agent-utils"
-version = "0.0.0"
-dependencies = [
- "nico-rpc",
- "eyre",
-]
-
-[[package]]
-name = "nico-dpu-fmds-shared"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "axum",
- "nico-dpu-agent-utils",
- "nico-rpc",
- "governor",
- "http-body-util",
- "reqwest 0.13.3",
- "serde",
- "serde_json",
- "tokio",
- "tonic",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "nico-dpu-otel-agent"
-version = "0.0.1"
-dependencies = [
- "nico-certs",
- "nico-host-support",
- "nico-rpc",
- "nico-systemd",
- "nico-tls",
- "clap",
- "ctor",
- "eyre",
- "humantime",
- "prost",
- "rand 0.10.1",
- "reqwest 0.13.3",
- "rustls-pemfile",
- "rustls-pki-types",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "typed-builder",
-]
-
-[[package]]
-name = "nico-dpu-remediation"
-version = "0.0.0"
-dependencies = [
- "nico-dpu-agent-utils",
- "nico-rpc",
- "nico-tls",
- "nico-uuid",
- "eyre",
- "rand 0.10.1",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tonic",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "nico-dsx-exchange-consumer"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "nico-health-report",
- "nico-rpc",
- "nico-secrets",
- "nico-tls",
- "nico-uuid",
- "nico-version",
- "chrono",
- "figment",
- "humantime-serde",
- "logfmt",
- "metrics-endpoint",
- "moka",
- "mqttea",
- "opentelemetry",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "url",
-]
-
-[[package]]
-name = "nico-firmware"
-version = "0.0.1"
-dependencies = [
- "bmc-vendor",
- "nico-api-db",
- "nico-api-model",
- "nico-macros",
- "nico-sqlx-testing",
- "eyre",
- "futures-util",
- "hex",
- "md5 0.8.0",
- "reqwest 0.13.3",
- "serde",
- "sqlx",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tracing",
-]
-
-[[package]]
-name = "nico-fmds"
-version = "0.0.1"
-dependencies = [
- "arc-swap",
- "async-trait",
- "axum",
- "axum-server",
- "nico-dpu-agent-utils",
- "nico-dpu-fmds-shared",
- "nico-rpc",
- "nico-tls",
- "nico-uuid",
- "nico-version",
- "clap",
- "eyre",
- "futures-util",
- "governor",
- "http-body-util",
- "hyper",
- "hyper-util",
- "ipnetwork",
- "logfmt",
- "netlink-packet-route 0.19.0",
- "nonzero_ext",
- "opentelemetry",
- "opentelemetry-prometheus",
- "opentelemetry-semantic-conventions",
- "opentelemetry_sdk",
- "prometheus",
- "prost",
- "reqwest 0.13.3",
- "rtnetlink",
- "tokio",
- "tonic",
- "tonic-prost",
- "tower",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "nico-health"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "base64",
- "nico-health-report",
- "nico-rpc",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "chrono",
- "criterion",
- "dashmap",
- "figment",
- "futures",
- "http",
- "humantime",
- "humantime-serde",
- "hyper",
- "hyper-util",
- "logfmt",
- "mac_address",
- "nv-redfish",
- "prometheus",
- "prost",
- "prost-types",
- "rand 0.10.1",
- "reqwest 0.13.3",
- "serde",
- "serde_json",
- "serde_with",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
- "tracing",
- "tracing-subscriber",
- "url",
-]
-
-[[package]]
-name = "nico-health-metrics"
-version = "0.0.0"
-dependencies = [
- "nico-api-model",
- "nico-health-report",
- "nico-utils",
- "opentelemetry",
-]
-
-[[package]]
-name = "nico-health-report"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "nico-host-support"
-version = "0.0.0"
-dependencies = [
- "base64",
- "nico-dpu-agent-utils",
- "nico-libmlx",
- "nico-rpc",
- "nico-rpc-utils",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "csv",
- "eyre",
- "ipnetwork",
- "libudev",
- "logfmt",
- "procfs",
- "rcgen",
- "regex",
- "rustls-pemfile",
- "serde",
- "serde_json",
- "serde_with",
- "smbios-lib",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "tryhard",
- "uname",
- "url",
- "uuid",
- "x509-parser",
-]
-
-[[package]]
-name = "nico-http-connector"
-version = "0.0.0"
-dependencies = [
- "futures-util",
- "hickory-resolver",
- "hyper",
- "hyper-util",
- "socket2",
- "tokio",
- "tokio-socks",
- "tower-service",
- "tracing",
- "tryhard",
-]
-
-[[package]]
-name = "nico-ib-fabric"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "base64",
- "nico-api-db",
- "nico-api-model",
- "nico-health-report",
- "nico-secrets",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "duration-str",
- "eyre",
- "figment",
- "http",
- "http-body-util",
- "hyper",
- "hyper-rustls",
- "hyper-timeout",
- "hyper-util",
- "opentelemetry",
- "rand 0.10.1",
- "rustls",
- "rustls-pemfile",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "nico-ib-partition-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-ib-fabric",
- "nico-uuid",
- "config-version",
- "eyre",
- "sqlx",
- "state-controller",
- "tracing",
-]
-
-[[package]]
-name = "nico-ipmi"
-version = "0.0.1"
-dependencies = [
- "arc-swap",
- "async-trait",
- "nico-secrets",
- "nico-utils",
- "nico-uuid",
- "eyre",
- "reqwest 0.13.3",
- "serde",
- "serde_json",
- "tracing",
-]
-
-[[package]]
-name = "nico-ipxe-renderer"
-version = "0.0.1"
-dependencies = [
- "hex",
- "serde",
- "serde_yaml",
- "sha2 0.11.0",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "nico-kms-provider"
-version = "0.0.1"
-dependencies = [
- "aes-gcm 0.10.3",
- "async-trait",
- "base64",
- "hex",
- "rand 0.10.1",
- "serde",
- "serial_test",
- "sha2 0.11.0",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "vaultrs",
- "zeroize",
-]
-
-[[package]]
-name = "nico-libmlx"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "backon",
- "base64",
- "nico-libmlx-model",
- "nico-rpc",
- "nico-ssh",
- "nico-uuid",
- "chrono",
- "clap",
- "hex",
- "hostname",
- "mac_address",
- "once_cell",
- "prettytable-rs",
- "prost-types",
- "quick-xml 0.39.3",
- "regex",
- "reqwest 0.13.3",
- "russh",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tracing",
- "tracing-subscriber",
- "url",
- "uuid",
- "wait-timeout",
-]
-
-[[package]]
-name = "nico-libmlx-model"
-version = "0.0.0"
-dependencies = [
- "mac_address",
- "serde",
-]
-
-[[package]]
-name = "nico-log-parser"
-version = "0.0.2"
-dependencies = [
- "anyhow",
- "nico-health-report",
- "nico-rpc",
- "nico-tls",
- "nico-uuid",
- "chrono",
- "getopts",
- "regex",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tonic",
-]
-
-[[package]]
-name = "nico-machine-a-tron"
-version = "0.0.0"
-dependencies = [
- "axum",
- "base64",
- "bmc-mock",
- "nico-network",
- "nico-rpc",
- "nico-tls",
- "nico-uuid",
- "nico-version",
- "chrono",
- "clap",
- "crossterm",
- "duration-str",
- "eyre",
- "figment",
- "futures",
- "lazy_static",
- "mac_address",
- "rand 0.10.1",
- "ratatui",
- "rcgen",
- "reqwest 0.13.3",
- "russh",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "nico-machine-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "bmc-vendor",
- "nico-api-db",
- "nico-api-model",
- "nico-dpf",
- "nico-firmware",
- "nico-health-metrics",
- "nico-health-report",
- "nico-ipmi",
- "nico-measured-boot",
- "nico-redfish",
- "nico-secrets",
- "nico-state-controller-common",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "config-version",
- "duration-str",
- "eyre",
- "figment",
- "futures",
- "futures-util",
- "itertools 0.14.0",
- "lazy_static",
- "libredfish",
- "mac_address",
- "mockall",
- "opentelemetry",
- "prost",
- "prost-types",
- "regex",
- "serde",
- "serde_json",
- "sqlx",
- "state-controller",
- "tokio",
- "tonic-prost-build",
- "tracing",
- "uuid",
- "version-compare 0.2.1",
-]
-
-[[package]]
-name = "nico-machine-validation"
-version = "0.0.0"
-dependencies = [
- "nico-rpc",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "futures-util",
- "reqwest 0.13.3",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tonic",
- "tracing",
-]
-
-[[package]]
-name = "nico-macros"
-version = "0.0.0"
-dependencies = [
- "eyre",
- "proc-macro2",
- "quote",
- "sqlx",
- "sqlx-macros-core",
- "syn 2.0.117",
-]
-
-[[package]]
-name = "nico-measured-boot"
-version = "0.0.0"
-dependencies = [
- "nico-uuid",
- "chrono",
- "clap",
- "eyre",
- "prettytable-rs",
- "serde",
- "sqlx",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "nico-metrics-utils"
-version = "0.0.0"
-dependencies = [
- "glob",
- "opentelemetry_sdk",
- "thiserror 2.0.18",
- "tracing",
-]
-
-[[package]]
-name = "nico-mockdpa"
-version = "0.0.1"
-dependencies = [
- "nico-dpa-interface-controller",
- "chrono",
- "clap",
- "mqttea",
- "prost",
- "prost-build",
- "rumqttc",
- "serde",
- "serde_json",
- "serde_yaml",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "nico-mqtt-common"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "mqttea",
- "opentelemetry",
- "tokio",
- "tokio-util",
- "tracing",
-]
-
-[[package]]
-name = "nico-network"
-version = "0.0.0"
-dependencies = [
- "eyre",
- "ipnet",
- "ipnetwork",
- "mac_address",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "nico-network-segment-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "config-version",
- "eyre",
- "ipnetwork",
- "opentelemetry",
- "sqlx",
- "state-controller",
- "tracing",
-]
-
-[[package]]
-name = "nico-nvlink-manager"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-secrets",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "config-version",
- "duration-str",
- "eyre",
- "http",
- "libnmxc",
- "libnmxm",
- "opentelemetry",
- "rand 0.10.1",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "nico-power-shelf-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-health-metrics",
- "nico-rack",
- "nico-secrets",
- "nico-utils",
- "nico-uuid",
- "config-version",
- "eyre",
- "librms",
- "mac_address",
- "opentelemetry",
- "sqlx",
- "state-controller",
- "tracing",
-]
-
-[[package]]
-name = "nico-preingestion-manager"
-version = "0.0.1"
-dependencies = [
- "bmc-vendor",
- "nico-api-db",
- "nico-api-model",
- "nico-firmware",
- "nico-redfish",
- "nico-secrets",
- "nico-ssh",
- "nico-utils",
- "chrono",
- "futures-util",
- "libredfish",
- "opentelemetry",
- "prometheus-text-parser",
- "sqlx",
- "thiserror 2.0.18",
- "time",
- "tokio",
- "tokio-util",
- "tracing",
- "version-compare 0.2.1",
-]
-
-[[package]]
-name = "nico-prost-builder"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
-
-[[package]]
-name = "nico-pxe"
-version = "0.0.1"
-dependencies = [
- "axum",
- "axum-client-ip",
- "axum-template",
- "base64",
- "bytes",
- "nico-host-support",
- "nico-rpc",
- "nico-tls",
- "nico-uuid",
- "nico-version",
- "clap",
- "http-body",
- "metrics",
- "metrics-exporter-prometheus",
- "mime",
- "pin-project-lite",
- "serde",
- "tempfile",
- "tera",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tower",
- "tower-http",
- "tower-layer",
- "tower-service",
- "uuid",
-]
-
-[[package]]
-name = "nico-rack"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "bms-dsx-exchange",
- "nico-api-db",
- "nico-api-model",
- "nico-health-report",
- "nico-mqtt-common",
- "nico-secrets",
- "nico-uuid",
- "chrono",
- "eyre",
- "librms",
- "mac_address",
- "mqttea",
- "opentelemetry",
- "serde_json",
- "sqlx",
- "state-controller",
- "tokio",
- "tokio-util",
- "tonic",
- "tracing",
-]
-
-[[package]]
-name = "nico-rack-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-health-metrics",
- "nico-rack",
- "nico-secrets",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "config-version",
- "duration-str",
- "eyre",
- "librms",
- "mac_address",
- "opentelemetry",
- "serde",
- "serde_json",
- "sqlx",
- "state-controller",
- "tonic",
- "tracing",
-]
-
-[[package]]
-name = "nico-redfish"
-version = "0.0.1"
-dependencies = [
- "arc-swap",
- "async-trait",
- "bmc-vendor",
- "nico-api-db",
- "nico-api-model",
- "nico-secrets",
- "nico-utils",
- "chrono",
- "http",
- "libredfish",
- "mac_address",
- "nv-redfish",
- "reqwest 0.13.3",
- "serde_json",
- "sqlx",
- "state-controller",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "nico-rpc"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "base64",
- "nico-api-model",
- "nico-health-report",
- "nico-http-connector",
- "nico-ipxe-renderer",
- "nico-libmlx-model",
- "nico-measured-boot",
- "nico-network",
- "nico-secrets",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "clap",
- "config-version",
- "csv",
- "data-encoding",
- "dns-record",
- "eyre",
- "hickory-resolver",
- "hyper",
- "hyper-rustls",
- "hyper-util",
- "ipnetwork",
- "itertools 0.14.0",
- "log",
- "mac_address",
- "nonempty",
- "once_cell",
- "prettytable-rs",
- "prost",
- "prost-types",
- "regex",
- "resolv-conf",
- "rustls",
- "rustls-pemfile",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2 0.11.0",
- "sqlx",
- "thiserror 2.0.18",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-client-wrapper 0.1.0",
- "tonic-prost",
- "tonic-prost-build",
- "tower",
- "tracing",
- "tryhard",
- "uuid",
- "x509-parser",
-]
-
-[[package]]
-name = "nico-rpc-utils"
-version = "0.0.0"
-dependencies = [
- "byte-unit",
- "nico-health-report",
- "nico-rpc",
- "nico-uuid",
- "chrono",
- "config-version",
- "eyre",
- "ipnetwork",
- "itertools 0.14.0",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tonic",
- "tracing",
-]
-
-[[package]]
-name = "nico-rvs"
-version = "0.0.1"
-dependencies = [
- "nico-rpc",
- "nico-tls",
- "nico-uuid",
- "figment",
- "logfmt",
- "serde",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "nico-scout"
-version = "0.0.1"
-dependencies = [
- "axum",
- "nico-host-support",
- "nico-libmlx",
- "nico-machine-validation",
- "nico-rpc",
- "nico-tls",
- "nico-utils",
- "nico-uuid",
- "nico-version",
- "chrono",
- "clap",
- "efivar",
- "eyre",
- "futures-util",
- "hex",
- "http",
- "lazy_static",
- "once_cell",
- "pwhash",
- "regex",
- "reqwest 0.13.3",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "smbios-lib",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tokio-stream",
- "tonic",
- "tracing",
- "tryhard",
- "tss-esapi",
- "uuid",
- "x509-parser",
-]
-
-[[package]]
-name = "nico-secrets"
-version = "0.0.0"
-dependencies = [
- "aes-gcm 0.10.3",
- "arc-swap",
- "async-trait",
- "base64",
- "bmc-vendor",
- "nico-uuid",
- "eyre",
- "figment",
- "hex",
- "mac_address",
- "notify",
- "opentelemetry",
- "p256 0.14.0-rc.7",
- "rand 0.10.1",
- "rand_core 0.10.1",
- "serde",
- "serde_json",
- "serde_yaml",
- "serial_test",
- "sha2 0.11.0",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "vaultrs",
-]
-
-[[package]]
-name = "nico-site-explorer"
-version = "0.0.1"
-dependencies = [
- "arc-swap",
- "async-trait",
- "bmc-explorer",
- "nico-api-db",
- "nico-api-model",
- "nico-firmware",
- "nico-health-report",
- "nico-ipmi",
- "nico-network",
- "nico-redfish",
- "nico-secrets",
- "nico-utils",
- "nico-uuid",
- "chrono",
- "config-version",
- "duration-str",
- "futures-util",
- "http",
- "itertools 0.14.0",
- "libredfish",
- "librms",
- "mac_address",
- "opentelemetry",
- "rand 0.10.1",
- "regex",
- "serde",
- "serde_json",
- "sqlx",
- "thiserror 2.0.18",
- "tokio",
- "tokio-util",
- "tracing",
- "version-compare 0.2.1",
-]
-
-[[package]]
-name = "nico-spdm-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-redfish",
- "nico-utils",
- "config-version",
- "itertools 0.14.0",
- "libredfish",
- "nras",
- "opentelemetry",
- "sqlx",
- "state-controller",
- "tracing",
-]
-
-[[package]]
-name = "nico-sqlx-testing"
-version = "0.0.0"
-dependencies = [
- "nico-api-db",
- "sqlx",
- "sqlx-core",
- "tokio",
-]
-
-[[package]]
-name = "nico-ssh"
-version = "0.0.0"
-dependencies = [
- "russh",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "nico-ssh-console"
-version = "0.1.0"
-dependencies = [
- "bmc-mock",
- "bmc-vendor",
- "bytes",
- "nico-api-test-helper",
- "nico-machine-a-tron",
- "nico-rpc",
- "nico-ssh-console-mock-api-server",
- "nico-tls",
- "nico-uuid",
- "chrono",
- "clap",
- "ctor",
- "duration-str",
- "eyre",
- "futures",
- "futures-util",
- "http",
- "http-body-util",
- "hyper",
- "hyper-util",
- "indoc",
- "lazy_static",
- "libc",
- "nix 0.31.2",
- "opentelemetry",
- "opentelemetry-prometheus",
- "opentelemetry_sdk",
- "prometheus",
- "prometheus-text-parser",
- "rand 0.10.1",
- "ringbuf",
- "russh",
- "serde",
- "size",
- "strip-ansi-escapes",
- "temp-dir",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.1.2+spec-1.1.0",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "nico-ssh-console-fuzz"
-version = "0.0.1"
-dependencies = [
- "nico-ssh-console",
- "libfuzzer-sys",
-]
-
-[[package]]
-name = "nico-ssh-console-mock-api-server"
-version = "0.0.1"
-dependencies = [
- "nico-api-test-helper",
- "nico-rpc",
- "nico-uuid",
- "nico-version",
- "eyre",
- "prost",
- "prost-types",
- "rustls",
- "rustls-pemfile",
- "tokio",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "nico-state-controller-common"
-version = "0.0.0"
-dependencies = [
- "nico-utils",
- "duration-str",
- "serde",
- "state-controller",
-]
-
-[[package]]
-name = "nico-switch-controller"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "nico-api-db",
- "nico-api-model",
- "nico-health-metrics",
- "nico-secrets",
- "nico-site-explorer",
- "nico-utils",
- "nico-uuid",
- "config-version",
- "eyre",
- "librms",
- "mac_address",
- "opentelemetry",
- "sqlx",
- "state-controller",
- "tracing",
-]
-
-[[package]]
-name = "nico-systemd"
-version = "0.0.0"
-dependencies = [
- "eyre",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "nico-tls"
-version = "0.0.0"
-dependencies = [
- "rustls",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tonic",
-]
-
-[[package]]
-name = "nico-utils"
-version = "0.0.0"
-dependencies = [
- "byte-unit",
- "nico-network",
- "chrono",
- "clap",
- "ipnetwork",
- "opentelemetry",
- "opentelemetry-prometheus",
- "opentelemetry_sdk",
- "prometheus",
- "serde",
- "sqlx",
- "thiserror 2.0.18",
- "tokio",
-]
-
-[[package]]
-name = "nico-uuid"
-version = "0.0.0"
-dependencies = [
- "data-encoding",
- "eyre",
- "prost",
- "serde",
- "serde_json",
- "sha2 0.11.0",
- "sqlx",
- "thiserror 2.0.18",
- "uuid",
-]
-
-[[package]]
-name = "nico-version"
-version = "0.0.0"
 
 [[package]]
 name = "cargo_metadata"
@@ -3017,18 +1092,18 @@ dependencies = [
 
 [[package]]
 name = "cbc"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98db6aeaef0eeef2c1e3ce9a27b739218825dae116076352ac3777076aa22225"
+checksum = "ce2dc9ee5f88d11e0beb842c88b33c8a5cf0d1329c4b19494af42b07dbfe8896"
 dependencies = [
- "cipher 0.5.1",
+ "cipher 0.5.2",
 ]
 
 [[package]]
 name = "cbindgen"
-version = "0.29.2"
+version = "0.29.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "befbfd072a8e81c02f8c507aefce431fe5e7d051f83d48a23ffc9b9fe5a11799"
+checksum = "c95537b45400390270fae69ac098d057c8f5399001cde9d04f700c105ddfff2d"
 dependencies = [
  "clap",
  "heck",
@@ -3045,9 +1120,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.61"
+version = "1.2.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d16d90359e986641506914ba71350897565610e87ce0ad9e6f28569db3dd5c6d"
+checksum = "556e016178bb5662a08681bbe0f00f8e17631781a4dfc8c45e466e4b185ec27f"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -3173,12 +1248,12 @@ dependencies = [
 
 [[package]]
 name = "cipher"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e34d8227fe1ba289043aeb13792056ff80fd6de1a9f49137a5f499de8e8c78ea"
+checksum = "e8cf2a2c93cd704877c0858356ed03480ff301ee950b43f1cbe4573b088bfa6c"
 dependencies = [
  "block-buffer 0.12.0",
- "crypto-common 0.2.1",
+ "crypto-common 0.2.2",
  "inout 0.2.2",
 ]
 
@@ -3206,9 +1281,9 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "4.6.3"
+version = "4.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "660c0520455b1013b9bcb0393d5f643d7e4454fb69c915b8d6d2aa0e9a45acc3"
+checksum = "e0a7a9bfdb35811f9e59832f0f05975114d2251b415fb534108e6f34060fd772"
 dependencies = [
  "clap",
 ]
@@ -3251,9 +1326,9 @@ dependencies = [
 
 [[package]]
 name = "cmov"
-version = "0.5.3"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f88a43d011fc4a6876cb7344703e297c71dda42494fee094d5f7c76bf13f746"
+checksum = "0c9ea0ac24bc397ab3c98583a3c9ba74fa56b09a4449bbe172b9b1ddb016027a"
 
 [[package]]
 name = "color-eyre"
@@ -3309,9 +1384,9 @@ dependencies = [
 
 [[package]]
 name = "compact_str"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fdb1325a1cece981e8a296ab8f0f9b63ae357bd0784a9faaf548cc7b480707a"
+checksum = "9dfdd1c2274d9aa354115b09dc9a901d6c5576818cdf70d14cae2bdb47df00ab"
 dependencies = [
  "castaway",
  "cfg-if",
@@ -3326,6 +1401,10 @@ name = "component-manager"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "chrono",
+ "libredfish",
+ "librms",
+ "mac_address",
  "nico-api-db",
  "nico-api-model",
  "nico-api-test-helper",
@@ -3334,10 +1413,6 @@ dependencies = [
  "nico-secrets",
  "nico-sqlx-testing",
  "nico-uuid",
- "chrono",
- "libredfish",
- "librms",
- "mac_address",
  "prost",
  "prost-types",
  "serde",
@@ -3722,9 +1797,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-common"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77727bb15fa921304124b128af125e7e3b968275d1b108b379190264f4423710"
+checksum = "ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453"
 dependencies = [
  "getrandom 0.4.2",
  "hybrid-array",
@@ -3785,9 +1860,9 @@ dependencies = [
 
 [[package]]
 name = "ctor"
-version = "1.0.3"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c24d2b2b7c12a2fffb7c5c8fd0dcda7ca14b4600fa2d3701b6079aefb6fa180"
+checksum = "01334b89b69ff726750c5ce5073fc8bd860e99aa9a8fc5ca11b04730e3aee97a"
 dependencies = [
  "link-section",
  "linktime-proc-macro",
@@ -3804,11 +1879,11 @@ dependencies = [
 
 [[package]]
 name = "ctr"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17469f8eb9bdbfad10f71f4cfddfd38b01143520c0e717d8796ccb4d44d44e42"
+checksum = "baaca1c4b237092596f64d571e9db6ce4109c4ef9742e27590f1709594461f21"
 dependencies = [
- "cipher 0.5.1",
+ "cipher 0.5.2",
 ]
 
 [[package]]
@@ -3935,9 +2010,9 @@ dependencies = [
 
 [[package]]
 name = "dashmap"
-version = "6.1.0"
+version = "6.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5041cc499144891f3790297212f32a74fb938e5136a14943f338ef9e0ae276cf"
+checksum = "e6361d5c062261c78a176addb82d4c821ae42bed6089de0e12603cd25de2059c"
 dependencies = [
  "cfg-if",
  "crossbeam-utils",
@@ -4134,7 +2209,7 @@ checksum = "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2"
 dependencies = [
  "block-buffer 0.12.0",
  "const-oid 0.10.2",
- "crypto-common 0.2.1",
+ "crypto-common 0.2.2",
  "ctutils",
 ]
 
@@ -4161,9 +2236,9 @@ dependencies = [
 
 [[package]]
 name = "displaydoc"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97369cbbc041bc366949bc74d34658d6cda5621039731c6310521892a3a20ae0"
+checksum = "1ac70aa55017e108007fbaf5aa0f54b021c98f92ff8af59d42eda9da96e3dd4f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4193,14 +2268,14 @@ dependencies = [
 
 [[package]]
 name = "domain"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1165df78e6fa91884750d6fb06c1f3eddc51f9b0ae1d3b8ebe37cdf04cc331ab"
+checksum = "8c469892dddfeff64ecfdbc64cf059c77fb0decaeccd4d5d484394bdd6312bac"
 dependencies = [
  "bumpalo",
  "bytes",
  "domain-macros",
- "hashbrown 0.17.0",
+ "hashbrown 0.17.1",
  "jiff",
  "octseq",
  "rand 0.10.1",
@@ -4208,9 +2283,9 @@ dependencies = [
 
 [[package]]
 name = "domain-macros"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19482bf08a6a058e8eaf5774db14407446439f7e6a2ee5ee01ef4f77cd504dcc"
+checksum = "6fef7ef74e413e36d5364db163ca577ccb56f2f74377705d5f920ee3e1544127"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4372,9 +2447,9 @@ dependencies = [
 
 [[package]]
 name = "either"
-version = "1.15.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
+checksum = "91622ff5e7162018101f2fea40d6ebf4a78bbe5a49736a2020649edf9693679e"
 dependencies = [
  "serde",
 ]
@@ -4408,7 +2483,7 @@ checksum = "bde7860544606d222fd6bd6d9f9a0773321bf78072a637e1d560a058c0031978"
 dependencies = [
  "base16ct 1.0.0",
  "crypto-bigint 0.7.0-rc.28",
- "crypto-common 0.2.1",
+ "crypto-common 0.2.2",
  "digest 0.11.3",
  "hkdf 0.13.0",
  "hybrid-array",
@@ -4638,13 +2713,12 @@ dependencies = [
 
 [[package]]
 name = "filetime"
-version = "0.2.27"
+version = "0.2.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f98844151eee8917efc50bd9e8318cb963ae8b297431495d3f758616ea5c57db"
+checksum = "5c287a33c7f0a620c38e641e7f60827713987b3c0f26e8ddc9462cc69cf75759"
 dependencies = [
  "cfg-if",
  "libc",
- "libredox",
 ]
 
 [[package]]
@@ -4850,9 +2924,9 @@ checksum = "037711b3d59c33004d3856fbdc83b99d4ff37a24768fa1be9ce3538a1cde4393"
 
 [[package]]
 name = "futures-timer"
-version = "3.0.3"
+version = "3.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f288b0a4f20f9a56b5d1da57e2227c661b7b16168e2f72365f57b63326e29b24"
+checksum = "af43fadb8a98512d547e37b4e92e0ced13e205c061b87b4623eff01d918d6968"
 
 [[package]]
 name = "futures-util"
@@ -4899,9 +2973,9 @@ dependencies = [
 
 [[package]]
 name = "generic-array"
-version = "1.4.1"
+version = "1.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dab9e9188e97a93276e1fe7b56401b851e2b45a46d045ca658100c1303ada649"
+checksum = "fb130435a959a8d525e6bca66ff6c40981a300ee96d70e3ef56f046556d614a3"
 dependencies = [
  "generic-array 0.14.7",
  "rustversion",
@@ -5172,9 +3246,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.17.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
+checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 dependencies = [
  "allocator-api2",
  "equivalent",
@@ -5391,9 +3465,9 @@ checksum = "f558a64ac9af88b5ba400d99b579451af0d39c6d360980045b91aac966d705e2"
 
 [[package]]
 name = "http"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3ba2a386d7f85a81f119ad7498ebe444d2e22c2af0b86b069416ace48b3311a"
+checksum = "8be7462df143984c4598a256ef469b251d7d7f9e271135073e78fc535414f3d0"
 dependencies = [
  "bytes",
  "itoa",
@@ -5467,9 +3541,9 @@ dependencies = [
 
 [[package]]
 name = "hybrid-array"
-version = "0.4.11"
+version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08d46837a0ed51fe95bd3b05de33cd64a1ee88fc797477ca48446872504507c5"
+checksum = "9155a582abd142abc056962c29e3ce5ff2ad5469f4246b537ed42c5deba857da"
 dependencies = [
  "ctutils",
  "subtle",
@@ -5479,9 +3553,9 @@ dependencies = [
 
 [[package]]
 name = "hyper"
-version = "1.9.0"
+version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6299f016b246a94207e63da54dbe807655bf9e00044f73ded42c3ac5305fbcca"
+checksum = "55281c53a1894c864990125767da440a4e630446785086f52523b20033b74498"
 dependencies = [
  "atomic-waker",
  "bytes",
@@ -5742,7 +3816,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
 dependencies = [
  "equivalent",
- "hashbrown 0.17.0",
+ "hashbrown 0.17.1",
  "serde",
  "serde_core",
 ]
@@ -5940,9 +4014,9 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "jiff"
-version = "0.2.24"
+version = "0.2.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f00b5dbd620d61dfdcb6007c9c1f6054ebd75319f163d886a9055cec1155073d"
+checksum = "4603d3033e49e2b0e31229fcab20a5d40089c607d975cd9c80551dc69eed9102"
 dependencies = [
  "jiff-static",
  "log",
@@ -5953,9 +4027,9 @@ dependencies = [
 
 [[package]]
 name = "jiff-static"
-version = "0.2.24"
+version = "0.2.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e000de030ff8022ea1da3f466fbb0f3a809f5e51ed31f6dd931c35181ad8e6d7"
+checksum = "782d32378dddf207193ac91cefb848ad41abb58195c95168e1291227a0832b47"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6023,9 +4097,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.98"
+version = "0.3.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67df7112613f8bfd9150013a0314e196f4800d3201ae742489d999db2f979f08"
+checksum = "142bc4740e452c1e57ade0cbc129f139c9093e354346f0872ef985f4f5cf5f11"
 dependencies = [
  "cfg-if",
  "futures-util",
@@ -6070,9 +4144,9 @@ dependencies = [
 
 [[package]]
 name = "jsonwebtoken"
-version = "10.3.0"
+version = "10.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0529410abe238729a60b108898784df8984c87f6054c9c4fcacc47e4803c1ce1"
+checksum = "eba32bfb4ffdeaca3e34431072faf01745c9b26d25504aa7a6cf5684334fc4fc"
 dependencies = [
  "base64",
  "ed25519-dalek 2.2.0",
@@ -6089,6 +4163,7 @@ dependencies = [
  "sha2 0.10.9",
  "signature 2.2.0",
  "simple_asn1",
+ "zeroize",
 ]
 
 [[package]]
@@ -6131,7 +4206,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "01737161ba802849cfd486b5bd209d38ba4943494c249a8126005170c7621edd"
 dependencies = [
- "crypto-common 0.2.1",
+ "crypto-common 0.2.2",
  "rand_core 0.10.1",
 ]
 
@@ -6184,9 +4259,9 @@ dependencies = [
 
 [[package]]
 name = "kqueue-sys"
-version = "1.1.0"
+version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7b65860415f949f23fa882e669f2dbd4a0f0eeb1acdd56790b30494afd7da2f"
+checksum = "07293a4e297ac234359b510362495713f75ea345d5307140414f20c69ffeb087"
 dependencies = [
  "bitflags 2.11.1",
  "libc",
@@ -6379,7 +4454,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "http",
- "reqwest 0.13.3",
+ "reqwest 0.13.4",
  "serde",
  "serde_derive",
  "serde_json",
@@ -6412,14 +4487,14 @@ dependencies = [
 
 [[package]]
 name = "libredox"
-version = "0.1.16"
+version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e02f3bb43d335493c96bf3fd3a321600bf6bd07ed34bc64118e9293bdffea46c"
+checksum = "f02ab6bace2054fb888a3c16f990117b579d14a3088e472d63c6011fa185c9d3"
 dependencies = [
  "bitflags 2.11.1",
  "libc",
  "plain",
- "redox_syscall 0.7.5",
+ "redox_syscall 0.8.0",
 ]
 
 [[package]]
@@ -6491,9 +4566,9 @@ dependencies = [
 
 [[package]]
 name = "link-section"
-version = "0.15.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4641b91711debb59c61b07eb5e30521ed6d9e2bdd9fd04f934e7da3a5bc386d4"
+checksum = "7a63f9687974de7e2caf6c96a1b19c6e882db299fdde09075c5b9e11c58421cd"
 
 [[package]]
 name = "linked-hash-map"
@@ -6503,9 +4578,9 @@ checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
 name = "linktime-proc-macro"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a44cd706ff0d503ee32b2071166510ca27e281228de10cd3aa8d35ff94560f81"
+checksum = "8c7b0a3383c2a1002d11349c92c85a666a5fb679e96c79d782cf0dbe557fd6ee"
 
 [[package]]
 name = "linux-raw-sys"
@@ -6536,9 +4611,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
+checksum = "616ec5685824bcc94416c6d4a7a446eea774a31efd7062c8480ba6fd06d7a6e5"
 
 [[package]]
 name = "logfmt"
@@ -6577,7 +4652,7 @@ version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a860605968fce16869fd239cf4237a82f3ac470723415db603b0e8b6c8d4fb9"
 dependencies = [
- "hashbrown 0.17.0",
+ "hashbrown 0.17.1",
 ]
 
 [[package]]
@@ -6675,9 +4750,9 @@ checksum = "ae960838283323069879657ca3de837e9f7bbb4c7bf6ea7f1b290d5e9476d2e0"
 
 [[package]]
 name = "memchr"
-version = "2.8.0"
+version = "2.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
+checksum = "6b947ae49db0d222b1dbc6b113ce7248a3fc3a6ca21b696717bfc000ba4484d8"
 
 [[package]]
 name = "memmem"
@@ -6696,9 +4771,9 @@ dependencies = [
 
 [[package]]
 name = "metrics"
-version = "0.24.5"
+version = "0.24.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff56c2e7dce6bd462e3b8919986a617027481b1dcc703175b58cf9dd98a2f071"
+checksum = "89550ee9f79e88fef3119de263694973a8adb26c21d75322164fb8c493039fe2"
 dependencies = [
  "portable-atomic",
  "rapidhash",
@@ -6709,11 +4784,11 @@ name = "metrics-endpoint"
 version = "0.1.0"
 dependencies = [
  "bytes",
- "nico-metrics-utils",
  "eyre",
  "http-body-util",
  "hyper",
  "hyper-util",
+ "nico-metrics-utils",
  "opentelemetry",
  "opentelemetry-prometheus",
  "opentelemetry-semantic-conventions",
@@ -6749,9 +4824,9 @@ dependencies = [
 
 [[package]]
 name = "metrics-util"
-version = "0.20.3"
+version = "0.20.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e56997f084e57b045edf17c3ed8ba7f9f779c670df8206dfd1c736f4c02dc4a"
+checksum = "96f8722f8562635f92f8ed992f26df0532266eb03d5202607c20c0d7e9745e13"
 dependencies = [
  "crossbeam-epoch",
  "crossbeam-utils",
@@ -6808,9 +4883,9 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50b7e5b27aa02a74bac8c3f23f448f8d87ff11f92d3aac1a6ed369ee08cc56c1"
+checksum = "02bd0af71c67b473010cbbc60715ee815645a4dc942899111f494b4b737d6fda"
 dependencies = [
  "libc",
  "log",
@@ -6884,9 +4959,9 @@ dependencies = [
 
 [[package]]
 name = "module-lattice"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc7c90d33a0dac244570c26461d761ffaeadb3bfc2b17cc625ae2185cafdffae"
+checksum = "0c61b87c9683ab7cb1c6871d261ad5479b6b10ceb52c4352aaca3b5d35a8febe"
 dependencies = [
  "ctutils",
  "hybrid-array",
@@ -6925,7 +5000,7 @@ dependencies = [
  "prost-build",
  "prost-types",
  "regex",
- "reqwest 0.13.3",
+ "reqwest 0.13.4",
  "rumqttc",
  "serde",
  "serde_json",
@@ -7063,6 +5138,1949 @@ dependencies = [
 ]
 
 [[package]]
+name = "nico-admin-cli"
+version = "0.0.1"
+dependencies = [
+ "bmc-vendor",
+ "chrono",
+ "clap",
+ "clap_complete",
+ "color-eyre",
+ "csv",
+ "eyre",
+ "futures",
+ "ipnet",
+ "libredfish",
+ "librms",
+ "mac_address",
+ "nico-health-report",
+ "nico-libmlx",
+ "nico-libmlx-model",
+ "nico-macros",
+ "nico-measured-boot",
+ "nico-network",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-secrets",
+ "nico-ssh",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "prettytable-rs",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "urlencoding",
+ "uuid",
+ "x509-parser",
+ "zip",
+]
+
+[[package]]
+name = "nico-agent"
+version = "0.1.0"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "axum",
+ "axum-server",
+ "backon",
+ "blake3",
+ "chrono",
+ "clap",
+ "colored",
+ "config-version",
+ "containerd-client",
+ "ctor",
+ "data-encoding",
+ "diff",
+ "eyre",
+ "futures",
+ "futures-util",
+ "governor",
+ "gtmpl",
+ "gtmpl_derive",
+ "gtmpl_value",
+ "hex",
+ "hickory-resolver",
+ "http-body",
+ "http-body-util",
+ "humantime",
+ "hyper",
+ "hyper-util",
+ "ipnetwork",
+ "lazy_static",
+ "libc",
+ "mac_address",
+ "mockall",
+ "netlink-packet-route 0.19.0",
+ "nico-certs",
+ "nico-dpu-agent-utils",
+ "nico-dpu-fmds-shared",
+ "nico-dpu-remediation",
+ "nico-health-report",
+ "nico-host-support",
+ "nico-http-connector",
+ "nico-metrics-utils",
+ "nico-network",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-systemd",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "nix 0.31.3",
+ "nonzero_ext",
+ "nvue-client",
+ "opentelemetry",
+ "opentelemetry-prometheus",
+ "opentelemetry-semantic-conventions",
+ "opentelemetry_sdk",
+ "prometheus",
+ "prost",
+ "rand 0.10.1",
+ "regex",
+ "reqwest 0.13.4",
+ "resolv-conf",
+ "rtnetlink",
+ "rustls",
+ "rustls-pemfile",
+ "rustls-pki-types",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2 0.11.0",
+ "similar 3.1.1",
+ "surge-ping",
+ "tempfile",
+ "tokio",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tower",
+ "tower-http",
+ "tracing",
+ "url",
+ "uuid",
+ "uzers",
+ "version-compare 0.2.1",
+]
+
+[[package]]
+name = "nico-api"
+version = "0.0.1"
+dependencies = [
+ "ansi-to-html",
+ "arc-swap",
+ "askama",
+ "askama_escape",
+ "asn1-rs",
+ "async-trait",
+ "axum",
+ "axum-extra",
+ "base64",
+ "bmc-vendor",
+ "byteorder",
+ "bytes",
+ "casbin",
+ "chrono",
+ "clap",
+ "component-manager",
+ "config-version",
+ "const_format",
+ "ctor",
+ "dashmap",
+ "data-encoding",
+ "dns-record",
+ "duration-str",
+ "eyre",
+ "figment",
+ "futures",
+ "futures-util",
+ "hex",
+ "hkdf 0.13.0",
+ "hostname",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "ipnetwork",
+ "itertools 0.14.0",
+ "jsonwebtoken",
+ "lazy_static",
+ "libnmxc",
+ "libredfish",
+ "librms",
+ "logfmt",
+ "mac_address",
+ "mockito",
+ "mqttea",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-authn",
+ "nico-dpa-interface-controller",
+ "nico-dpf",
+ "nico-firmware",
+ "nico-health-report",
+ "nico-host-support",
+ "nico-ib-fabric",
+ "nico-ib-partition-controller",
+ "nico-ipmi",
+ "nico-ipxe-renderer",
+ "nico-libmlx",
+ "nico-machine-controller",
+ "nico-macros",
+ "nico-measured-boot",
+ "nico-metrics-utils",
+ "nico-mqtt-common",
+ "nico-network",
+ "nico-network-segment-controller",
+ "nico-nvlink-manager",
+ "nico-power-shelf-controller",
+ "nico-preingestion-manager",
+ "nico-prost-builder",
+ "nico-rack",
+ "nico-rack-controller",
+ "nico-redfish",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-secrets",
+ "nico-site-explorer",
+ "nico-spdm-controller",
+ "nico-sqlx-testing",
+ "nico-state-controller-common",
+ "nico-switch-controller",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "nras",
+ "num_cpus",
+ "oauth2",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry-prometheus",
+ "opentelemetry-semantic-conventions",
+ "opentelemetry_sdk",
+ "p256 0.14.0-rc.7",
+ "pkcs1 0.7.5",
+ "prometheus",
+ "prometheus-text-parser",
+ "prost",
+ "rand 0.10.1",
+ "rcgen",
+ "regex",
+ "reqwest 0.13.4",
+ "rsa 0.9.10",
+ "rumqttc",
+ "rustls",
+ "rustls-pemfile",
+ "rustls-pki-types",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2 0.11.0",
+ "spancounter",
+ "sqlx",
+ "sqlx-query-tracing",
+ "state-controller",
+ "strum 0.28.0",
+ "temp-dir",
+ "tempfile",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "tokio-rustls",
+ "tokio-stream",
+ "tokio-util",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tonic-reflection",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-log",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "tss-esapi",
+ "url",
+ "urlencoding",
+ "uuid",
+ "x509-parser",
+]
+
+[[package]]
+name = "nico-api-db"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "chrono",
+ "config-version",
+ "ctor",
+ "dns-record",
+ "domain",
+ "eyre",
+ "futures",
+ "futures-util",
+ "hickory-proto",
+ "ipnetwork",
+ "itertools 0.14.0",
+ "lazy_static",
+ "mac_address",
+ "names",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-ipxe-renderer",
+ "nico-libmlx-model",
+ "nico-macros",
+ "nico-measured-boot",
+ "nico-network",
+ "nico-secrets",
+ "nico-sqlx-testing",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "octseq",
+ "regex",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "version-compare 0.2.1",
+]
+
+[[package]]
+name = "nico-api-integration-tests"
+version = "0.0.0"
+dependencies = [
+ "askama_escape",
+ "bmc-mock",
+ "ctor",
+ "eyre",
+ "futures",
+ "itertools 0.14.0",
+ "mac_address",
+ "nico-api-test-helper",
+ "nico-machine-a-tron",
+ "nico-secrets",
+ "nico-utils",
+ "opentelemetry",
+ "serde_json",
+ "serial_test",
+ "sqlx",
+ "temp-dir",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "nico-api-model"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "bmc-vendor",
+ "chrono",
+ "config-version",
+ "dns-record",
+ "duration-str",
+ "eyre",
+ "hex",
+ "ipnetwork",
+ "itertools 0.14.0",
+ "lazy_static",
+ "libnmxm",
+ "mac_address",
+ "nico-health-report",
+ "nico-ipxe-renderer",
+ "nico-libmlx-model",
+ "nico-network",
+ "nico-secrets",
+ "nico-sqlx-testing",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "nras",
+ "once_cell",
+ "p256 0.14.0-rc.7",
+ "prost",
+ "rand 0.10.1",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_regex",
+ "sha2 0.11.0",
+ "sqlx",
+ "strum 0.28.0",
+ "strum_macros 0.28.0",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tracing",
+ "url",
+ "uuid",
+ "version-compare 0.2.1",
+]
+
+[[package]]
+name = "nico-api-test-helper"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "bmc-mock",
+ "chrono",
+ "ctor",
+ "eyre",
+ "futures",
+ "itertools 0.14.0",
+ "lazy_static",
+ "librms",
+ "metrics-endpoint",
+ "nico-api",
+ "nico-machine-a-tron",
+ "nico-rpc",
+ "nico-secrets",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "rand 0.10.1",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "sqlx",
+ "temp-dir",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "nico-authn"
+version = "0.0.0"
+dependencies = [
+ "hyper",
+ "serde",
+ "thiserror 2.0.18",
+ "tonic",
+ "tower",
+ "tracing",
+ "x509-parser",
+]
+
+[[package]]
+name = "nico-bmc-proxy"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "axum-extra",
+ "bytes",
+ "casbin",
+ "clap",
+ "figment",
+ "futures",
+ "futures-util",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-rustls",
+ "hyper-timeout",
+ "hyper-util",
+ "lazy_static",
+ "logfmt",
+ "mac_address",
+ "metrics-endpoint",
+ "nico-authn",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-version",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry-prometheus",
+ "opentelemetry-semantic-conventions",
+ "opentelemetry_sdk",
+ "reqwest 0.13.4",
+ "rustls-pemfile",
+ "rustls-pki-types",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-rustls",
+ "tokio-stream",
+ "tokio-util",
+ "tonic",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-log",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "url",
+ "urlencoding",
+ "uuid",
+ "x509-parser",
+]
+
+[[package]]
+name = "nico-certs"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "nico-host-support",
+ "nico-rpc",
+ "nico-tls",
+ "rand 0.10.1",
+ "tonic",
+ "tracing",
+]
+
+[[package]]
+name = "nico-dhcp"
+version = "0.0.0"
+dependencies = [
+ "cbindgen",
+ "cc",
+ "chrono",
+ "derive_builder",
+ "dhcproto",
+ "eyre",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "ipnetwork",
+ "lazy_static",
+ "libc",
+ "log",
+ "lru 0.18.0",
+ "mac_address",
+ "metrics-endpoint",
+ "nico-rpc",
+ "nico-tls",
+ "once_cell",
+ "opentelemetry",
+ "prometheus",
+ "prost",
+ "serde_json",
+ "tempfile",
+ "test-cdylib",
+ "tokio",
+ "tokio-util",
+ "tonic",
+]
+
+[[package]]
+name = "nico-dhcp-server"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "dhcproto",
+ "futures",
+ "ipnetwork",
+ "logfmt",
+ "lru 0.18.0",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-tls",
+ "nico-uuid",
+ "prost",
+ "serde",
+ "serde_yaml",
+ "socket2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "nico-dns"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "clap",
+ "dns-record",
+ "eyre",
+ "metrics-endpoint",
+ "nico-rpc",
+ "nico-tls",
+ "nico-version",
+ "opentelemetry",
+ "opentelemetry-otlp",
+ "opentelemetry_sdk",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "trust-dns-resolver",
+ "trust-dns-server",
+]
+
+[[package]]
+name = "nico-dpa-interface-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "config-version",
+ "duration-str",
+ "eyre",
+ "mac_address",
+ "mqttea",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "prost",
+ "serde",
+ "sqlx",
+ "state-controller",
+ "tonic-prost-build",
+ "tracing",
+]
+
+[[package]]
+name = "nico-dpf"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clap",
+ "dashmap",
+ "eyre",
+ "futures",
+ "hex",
+ "http",
+ "hyper",
+ "k8s-openapi",
+ "kopium",
+ "kube",
+ "libredfish",
+ "nico-uuid",
+ "once_cell",
+ "rand 0.10.1",
+ "rustls",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2 0.11.0",
+ "strum_macros 0.28.0",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower-test",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "nico-dpu-agent-utils"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "nico-rpc",
+]
+
+[[package]]
+name = "nico-dpu-fmds-shared"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "governor",
+ "http-body-util",
+ "nico-dpu-agent-utils",
+ "nico-rpc",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tonic",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "nico-dpu-otel-agent"
+version = "0.0.1"
+dependencies = [
+ "clap",
+ "ctor",
+ "eyre",
+ "humantime",
+ "nico-certs",
+ "nico-host-support",
+ "nico-rpc",
+ "nico-systemd",
+ "nico-tls",
+ "prost",
+ "rand 0.10.1",
+ "reqwest 0.13.4",
+ "rustls-pemfile",
+ "rustls-pki-types",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "typed-builder",
+]
+
+[[package]]
+name = "nico-dpu-remediation"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "nico-dpu-agent-utils",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "rand 0.10.1",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tonic",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "nico-dsx-exchange-consumer"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "figment",
+ "humantime-serde",
+ "logfmt",
+ "metrics-endpoint",
+ "moka",
+ "mqttea",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-secrets",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
+ "opentelemetry",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+]
+
+[[package]]
+name = "nico-firmware"
+version = "0.0.1"
+dependencies = [
+ "bmc-vendor",
+ "eyre",
+ "futures-util",
+ "hex",
+ "md5 0.8.0",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-macros",
+ "nico-sqlx-testing",
+ "reqwest 0.13.4",
+ "serde",
+ "sqlx",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tracing",
+]
+
+[[package]]
+name = "nico-fmds"
+version = "0.0.1"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "axum",
+ "axum-server",
+ "clap",
+ "eyre",
+ "futures-util",
+ "governor",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "ipnetwork",
+ "logfmt",
+ "netlink-packet-route 0.19.0",
+ "nico-dpu-agent-utils",
+ "nico-dpu-fmds-shared",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
+ "nonzero_ext",
+ "opentelemetry",
+ "opentelemetry-prometheus",
+ "opentelemetry-semantic-conventions",
+ "opentelemetry_sdk",
+ "prometheus",
+ "prost",
+ "reqwest 0.13.4",
+ "rtnetlink",
+ "tokio",
+ "tonic",
+ "tonic-prost",
+ "tower",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "nico-health"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "base64",
+ "chrono",
+ "criterion",
+ "dashmap",
+ "figment",
+ "futures",
+ "http",
+ "humantime",
+ "humantime-serde",
+ "hyper",
+ "hyper-util",
+ "logfmt",
+ "mac_address",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "nv-redfish",
+ "prometheus",
+ "prost",
+ "prost-types",
+ "rand 0.10.1",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+]
+
+[[package]]
+name = "nico-health-metrics"
+version = "0.0.0"
+dependencies = [
+ "nico-api-model",
+ "nico-health-report",
+ "nico-utils",
+ "opentelemetry",
+]
+
+[[package]]
+name = "nico-health-report"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "nico-host-support"
+version = "0.0.0"
+dependencies = [
+ "base64",
+ "csv",
+ "eyre",
+ "ipnetwork",
+ "libudev",
+ "logfmt",
+ "nico-dpu-agent-utils",
+ "nico-libmlx",
+ "nico-rpc",
+ "nico-rpc-utils",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "procfs",
+ "rcgen",
+ "regex",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "smbios-lib",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "tryhard",
+ "uname",
+ "url",
+ "uuid",
+ "x509-parser",
+]
+
+[[package]]
+name = "nico-http-connector"
+version = "0.0.0"
+dependencies = [
+ "futures-util",
+ "hickory-resolver",
+ "hyper",
+ "hyper-util",
+ "socket2",
+ "tokio",
+ "tokio-socks",
+ "tower-service",
+ "tracing",
+ "tryhard",
+]
+
+[[package]]
+name = "nico-ib-fabric"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "base64",
+ "chrono",
+ "duration-str",
+ "eyre",
+ "figment",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-rustls",
+ "hyper-timeout",
+ "hyper-util",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-secrets",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "rand 0.10.1",
+ "rustls",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "nico-ib-partition-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "config-version",
+ "eyre",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-ib-fabric",
+ "nico-uuid",
+ "sqlx",
+ "state-controller",
+ "tracing",
+]
+
+[[package]]
+name = "nico-ipmi"
+version = "0.0.1"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "eyre",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "nico-ipxe-renderer"
+version = "0.0.1"
+dependencies = [
+ "hex",
+ "serde",
+ "serde_yaml",
+ "sha2 0.11.0",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "nico-kms-provider"
+version = "0.0.1"
+dependencies = [
+ "aes-gcm 0.10.3",
+ "async-trait",
+ "base64",
+ "hex",
+ "rand 0.10.1",
+ "serde",
+ "serial_test",
+ "sha2 0.11.0",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "vaultrs",
+ "zeroize",
+]
+
+[[package]]
+name = "nico-libmlx"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "backon",
+ "base64",
+ "chrono",
+ "clap",
+ "hex",
+ "hostname",
+ "mac_address",
+ "nico-libmlx-model",
+ "nico-rpc",
+ "nico-ssh",
+ "nico-uuid",
+ "once_cell",
+ "prettytable-rs",
+ "prost-types",
+ "quick-xml 0.39.4",
+ "regex",
+ "reqwest 0.13.4",
+ "russh",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
+ "wait-timeout",
+]
+
+[[package]]
+name = "nico-libmlx-model"
+version = "0.0.0"
+dependencies = [
+ "mac_address",
+ "serde",
+]
+
+[[package]]
+name = "nico-log-parser"
+version = "0.0.2"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "getopts",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tonic",
+]
+
+[[package]]
+name = "nico-machine-a-tron"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "base64",
+ "bmc-mock",
+ "chrono",
+ "clap",
+ "crossterm",
+ "duration-str",
+ "eyre",
+ "figment",
+ "futures",
+ "lazy_static",
+ "mac_address",
+ "nico-network",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
+ "rand 0.10.1",
+ "ratatui",
+ "rcgen",
+ "reqwest 0.13.4",
+ "russh",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "nico-machine-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "bmc-vendor",
+ "chrono",
+ "config-version",
+ "duration-str",
+ "eyre",
+ "figment",
+ "futures",
+ "futures-util",
+ "itertools 0.14.0",
+ "lazy_static",
+ "libredfish",
+ "mac_address",
+ "mockall",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-dpf",
+ "nico-firmware",
+ "nico-health-metrics",
+ "nico-health-report",
+ "nico-ipmi",
+ "nico-measured-boot",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-state-controller-common",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "prost",
+ "prost-types",
+ "regex",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "state-controller",
+ "tokio",
+ "tonic-prost-build",
+ "tracing",
+ "uuid",
+ "version-compare 0.2.1",
+]
+
+[[package]]
+name = "nico-machine-validation"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "futures-util",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tonic",
+ "tracing",
+]
+
+[[package]]
+name = "nico-macros"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "proc-macro2",
+ "quote",
+ "sqlx",
+ "sqlx-macros-core",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "nico-measured-boot"
+version = "0.0.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "eyre",
+ "nico-uuid",
+ "prettytable-rs",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "nico-metrics-utils"
+version = "0.0.0"
+dependencies = [
+ "glob",
+ "opentelemetry_sdk",
+ "thiserror 2.0.18",
+ "tracing",
+]
+
+[[package]]
+name = "nico-mockdpa"
+version = "0.0.1"
+dependencies = [
+ "chrono",
+ "clap",
+ "mqttea",
+ "nico-dpa-interface-controller",
+ "prost",
+ "prost-build",
+ "rumqttc",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "nico-mqtt-common"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "mqttea",
+ "opentelemetry",
+ "tokio",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "nico-network"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "ipnet",
+ "ipnetwork",
+ "mac_address",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "nico-network-segment-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "config-version",
+ "eyre",
+ "ipnetwork",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "sqlx",
+ "state-controller",
+ "tracing",
+]
+
+[[package]]
+name = "nico-nvlink-manager"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "config-version",
+ "duration-str",
+ "eyre",
+ "http",
+ "libnmxc",
+ "libnmxm",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "rand 0.10.1",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "nico-power-shelf-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "config-version",
+ "eyre",
+ "librms",
+ "mac_address",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-metrics",
+ "nico-rack",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "sqlx",
+ "state-controller",
+ "tracing",
+]
+
+[[package]]
+name = "nico-preingestion-manager"
+version = "0.0.1"
+dependencies = [
+ "bmc-vendor",
+ "chrono",
+ "futures-util",
+ "libredfish",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-firmware",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-ssh",
+ "nico-utils",
+ "opentelemetry",
+ "prometheus-text-parser",
+ "sqlx",
+ "thiserror 2.0.18",
+ "time",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "version-compare 0.2.1",
+]
+
+[[package]]
+name = "nico-prost-builder"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "nico-pxe"
+version = "0.0.1"
+dependencies = [
+ "axum",
+ "axum-client-ip",
+ "axum-template",
+ "base64",
+ "bytes",
+ "clap",
+ "http-body",
+ "metrics",
+ "metrics-exporter-prometheus",
+ "mime",
+ "nico-host-support",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "nico-version",
+ "pin-project-lite",
+ "serde",
+ "tempfile",
+ "tera",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tower",
+ "tower-http",
+ "tower-layer",
+ "tower-service",
+ "uuid",
+]
+
+[[package]]
+name = "nico-rack"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "bms-dsx-exchange",
+ "chrono",
+ "eyre",
+ "librms",
+ "mac_address",
+ "mqttea",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-mqtt-common",
+ "nico-secrets",
+ "nico-uuid",
+ "opentelemetry",
+ "serde_json",
+ "sqlx",
+ "state-controller",
+ "tokio",
+ "tokio-util",
+ "tonic",
+ "tracing",
+]
+
+[[package]]
+name = "nico-rack-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "config-version",
+ "duration-str",
+ "eyre",
+ "librms",
+ "mac_address",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-metrics",
+ "nico-rack",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "state-controller",
+ "tonic",
+ "tracing",
+]
+
+[[package]]
+name = "nico-redfish"
+version = "0.0.1"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "bmc-vendor",
+ "chrono",
+ "http",
+ "libredfish",
+ "mac_address",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-secrets",
+ "nico-utils",
+ "nv-redfish",
+ "reqwest 0.13.4",
+ "serde_json",
+ "sqlx",
+ "state-controller",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
+name = "nico-rpc"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "base64",
+ "chrono",
+ "clap",
+ "config-version",
+ "csv",
+ "data-encoding",
+ "dns-record",
+ "eyre",
+ "hickory-resolver",
+ "hyper",
+ "hyper-rustls",
+ "hyper-util",
+ "ipnetwork",
+ "itertools 0.14.0",
+ "log",
+ "mac_address",
+ "nico-api-model",
+ "nico-health-report",
+ "nico-http-connector",
+ "nico-ipxe-renderer",
+ "nico-libmlx-model",
+ "nico-measured-boot",
+ "nico-network",
+ "nico-secrets",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nonempty",
+ "once_cell",
+ "prettytable-rs",
+ "prost",
+ "prost-types",
+ "regex",
+ "resolv-conf",
+ "rustls",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2 0.11.0",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-client-wrapper 0.1.0",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tower",
+ "tracing",
+ "tryhard",
+ "uuid",
+ "x509-parser",
+]
+
+[[package]]
+name = "nico-rpc-utils"
+version = "0.0.0"
+dependencies = [
+ "byte-unit",
+ "chrono",
+ "config-version",
+ "eyre",
+ "ipnetwork",
+ "itertools 0.14.0",
+ "nico-health-report",
+ "nico-rpc",
+ "nico-uuid",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tonic",
+ "tracing",
+]
+
+[[package]]
+name = "nico-rvs"
+version = "0.0.1"
+dependencies = [
+ "figment",
+ "logfmt",
+ "nico-rpc",
+ "nico-tls",
+ "nico-uuid",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "nico-scout"
+version = "0.0.1"
+dependencies = [
+ "axum",
+ "chrono",
+ "clap",
+ "efivar",
+ "eyre",
+ "futures-util",
+ "hex",
+ "http",
+ "lazy_static",
+ "nico-host-support",
+ "nico-libmlx",
+ "nico-machine-validation",
+ "nico-rpc",
+ "nico-tls",
+ "nico-utils",
+ "nico-uuid",
+ "nico-version",
+ "once_cell",
+ "pwhash",
+ "regex",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "smbios-lib",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tracing",
+ "tryhard",
+ "tss-esapi",
+ "uuid",
+ "x509-parser",
+]
+
+[[package]]
+name = "nico-secrets"
+version = "0.0.0"
+dependencies = [
+ "aes-gcm 0.10.3",
+ "arc-swap",
+ "async-trait",
+ "base64",
+ "bmc-vendor",
+ "eyre",
+ "figment",
+ "hex",
+ "mac_address",
+ "nico-uuid",
+ "notify",
+ "opentelemetry",
+ "p256 0.14.0-rc.7",
+ "rand 0.10.1",
+ "rand_core 0.10.1",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "serial_test",
+ "sha2 0.11.0",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "vaultrs",
+]
+
+[[package]]
+name = "nico-site-explorer"
+version = "0.0.1"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "bmc-explorer",
+ "chrono",
+ "config-version",
+ "duration-str",
+ "futures-util",
+ "http",
+ "itertools 0.14.0",
+ "libredfish",
+ "librms",
+ "mac_address",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-firmware",
+ "nico-health-report",
+ "nico-ipmi",
+ "nico-network",
+ "nico-redfish",
+ "nico-secrets",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "rand 0.10.1",
+ "regex",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "version-compare 0.2.1",
+]
+
+[[package]]
+name = "nico-spdm-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "config-version",
+ "itertools 0.14.0",
+ "libredfish",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-redfish",
+ "nico-utils",
+ "nras",
+ "opentelemetry",
+ "sqlx",
+ "state-controller",
+ "tracing",
+]
+
+[[package]]
+name = "nico-sqlx-testing"
+version = "0.0.0"
+dependencies = [
+ "nico-api-db",
+ "sqlx",
+ "sqlx-core",
+ "tokio",
+]
+
+[[package]]
+name = "nico-ssh"
+version = "0.0.0"
+dependencies = [
+ "russh",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "nico-ssh-console"
+version = "0.1.0"
+dependencies = [
+ "bmc-mock",
+ "bmc-vendor",
+ "bytes",
+ "chrono",
+ "clap",
+ "ctor",
+ "duration-str",
+ "eyre",
+ "futures",
+ "futures-util",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "indoc",
+ "lazy_static",
+ "libc",
+ "nico-api-test-helper",
+ "nico-machine-a-tron",
+ "nico-rpc",
+ "nico-ssh-console-mock-api-server",
+ "nico-tls",
+ "nico-uuid",
+ "nix 0.31.3",
+ "opentelemetry",
+ "opentelemetry-prometheus",
+ "opentelemetry_sdk",
+ "prometheus",
+ "prometheus-text-parser",
+ "rand 0.10.1",
+ "ringbuf",
+ "russh",
+ "serde",
+ "size",
+ "strip-ansi-escapes",
+ "temp-dir",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 1.1.2+spec-1.1.0",
+ "tonic",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "nico-ssh-console-fuzz"
+version = "0.0.1"
+dependencies = [
+ "libfuzzer-sys",
+ "nico-ssh-console",
+]
+
+[[package]]
+name = "nico-ssh-console-mock-api-server"
+version = "0.0.1"
+dependencies = [
+ "eyre",
+ "nico-api-test-helper",
+ "nico-rpc",
+ "nico-uuid",
+ "nico-version",
+ "prost",
+ "prost-types",
+ "rustls",
+ "rustls-pemfile",
+ "tokio",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "nico-state-controller-common"
+version = "0.0.0"
+dependencies = [
+ "duration-str",
+ "nico-utils",
+ "serde",
+ "state-controller",
+]
+
+[[package]]
+name = "nico-switch-controller"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "config-version",
+ "eyre",
+ "librms",
+ "mac_address",
+ "nico-api-db",
+ "nico-api-model",
+ "nico-health-metrics",
+ "nico-secrets",
+ "nico-site-explorer",
+ "nico-utils",
+ "nico-uuid",
+ "opentelemetry",
+ "sqlx",
+ "state-controller",
+ "tracing",
+]
+
+[[package]]
+name = "nico-systemd"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "nico-tls"
+version = "0.0.0"
+dependencies = [
+ "rustls",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tonic",
+]
+
+[[package]]
+name = "nico-utils"
+version = "0.0.0"
+dependencies = [
+ "byte-unit",
+ "chrono",
+ "clap",
+ "ipnetwork",
+ "nico-network",
+ "opentelemetry",
+ "opentelemetry-prometheus",
+ "opentelemetry_sdk",
+ "prometheus",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "nico-uuid"
+version = "0.0.0"
+dependencies = [
+ "data-encoding",
+ "eyre",
+ "prost",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "sqlx",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
+name = "nico-version"
+version = "0.0.0"
+
+[[package]]
 name = "nix"
 version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7089,9 +7107,9 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.31.2"
+version = "0.31.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d6d0705320c1e6ba1d912b5e37cf18071b6c2e9b7fa8215a1e8a7651966f5d3"
+checksum = "cf20d2fde8ff38632c426f1165ed7436270b44f199fc55284c38276f9db47c3d"
 dependencies = [
  "bitflags 2.11.1",
  "cfg-if",
@@ -7183,7 +7201,7 @@ dependencies = [
  "fmt",
  "jsonwebtoken",
  "mockito",
- "reqwest 0.13.3",
+ "reqwest 0.13.4",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -7237,9 +7255,9 @@ dependencies = [
 
 [[package]]
 name = "num-conv"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6673768db2d862beb9b39a78fdcb1a69439615d5794a1be50caa9bc92c81967"
+checksum = "521739c6d2bac4aa25192232afe6841231376b2b26d4d9fae5ecf8ca5772e441"
 
 [[package]]
 name = "num-derive"
@@ -7373,7 +7391,7 @@ dependencies = [
 name = "nvue-client"
 version = "0.0.0"
 dependencies = [
- "reqwest 0.13.3",
+ "reqwest 0.13.4",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -7666,18 +7684,19 @@ dependencies = [
 
 [[package]]
 name = "pageant"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b537f975f6d8dcf48db368d7ec209d583b015713b5df0f5d92d2631e4ff5595"
+checksum = "4f3a5ae18f65a85c67a77d18d42d3606c07948e3c17c1e5f74852b26589e88a5"
 dependencies = [
+ "base16ct 1.0.0",
  "byteorder",
  "bytes",
  "delegate",
  "futures",
  "log",
- "rand 0.8.6",
- "sha2 0.10.9",
- "thiserror 1.0.69",
+ "rand 0.10.1",
+ "sha2 0.11.0",
+ "thiserror 2.0.18",
  "tokio",
  "windows",
  "windows-strings",
@@ -7968,18 +7987,18 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "1.1.12"
+version = "1.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbf0d9e68100b3a7989b4901972f265cd542e560a3a8a724e1e20322f4d06ce9"
+checksum = "2466b2336ed02bcdca6b294417127b90ec92038d1d5c4fbeac971a922e0e0924"
 dependencies = [
  "pin-project-internal",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "1.1.12"
+version = "1.1.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a990e22f43e84855daf260dded30524ef4a9021cc7541c26540500a50b624389"
+checksum = "c96395f0a926bc13b1c17622aaddda1ecb55d49c8f1bf9777e4d877800a43f8b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8019,9 +8038,9 @@ version = "0.8.0-rc.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c5a777c6e26664bc9504b3ce3f6133f8f20d9071f130a4f9fcbd3186959d8dd6"
 dependencies = [
- "aes 0.9.0",
+ "aes 0.9.1",
  "aes-gcm 0.11.0-rc.3",
- "cbc 0.2.0",
+ "cbc 0.2.1",
  "der 0.8.0",
  "pbkdf2 0.13.0",
  "rand_core 0.10.1",
@@ -8243,9 +8262,9 @@ dependencies = [
 
 [[package]]
 name = "prefix-trie"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90f561214012d3fc240a1f9c817cc4d57f5310910d066069c1b093f766bb5966"
+checksum = "4cf6e3177f0684016a5c209b00882e15f8bdd3f3bb48f0491df10cd102d0c6e7"
 dependencies = [
  "either",
  "ipnet",
@@ -8283,7 +8302,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93401c13cc7ff24684571cfca9d3cf9ebabfaf3d4b7b9963ade41ec54da196b5"
 dependencies = [
  "crypto-bigint 0.7.0-rc.28",
- "crypto-common 0.2.1",
+ "crypto-common 0.2.2",
  "rand_core 0.10.1",
  "rustcrypto-ff",
  "subtle",
@@ -8314,7 +8333,7 @@ version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
 dependencies = [
- "toml_edit 0.25.11+spec-1.1.0",
+ "toml_edit 0.25.12+spec-1.1.0",
 ]
 
 [[package]]
@@ -8496,9 +8515,9 @@ dependencies = [
 
 [[package]]
 name = "pulldown-cmark"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c3a14896dfa883796f1cb410461aef38810ea05f2b2c33c5aded3649095fdad"
+checksum = "e9f068eba8e7071c5f9511831b44f32c740d5adf574e990f946ddb53db2f314e"
 dependencies = [
  "bitflags 2.11.1",
  "memchr",
@@ -8556,9 +8575,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.39.3"
+version = "0.39.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "721da970c312655cde9b4ffe0547f20a8494866a4af5ff51f18b7c633d0c870b"
+checksum = "cdcc8dd4e2f670d309a5f0e83fe36dfdc05af317008fea29144da1a2ac858e5e"
 dependencies = [
  "memchr",
  "serde",
@@ -8857,9 +8876,9 @@ dependencies = [
 
 [[package]]
 name = "rcgen"
-version = "0.14.7"
+version = "0.14.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10b99e0098aa4082912d4c649628623db6aba77335e4f4569ff5083a6448b32e"
+checksum = "57f6d249aad744e274e682777a50283a225a32705394ee6d5fcc01efa25e4055"
 dependencies = [
  "pem",
  "ring",
@@ -8880,9 +8899,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.7.5"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4666a1a60d8412eab19d94f6d13dcc9cea0a5ef4fdf6a5db306537413c661b1b"
+checksum = "7c7591fa2c6b601dfcfe5f043f65a1c39fcdf50efefcd7f1572e538c1f4b398d"
 dependencies = [
  "bitflags 2.11.1",
 ]
@@ -9001,9 +9020,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.13.3"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62e0021ea2c22aed41653bc7e1419abb2c97e038ff2c33d0e1309e49a97deec0"
+checksum = "219c5811de6525e5416c7d5d53bb656d3afdbc6c5af816e0802bcfa42dbdc1c3"
 dependencies = [
  "base64",
  "bytes",
@@ -9071,9 +9090,9 @@ dependencies = [
 
 [[package]]
 name = "rhai"
-version = "1.24.0"
+version = "1.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f9ef5dabe4c0b43d8f1187dc6beb67b53fe607fff7e30c5eb7f71b814b8c2c1"
+checksum = "dd4dd0f8c36625202a4ba553c416c19b719947cd2a31d1bda06126e4a5727daf"
 dependencies = [
  "ahash 0.8.12",
  "bitflags 2.11.1",
@@ -9090,9 +9109,9 @@ dependencies = [
 
 [[package]]
 name = "rhai_codegen"
-version = "3.1.0"
+version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4322a2a4e8cf30771dd9f27f7f37ca9ac8fe812dddd811096a98483080dabe6"
+checksum = "3cd3a7535e50bf36857e7be7bec276d334e8c2dfa469c2201226fd01638ea5ca"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9229,13 +9248,13 @@ dependencies = [
 
 [[package]]
 name = "russh"
-version = "0.60.2"
+version = "0.60.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c9e358980fe9b079b99da387117864ee6f0a3fd02f39e5b5fde6af9c2895374"
+checksum = "324b92f459d3e42da294e14e8eb150d2215fcfb7c966838bc1127cd68bc05a0d"
 dependencies = [
  "aead 0.6.0-rc.10",
  "aes 0.8.4",
- "aes 0.9.0",
+ "aes 0.9.1",
  "aes-gcm 0.11.0-rc.3",
  "aws-lc-rs",
  "bitflags 2.11.1",
@@ -9243,10 +9262,10 @@ dependencies = [
  "byteorder",
  "bytes",
  "cbc 0.1.2",
- "cbc 0.2.0",
- "cipher 0.5.1",
+ "cbc 0.2.1",
+ "cipher 0.5.2",
  "crypto-bigint 0.7.0-rc.28",
- "ctr 0.10.0",
+ "ctr 0.10.1",
  "ctr 0.9.2",
  "curve25519-dalek 5.0.0-pre.6",
  "data-encoding",
@@ -9259,7 +9278,7 @@ dependencies = [
  "enum_dispatch",
  "flate2",
  "futures",
- "generic-array 1.4.1",
+ "generic-array 1.4.2",
  "getrandom 0.2.17",
  "ghash 0.6.0",
  "hex-literal",
@@ -9311,12 +9330,12 @@ dependencies = [
 
 [[package]]
 name = "russh-cryptovec"
-version = "0.59.0"
+version = "0.60.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36140e8a20297bc2e8338807c3d9ca911f7fa49d7539cbcd6d48d3befd70efd8"
+checksum = "37cb4d0360bdd8935392a306d8b5edb539cc455b30e8bf13dd213a0cf7879b40"
 dependencies = [
  "log",
- "nix 0.31.2",
+ "nix 0.31.3",
  "ssh-encoding",
  "windows-sys 0.61.2",
 ]
@@ -9411,7 +9430,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "http",
- "reqwest 0.13.3",
+ "reqwest 0.13.4",
  "rustify_derive",
  "serde",
  "serde_json",
@@ -9553,7 +9572,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f874456e72520ff1375a06c588eaf074b0f01f9e9e1aada45bd9b7954a6e42c"
 dependencies = [
  "cfg-if",
- "cipher 0.5.1",
+ "cipher 0.5.2",
 ]
 
 [[package]]
@@ -9817,9 +9836,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.149"
+version = "1.0.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
+checksum = "e8014e44b4736ed0538adeecded0fce2a272f22dc9578a7eb6b2d9993c74cfb9"
 dependencies = [
  "itoa",
  "memchr",
@@ -9881,11 +9900,12 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.19.0"
+version = "3.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f05839ce67618e14a09b286535c0d9c94e85ef25469b0e13cb4f844e5593eb19"
+checksum = "e72c1c2cb7b223fafb600a619537a871c2818583d619401b785e7c0b746ccde2"
 dependencies = [
  "base64",
+ "bs58",
  "chrono",
  "hex",
  "indexmap 1.9.3",
@@ -9900,9 +9920,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.19.0"
+version = "3.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf2ebbe86054f9b45bc3881e865683ccfaccce97b9b4cb53f3039d67f355a334"
+checksum = "b90c488738ecb4fb0262f41f43bc40efc5868d9fb744319ddf5f5317f417bfac"
 dependencies = [
  "darling 0.23.0",
  "proc-macro2",
@@ -10050,9 +10070,9 @@ dependencies = [
 
 [[package]]
 name = "shlex"
-version = "1.3.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
+checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "signal-hook"
@@ -10135,9 +10155,9 @@ checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 
 [[package]]
 name = "similar"
-version = "3.1.0"
+version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04d93e861ede2e497b47833469b8ec9d5c07fa4c78ce7a00f6eb7dd8168b4b3f"
+checksum = "e6505efef05804732ed8a3f2d4f279429eb485bd69d5b0cc6b19cc02005cda16"
 dependencies = [
  "bstr",
 ]
@@ -10230,9 +10250,9 @@ dependencies = [
 
 [[package]]
 name = "socket2"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a766e1110788c36f4fa1c2b71b387a7815aa65f88ce0229841826633d93723e"
+checksum = "52d1cfed4120b4d927bf7c0f86d2087a4a7d6027c906d9f9d525a80573b9be51"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
@@ -10554,17 +10574,17 @@ name = "state-controller"
 version = "0.0.1"
 dependencies = [
  "async-trait",
+ "chrono",
+ "config-version",
+ "eyre",
+ "futures",
+ "futures-util",
  "nico-api-db",
  "nico-api-model",
  "nico-macros",
  "nico-sqlx-testing",
  "nico-utils",
  "nico-uuid",
- "chrono",
- "config-version",
- "eyre",
- "futures",
- "futures-util",
  "opentelemetry",
  "rand 0.10.1",
  "serde",
@@ -10791,9 +10811,9 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "tar"
-version = "0.4.45"
+version = "0.4.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22692a6476a21fa75fdfc11d452fda482af402c008cdbaf3476414e122040973"
+checksum = "3f6221d9a6003c78398e3b239969f352578258df48c8eb051caadae0015bc840"
 dependencies = [
  "filetime",
  "libc",
@@ -11076,9 +11096,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.52.2"
+version = "1.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "110a78583f19d5cdb2c5ccf321d1290344e71313c6c37d43520d386027d18386"
+checksum = "8fc7f01b389ac15039e4dc9531aa973a135d7a4135281b12d7c1bc79fd57fffe"
 dependencies = [
  "bytes",
  "libc",
@@ -11115,9 +11135,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-socks"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d4770b8024672c1101b3f6733eab95b18007dbe0847a8afe341fcf79e06043f"
+checksum = "a7e2948f60dbe26b35f2c7fb74ac2854c1fddded0fe9d7548fcc674a246f7615"
 dependencies = [
  "either",
  "futures-util",
@@ -11222,7 +11242,7 @@ dependencies = [
  "toml_datetime 1.1.1+spec-1.1.0",
  "toml_parser",
  "toml_writer",
- "winnow 1.0.2",
+ "winnow 1.0.3",
 ]
 
 [[package]]
@@ -11281,15 +11301,15 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.25.11+spec-1.1.0"
+version = "0.25.12+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b59c4d22ed448339746c59b905d24568fcbb3ab65a500494f7b8c3e97739f2b"
+checksum = "d2153edc6955a6c354fad8f5efd38b6a8769bdccf9fe50f8e1329f81b0baa5d7"
 dependencies = [
  "indexmap 2.14.0",
  "toml_datetime 1.1.1+spec-1.1.0",
  "toml_parser",
  "toml_writer",
- "winnow 1.0.2",
+ "winnow 1.0.3",
 ]
 
 [[package]]
@@ -11298,7 +11318,7 @@ version = "1.1.2+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2abe9b86193656635d2411dc43050282ca48aa31c2451210f4202550afb7526"
 dependencies = [
- "winnow 1.0.2",
+ "winnow 1.0.3",
 ]
 
 [[package]]
@@ -11453,9 +11473,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.10"
+version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68d6fdd9f81c2819c9a8b0e0cd91660e7746a8e6ea2ba7c6b2b057985f6bcb51"
+checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
 dependencies = [
  "base64",
  "bitflags 2.11.1",
@@ -11766,9 +11786,9 @@ checksum = "8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e"
 
 [[package]]
 name = "typenum"
-version = "1.20.0"
+version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40ce102ab67701b8526c123c1bab5cbe42d7040ccfd0f64af1a385808d2f43de"
+checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
 
 [[package]]
 name = "ucd-trie"
@@ -11878,7 +11898,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4987bdc12753382e0bec4a65c50738ffaabc998b9cdd1f952fb5f39b0048a96"
 dependencies = [
- "crypto-common 0.2.1",
+ "crypto-common 0.2.2",
  "ctutils",
 ]
 
@@ -11939,9 +11959,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.23.1"
+version = "1.23.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ddd74a9687298c6858e9b88ec8935ec45d22e8fd5e6394fa1bd4e99a87789c76"
+checksum = "d258b83ceec21034727ecee8c382cfa6c3e133699b0742c64571814fb420c9f7"
 dependencies = [
  "atomic",
  "getrandom 0.4.2",
@@ -11975,7 +11995,7 @@ dependencies = [
  "async-trait",
  "derive_builder",
  "http",
- "reqwest 0.13.3",
+ "reqwest 0.13.4",
  "rustify",
  "rustify_derive",
  "serde",
@@ -12087,9 +12107,9 @@ checksum = "b8dad83b4f25e74f184f64c43b150b91efe7647395b42289f38e50566d82855b"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.121"
+version = "0.2.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49ace1d07c165b0864824eee619580c4689389afa9dc9ed3a4c75040d82e6790"
+checksum = "3ed04576f974d2b2fba0f38c51dbc5518011e38c36bf1143164be765528fd409"
 dependencies = [
  "cfg-if",
  "once_cell",
@@ -12100,9 +12120,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.71"
+version = "0.4.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96492d0d3ffba25305a7dc88720d250b1401d7edca02cc3bcd50633b424673b8"
+checksum = "9473dbd2991ae90b6291c3c32c30c6187ac49aa32f9905d1cce280ec1e110b0f"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -12110,9 +12130,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.121"
+version = "0.2.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e68e6f4afd367a562002c05637acb8578ff2dea1943df76afb9e83d177c8578"
+checksum = "916151b09da36bd82f6615cbf3a419e2f0ba23a03c6160e8e92eb6bd4aa1dec6"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -12120,9 +12140,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.121"
+version = "0.2.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d95a9ec35c64b2a7cb35d3fead40c4238d0940c86d107136999567a4703259f2"
+checksum = "299047362ccbfce148b67ab7e73349f77748e00c8296f9542adfad2ad82c5c5e"
 dependencies = [
  "bumpalo",
  "proc-macro2",
@@ -12133,18 +12153,18 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.121"
+version = "0.2.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4e0100b01e9f0d03189a92b96772a1fb998639d981193d7dbab487302513441"
+checksum = "9a929b2c61f11ba3e9bc35b50c1f25cb38e0e892c0c231ae2b8cf78d5dad4437"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "wasm-bindgen-test"
-version = "0.3.71"
+version = "0.3.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af5ec93229ad9ccd0a545a516dec76dc276613f278f6a91aa6b463d5b33d42d0"
+checksum = "74fde991ccdc895cb7fbaa14b137d62af74d9011be67b71c694bfc40edd3119c"
 dependencies = [
  "async-trait",
  "cast",
@@ -12164,9 +12184,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-test-macro"
-version = "0.3.71"
+version = "0.3.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c81b9fef827e575e0e54431736d1baa0d700315d8c62cfef1f61fa3aad0cbeb"
+checksum = "e925354648d2a4d1bf205412e36d520a800280622eef4719678d268e5d40e978"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12175,9 +12195,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-test-shared"
-version = "0.2.121"
+version = "0.2.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f4d8ae7ad5440360e9799dfd42857d126454a88441ddf72d288ef83fa47f527"
+checksum = "684365b586a9a6256c1cc3544eee8680de48d6041142f581776ec7b139622ae9"
 
 [[package]]
 name = "wasm-encoder"
@@ -12241,9 +12261,9 @@ dependencies = [
 
 [[package]]
 name = "web-sys"
-version = "0.3.98"
+version = "0.3.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b572dff8bcf38bad0fa19729c89bb5748b2b9b1d8be70cf90df697e3a8f32aa"
+checksum = "6d621441cfc37b84979402712047321980c178f299193a3589d05b99e8763436"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -12768,9 +12788,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "1.0.2"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ee1708bef14716a11bae175f579062d4554d95be2c6829f518df847b7b3fdd0"
+checksum = "0592e1c9d151f854e6fd382574c3a0855250e1d9b2f99d9281c6e6391af352f1"
 dependencies = [
  "memchr",
 ]
@@ -12918,8 +12938,8 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "eyre",
- "similar 3.1.0",
- "toml_edit 0.25.11+spec-1.1.0",
+ "similar 3.1.1",
+ "toml_edit 0.25.12+spec-1.1.0",
  "version-compare 0.2.1",
  "walkdir",
 ]
@@ -12932,10 +12952,11 @@ checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 
 [[package]]
 name = "yasna"
-version = "0.5.2"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e17bb3549cc1321ae1296b9cdc2698e2b6cb1992adfa19a8c72e5b7a738f44cd"
+checksum = "b5f6765e852b9b4dc8e2a76843e4d64d1cea8e79bcde0b6901aea8e7c7f08282"
 dependencies = [
+ "bit-vec 0.9.1",
  "time",
 ]
 
@@ -12964,18 +12985,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.48"
+version = "0.8.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eed437bf9d6692032087e337407a86f04cd8d6a16a37199ed57949d415bd68e9"
+checksum = "3b065d4f0e55f82fae73202e189638116a87c55ab6b8e6c2721e13dd9d854ad1"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.48"
+version = "0.8.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70e3cd084b1788766f53af483dd21f93881ff30d7320490ec3ef7526d203bad4"
+checksum = "0b631b19d36a892ab55420c92dbc83ccd79274f25be714855d3074aa71cab639"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12984,9 +13005,9 @@ dependencies = [
 
 [[package]]
 name = "zerofrom"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69faa1f2a1ea75661980b013019ed6687ed0e83d069bc1114e2cc74c6c04c4df"
+checksum = "0ec05a11813ea801ff6d75110ad09cd0824ddba17dfe17128ea0d5f68e6c5272"
 dependencies = [
  "zerofrom-derive",
 ]

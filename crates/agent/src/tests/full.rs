@@ -277,37 +277,37 @@ async fn run_common_parts(
     // same gRPC endpoints that NICo API would (and, in this case, the exact gRPC
     // endpoints that our local agent that we're spawning will need to make calls to).
     // A `state` is provided to the Router so that each mocked call (e.g. how `handle_netconf
-    // is leveraged for `/nico.NICo/GetManagedHostNetworkConfig` calls) can have
+    // is leveraged for `/forge.Forge/GetManagedHostNetworkConfig` calls) can have
     // additional bits of context (just like nico-api would).
     let app = Router::new()
         .route("/up", get(handle_up))
-        .route("/nico.NICo/DiscoverMachine", post(handle_discover))
+        .route("/forge.Forge/DiscoverMachine", post(handle_discover))
         .route(
-            "/nico.NICo/GetManagedHostNetworkConfig",
+            "/forge.Forge/GetManagedHostNetworkConfig",
             post(handle_netconf),
         )
         .route(
-            "/nico.NICo/RecordDpuNetworkStatus",
+            "/forge.Forge/RecordDpuNetworkStatus",
             post(handle_record_netstat),
         )
         .route(
-            "/nico.NICo/DpuAgentUpgradeCheck",
+            "/forge.Forge/DpuAgentUpgradeCheck",
             post(handle_dpu_agent_upgrade_check),
         )
         .route(
-            "/nico.NICo/UpdateAgentReportedInventory",
+            "/forge.Forge/UpdateAgentReportedInventory",
             post(handle_update_agent_reported_inventory),
         )
         .route(
-            "/nico.NICo/GetDpuInfoList",
+            "/forge.Forge/GetDpuInfoList",
             post(handle_get_dpu_info_list),
         )
-        .route("/nico.NICo/FindInterfaces", post(handle_find_interfaces))
+        .route("/forge.Forge/FindInterfaces", post(handle_find_interfaces))
         // NicoApiClient needs a working Version route for connection retrying
-        .route("/nico.NICo/Version", post(handle_version))
+        .route("/forge.Forge/Version", post(handle_version))
         // Same handlers, registered at the renamed proto path for forward
         // compatibility with clients built from core.proto. Old clients on
-        // /nico.NICo/* continue to hit the routes above; new clients on
+        // /forge.Forge/* continue to hit the routes above; new clients on
         // /core.Core/* hit these. To be collapsed once all callers have
         // migrated to /core.Core/*.
         .route("/core.Core/DiscoverMachine", post(handle_discover))
