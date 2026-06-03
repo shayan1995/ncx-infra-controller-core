@@ -280,6 +280,15 @@ nico-ssh-console-rs:
     annotations:
       metallb.universe.tf/loadBalancerIPs: "10.180.126.164"  # EXAMPLE - SSH console VIP (internal pool)
 
+## ---------------------------------------------------------------------------
+## nico-ntp - chrony NTP servers
+##
+## Deploys a 3-replica chrony StatefulSet plus per-pod LoadBalancer Services.
+## Each replica gets a stable MetalLB VIP that DPUs and bare-metal hosts sync
+## against (advertised to them via nico-dhcp.config.kea.hookParameters.ntpServer
+## above). Enabled by default — DPU pre-ingestion fails on clock divergence,
+## so the chart deploys NTP unless you disable it here.
+## ---------------------------------------------------------------------------
 nico-ntp:
   externalService:
     enabled: true    # must be explicitly enabled - defaults to false in chart
