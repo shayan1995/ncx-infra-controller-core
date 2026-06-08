@@ -7503,6 +7503,7 @@ dependencies = [
 name = "nvue-client"
 version = "0.0.0"
 dependencies = [
+ "glob",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
