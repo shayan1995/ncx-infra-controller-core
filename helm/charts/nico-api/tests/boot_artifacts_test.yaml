@@ -69,7 +69,6 @@ tests:
           content:
             name: boot-artifacts
             mountPath: /forge-boot-artifacts/blobs/internal
-            readOnly: true
 
   - it: should merge bootArtifactContainers and initContainers
     set:
