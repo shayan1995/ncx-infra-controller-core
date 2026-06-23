@@ -18,7 +18,6 @@ tests:
           content:
             name: boot-artifacts
             mountPath: /forge-boot-artifacts/blobs/internal
-            readOnly: true
 
   - it: should render boot artifact init containers with auto-injected volume mount
     set:

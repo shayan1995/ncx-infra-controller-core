@@ -63,7 +63,7 @@ nico-api:
       command: ["sh", "-c", "cp -r /x86_64 /forge-boot-artifacts/blobs/internal"]
     - name: boot-artifacts-aarch64
       image: "your-registry.example.com/boot-artifacts-aarch64:latest"
-      command: ["sh", "-c", "cp -r /aarch64 /apt /firmware /forge-boot-artifacts/blobs/internal"]
+      command: ["sh", "-c", "cp -r /aarch64 /apt /forge-boot-artifacts/blobs/internal"]
     - name: machine-validation-config
       image: "your-registry.example.com/machine-validation-config:latest"
       command: ["sh", "-c", "cp -r /machine-validation /forge-boot-artifacts/blobs/internal"]
@@ -248,7 +248,7 @@ nico-pxe:
       command: ["sh", "-c", "cp -r /x86_64 /forge-boot-artifacts/blobs/internal"]
     - name: boot-artifacts-aarch64
       image: "your-registry.example.com/boot-artifacts-aarch64:latest"
-      command: ["sh", "-c", "cp -r /aarch64 /apt /firmware /forge-boot-artifacts/blobs/internal"]
+      command: ["sh", "-c", "cp -r /aarch64 /apt /forge-boot-artifacts/blobs/internal"]
     - name: machine-validation-config
       image: "your-registry.example.com/machine-validation-config:latest"
       command: ["sh", "-c", "cp -r /machine-validation /forge-boot-artifacts/blobs/internal"]
