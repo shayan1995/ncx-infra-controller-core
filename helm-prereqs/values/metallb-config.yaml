@@ -36,7 +36,7 @@
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: vip-pool-internal
+  name: vip-pool-int-dev6    # ← rename to vip-pool-int-<yoursite>
   namespace: metallb-system
 spec:
   addresses: []      # REQUIRED: your internal VIP CIDR(s)/range(s)
@@ -45,7 +45,7 @@ spec:
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: vip-pool-external
+  name: vip-pool-ext-dev6    # ← rename to vip-pool-ext-<yoursite>
   namespace: metallb-system
 spec:
   addresses: []      # REQUIRED: your external VIP CIDR(s)/range(s)
@@ -84,14 +84,23 @@ spec:
 # ---------------------------------------------------------------------------
 # BGP Advertisement (production)
 #
-# Empty spec = advertise ALL IPAddressPools to ALL BGPPeers. Uncomment when
-# using BGP mode; rename to match your site.
+# Empty spec = advertise ALL IPAddressPools to ALL BGPPeers automatically.
+# This is the standard production configuration — no filtering needed when
+# all nodes peer with the same set of routers and all VIPs should be reachable
+# from both TOR switches.
+#
+# To restrict which pools are sent to which peers, add:
+#   spec:
+#     ipAddressPools: [vip-pool-int-dev6]
+#     peers: [rno1-m04-d04-cpu-1-bgp-peer]
+#
+# Rename the advertisement to match your site (e.g. "prod-us-east", "lab-rno1").
 # ---------------------------------------------------------------------------
-# apiVersion: metallb.io/v1beta1
-# kind: BGPAdvertisement
-# metadata:
-#   name: site-advertisement
-#   namespace: metallb-system
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: dev6          # EXAMPLE — rename to your site name
+  namespace: metallb-system
 
 # ---------------------------------------------------------------------------
 # L2 Advertisement — alternative to BGP for dev/test environments.
@@ -107,5 +116,5 @@ spec:
 #   namespace: metallb-system
 # spec:
 #   ipAddressPools:
-#     - vip-pool-internal
-#     - vip-pool-external
+#     - vip-pool-int-dev6
+#     - vip-pool-ext-dev6
