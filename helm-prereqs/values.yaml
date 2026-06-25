@@ -7,7 +7,7 @@
 ## the nico-pg-cluster-env ConfigMap.
 ## Override per site: --set siteName=<sitename>
 ## REQUIRED: set your short site identifier (preflight fails while empty/TMP_SITE).
-siteName: "dev6"
+siteName: ""
 
 ## Target namespace — must match the namespace used for helm install nico
 namespace: nico-system

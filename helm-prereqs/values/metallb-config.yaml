@@ -39,8 +39,7 @@ metadata:
   name: vip-pool-int-dev6    # ← rename to vip-pool-int-<yoursite>
   namespace: metallb-system
 spec:
-  addresses:
-    - 10.180.126.160/28
+  addresses: []      # REQUIRED: your internal VIP CIDR(s)/range(s)
 
 ---
 apiVersion: metallb.io/v1beta1
@@ -49,8 +48,7 @@ metadata:
   name: vip-pool-ext-dev6    # ← rename to vip-pool-ext-<yoursite>
   namespace: metallb-system
 spec:
-  addresses:
-    - 10.180.126.176/28
+  addresses: []      # REQUIRED: your external VIP CIDR(s)/range(s)
 
 ---
 # ---------------------------------------------------------------------------
