@@ -5,6 +5,7 @@ package flowgrpc
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	flowgrpctypes "github.com/NVIDIA/infra-controller/rest-api/site-agent/pkg/datatypes/managertypes/flowgrpc"
@@ -42,7 +43,11 @@ func makeGrpcClientMetrics() client.Metrics {
 	if err := prometheus.Register(metrics.responseLatency); err != nil {
 		are := prometheus.AlreadyRegisteredError{}
 		if errors.As(err, &are) {
-			metrics.responseLatency = are.ExistingCollector.(*prometheus.HistogramVec)
+			existing, ok := are.ExistingCollector.(*prometheus.HistogramVec)
+			if !ok {
+				panic(fmt.Errorf("flowgrpc: metric %q already registered as unexpected type %T", metricFlowGrpcLatency, are.ExistingCollector))
+			}
+			metrics.responseLatency = existing
 		} else {
 			panic(err)
 		}
@@ -75,7 +80,11 @@ func newWorkflowMetrics() flowgrpctypes.WorkflowMetrics {
 	if err := prometheus.Register(metrics.latency); err != nil {
 		are := prometheus.AlreadyRegisteredError{}
 		if errors.As(err, &are) {
-			metrics.latency = are.ExistingCollector.(*prometheus.HistogramVec)
+			existing, ok := are.ExistingCollector.(*prometheus.HistogramVec)
+			if !ok {
+				panic(fmt.Errorf("flowgrpc: metric %q already registered as unexpected type %T", metricFlowWorkflowLatency, are.ExistingCollector))
+			}
+			metrics.latency = existing
 		} else {
 			panic(err)
 		}

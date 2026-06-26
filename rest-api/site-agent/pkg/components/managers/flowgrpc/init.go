@@ -4,6 +4,7 @@
 package flowgrpc
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -27,15 +28,20 @@ func (flowgrpc *API) Init() {
 
 	ManagerAccess.Data.EB.Log.Info().Msg("Flow: Initializing Flow gRPC client manager")
 
-	prometheus.MustRegister(
-		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Namespace: "elektra_site_agent",
-			Name:      MetricFlowStatus,
-			Help:      "Flow gRPC health status",
-		},
-			func() float64 {
-				return float64(ManagerAccess.Data.EB.Managers.FlowGrpc.State.HealthStatus.Load())
-			}))
+	gauge := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: "elektra_site_agent",
+		Name:      MetricFlowStatus,
+		Help:      "Flow gRPC health status",
+	},
+		func() float64 {
+			return float64(ManagerAccess.Data.EB.Managers.FlowGrpc.State.HealthStatus.Load())
+		})
+	if err := prometheus.Register(gauge); err != nil {
+		are := prometheus.AlreadyRegisteredError{}
+		if !errors.As(err, &are) {
+			panic(fmt.Errorf("flowgrpc: failed to register metric %q: %w", MetricFlowStatus, err))
+		}
+	}
 
 	ManagerAccess.Data.EB.Managers.FlowGrpc.State.HealthStatus.Store(uint64(computils.CompNotKnown))
 
