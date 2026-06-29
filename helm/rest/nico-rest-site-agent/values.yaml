@@ -82,7 +82,7 @@ envConfig:
   ENABLE_TLS: "true"
   NICO_ADDRESS: ""
   NICO_SEC_OPT: "0"
-  FLOW_GRPC_ENABLED: "false"
+  FLOW_GRPC_ENABLED: "true"
   FLOW_GRPC_SEC_OPT: "2"
   CLUSTER_ID: ""
   TEMPORAL_HOST: "temporal-frontend.temporal"
