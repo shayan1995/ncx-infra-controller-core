@@ -63,6 +63,14 @@ envConfig:
   CARBIDE_ADDRESS: "nico-api.nico-system.svc.cluster.local:1079"
   CARBIDE_SEC_OPT: "2"
 
+  # mTLS to Flow gRPC on port 50051 (FLOW_GRPC_SEC_OPT=2).
+  # Flow requires client certificates (RequireAndVerifyClientCert); server-TLS
+  # only (1) causes "tls: certificate required" on every connection attempt.
+  # The site-agent reuses the Core gRPC cert (same vault-nico-issuer CA) which
+  # is mounted at /etc/core-grpc/ by the nico-certs volume.
+  FLOW_GRPC_ENABLED: "true"
+  FLOW_GRPC_SEC_OPT: "2"
+
   # DB connection config — DEV ONLY, matches the dev postgres instance in setup.sh.
   # DB_USER and DB_PASSWORD are injected from the db-creds Secret (secrets.dbCreds).
   DB_ADDR: "postgres.postgres.svc.cluster.local"

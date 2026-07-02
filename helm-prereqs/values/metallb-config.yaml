@@ -39,7 +39,8 @@ metadata:
   name: vip-pool-internal
   namespace: metallb-system
 spec:
-  addresses: []      # REQUIRED: your internal VIP CIDR(s)/range(s)
+  addresses:
+    - 10.180.126.160/28
 
 ---
 apiVersion: metallb.io/v1beta1
@@ -48,7 +49,8 @@ metadata:
   name: vip-pool-external
   namespace: metallb-system
 spec:
-  addresses: []      # REQUIRED: your external VIP CIDR(s)/range(s)
+  addresses:
+    - 10.180.126.176/28
 
 ---
 # ---------------------------------------------------------------------------
@@ -87,11 +89,11 @@ spec:
 # Empty spec = advertise ALL IPAddressPools to ALL BGPPeers. Uncomment when
 # using BGP mode; rename to match your site.
 # ---------------------------------------------------------------------------
-# apiVersion: metallb.io/v1beta1
-# kind: BGPAdvertisement
-# metadata:
-#   name: site-advertisement
-#   namespace: metallb-system
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: dev6
+  namespace: metallb-system
 
 # ---------------------------------------------------------------------------
 # L2 Advertisement — alternative to BGP for dev/test environments.
