@@ -1,0 +1,46 @@
+# Least-privilege RBAC for the simulator. Keep in sync with the
+# +kubebuilder:rbac markers in internal/controller/dpudevice_controller.go
+# (regenerate with `make manifests` once controller-gen is wired).
+#
+# IMPORTANT: the ServiceAccount namespace below AND the ClusterRoleBinding
+# subject namespace AND the Deployment namespace (config/manager/manager.yaml)
+# must all equal the value passed to --dpf-namespace. They are hardcoded to
+# dpf-operator-system here; change all three together when deploying to a
+# different namespace, or the pod's SA token will not be bound to this
+# ClusterRole and every API call returns 403.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dpf-sim-controller
+  namespace: dpf-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dpf-sim-controller
+rules:
+  - apiGroups: ["provisioning.dpu.nvidia.com"]
+    resources: ["dpudevices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["provisioning.dpu.nvidia.com"]
+    resources: ["dpunodes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["provisioning.dpu.nvidia.com"]
+    resources: ["dpus"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["provisioning.dpu.nvidia.com"]
+    resources: ["dpus/status"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dpf-sim-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dpf-sim-controller
+subjects:
+  - kind: ServiceAccount
+    name: dpf-sim-controller
+    namespace: dpf-operator-system

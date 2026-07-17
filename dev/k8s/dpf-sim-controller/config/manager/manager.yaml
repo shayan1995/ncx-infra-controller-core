@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dpf-sim-controller
+  namespace: dpf-operator-system
+  labels:
+    app.kubernetes.io/name: dpf-sim-controller
+    app.kubernetes.io/component: dev-simulator
+spec:
+  replicas: 1 # single-instance dev tooling; no leader election
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dpf-sim-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dpf-sim-controller
+    spec:
+      serviceAccountName: dpf-sim-controller
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: manager
+          image: dpf-sim-controller:dev # override via kustomize/`make deploy IMG=...`
+          args:
+            - --dpf-namespace=dpf-operator-system
+            - --phase-dwell=3s
+          ports:
+            - name: metrics
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
