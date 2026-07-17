@@ -165,13 +165,14 @@ _record_registry_transport_issue() {
     local _image_ref="$2"
     local _detail="$3"
     local _stderr="$4"
+    local _creds_in_use="$5"
     local _msg="${_label} '${_image_ref}' could not be checked: ${_detail}"
     [[ -n "${_stderr}" ]] && _msg="${_msg} (${_stderr})"
 
-    if [[ -n "${REGISTRY_PULL_SECRET:-}" ]]; then
+    if [[ -n "${_creds_in_use}" ]]; then
         ERRORS+=("${_msg}")
     else
-        WARNINGS+=("${_msg}; no REGISTRY_PULL_SECRET is set, so setup may still work only if images are public, preloaded, or existing imagePullSecrets are valid")
+        WARNINGS+=("${_msg}; preflight has no registry credentials for this host, so setup may still work if images are public, preloaded, or existing imagePullSecrets are valid")
     fi
 }
 
@@ -179,15 +180,16 @@ _curl_registry_manifest() {
     local _url="$1"
     local _header_file="$2"
     local _err_file="$3"
-    local _bearer_token="${4:-}"
+    local _bearer_token="$4"
+    local _secret="$5"
     local _username="${REGISTRY_PULL_USERNAME:-\$oauthtoken}"
     local _accept="application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json"
     local _auth_args=()
 
     if [[ -n "${_bearer_token}" ]]; then
         _auth_args=(-H "Authorization: Bearer ${_bearer_token}")
-    elif [[ -n "${REGISTRY_PULL_SECRET:-}" ]]; then
-        _auth_args=(--user "${_username}:${REGISTRY_PULL_SECRET}")
+    elif [[ -n "${_secret}" ]]; then
+        _auth_args=(--user "${_username}:${_secret}")
     fi
 
     # HEAD is the spec'd existence probe and does not count as a pull
@@ -232,11 +234,21 @@ _validate_image_manifest_access() {
     _repo="${_image_no_tag#*/}"
     _url="https://${_registry}/v2/${_repo}/manifests/${_tag}"
 
+    # Only offer REGISTRY_PULL_SECRET to the registry it was provided for
+    # (the NICO_IMAGE_REGISTRY host). Refs pointing at other hosts — or any
+    # host when no secret is set — are probed anonymously, so the secret is
+    # never sent to unrelated registries and registries that do not require
+    # auth just answer 200. Failures without credentials stay warnings.
+    local _host_secret=""
+    if [[ -n "${REGISTRY_PULL_SECRET:-}" && "${_registry}" == "${NICO_IMAGE_REGISTRY%%/*}" ]]; then
+        _host_secret="${REGISTRY_PULL_SECRET}"
+    fi
+
     _header_file="$(mktemp)"
     _err_file="$(mktemp)"
     _token_file="$(mktemp)"
 
-    if _http_code="$(_curl_registry_manifest "${_url}" "${_header_file}" "${_err_file}")"; then
+    if _http_code="$(_curl_registry_manifest "${_url}" "${_header_file}" "${_err_file}" "" "${_host_secret}")"; then
         _curl_rc=0
     else
         _curl_rc=$?
@@ -245,7 +257,7 @@ _validate_image_manifest_access() {
     if [[ "${_curl_rc}" -ne 0 ]]; then
         _stderr="$(cat "${_err_file}" 2>/dev/null || true)"
         rm -f "${_header_file}" "${_err_file}" "${_token_file}"
-        _record_registry_transport_issue "${_label}" "${_image_ref}" "$(_registry_transport_detail "${_curl_rc}")" "${_stderr}"
+        _record_registry_transport_issue "${_label}" "${_image_ref}" "$(_registry_transport_detail "${_curl_rc}")" "${_stderr}" "${_host_secret}"
         return
     fi
 
@@ -259,8 +271,8 @@ _validate_image_manifest_access() {
 
             if [[ -n "${_realm}" ]]; then
                 local _token_auth_args=()
-                if [[ -n "${REGISTRY_PULL_SECRET:-}" ]]; then
-                    _token_auth_args=(--user "${_username}:${REGISTRY_PULL_SECRET}")
+                if [[ -n "${_host_secret}" ]]; then
+                    _token_auth_args=(--user "${_username}:${_host_secret}")
                 fi
                 if _token_code="$(curl --silent --show-error --location \
                     --connect-timeout 5 --max-time 20 \
@@ -279,29 +291,44 @@ _validate_image_manifest_access() {
                 if [[ "${_token_rc}" -ne 0 ]]; then
                     _stderr="$(cat "${_err_file}" 2>/dev/null || true)"
                     rm -f "${_header_file}" "${_err_file}" "${_token_file}"
-                    _record_registry_transport_issue "${_label}" "${_image_ref}" "$(_registry_transport_detail "${_token_rc}")" "${_stderr}"
+                    _record_registry_transport_issue "${_label}" "${_image_ref}" "$(_registry_transport_detail "${_token_rc}")" "${_stderr}" "${_host_secret}"
                     return
                 fi
 
-                _token_json="$(cat "${_token_file}" 2>/dev/null || true)"
-                _token="$(printf "%s" "${_token_json}" | jq -r '.token // .access_token // empty' 2>/dev/null || true)"
-                if [[ -n "${_token}" ]]; then
-                    : > "${_header_file}"
-                    : > "${_err_file}"
-                    if _http_code="$(_curl_registry_manifest "${_url}" "${_header_file}" "${_err_file}" "${_token}")"; then
-                        _curl_rc=0
-                    else
-                        _curl_rc=$?
-                    fi
-                    if [[ "${_curl_rc}" -ne 0 ]]; then
-                        _stderr="$(cat "${_err_file}" 2>/dev/null || true)"
+                # Classify the token response before retrying the manifest so
+                # a broken token endpoint is not misreported as bad credentials.
+                case "${_token_code}" in
+                    2??)
+                        _token_json="$(cat "${_token_file}" 2>/dev/null || true)"
+                        _token="$(printf "%s" "${_token_json}" | jq -r '.token // .access_token // empty' 2>/dev/null || true)"
+                        if [[ -z "${_token}" ]]; then
+                            rm -f "${_header_file}" "${_err_file}" "${_token_file}"
+                            _record_registry_transport_issue "${_label}" "${_image_ref}" "token endpoint returned HTTP ${_token_code} without a usable token" "" "${_host_secret}"
+                            return
+                        fi
+                        : > "${_header_file}"
+                        : > "${_err_file}"
+                        if _http_code="$(_curl_registry_manifest "${_url}" "${_header_file}" "${_err_file}" "${_token}" "")"; then
+                            _curl_rc=0
+                        else
+                            _curl_rc=$?
+                        fi
+                        if [[ "${_curl_rc}" -ne 0 ]]; then
+                            _stderr="$(cat "${_err_file}" 2>/dev/null || true)"
+                            rm -f "${_header_file}" "${_err_file}" "${_token_file}"
+                            _record_registry_transport_issue "${_label}" "${_image_ref}" "$(_registry_transport_detail "${_curl_rc}")" "${_stderr}" "${_host_secret}"
+                            return
+                        fi
+                        ;;
+                    401|403)
+                        _http_code="${_token_code}"
+                        ;;
+                    *)
                         rm -f "${_header_file}" "${_err_file}" "${_token_file}"
-                        _record_registry_transport_issue "${_label}" "${_image_ref}" "$(_registry_transport_detail "${_curl_rc}")" "${_stderr}"
+                        _record_registry_transport_issue "${_label}" "${_image_ref}" "token endpoint returned HTTP ${_token_code}" "" "${_host_secret}"
                         return
-                    fi
-                elif [[ "${_token_code}" == "401" || "${_token_code}" == "403" ]]; then
-                    _http_code="${_token_code}"
-                fi
+                        ;;
+                esac
             fi
         fi
     fi
@@ -313,20 +340,28 @@ _validate_image_manifest_access() {
             return
             ;;
         401|403)
-            if [[ -n "${REGISTRY_PULL_SECRET:-}" ]]; then
+            if [[ -n "${_host_secret}" ]]; then
                 ERRORS+=("${_label} '${_image_ref}' is not pullable with REGISTRY_PULL_USERNAME/REGISTRY_PULL_SECRET (HTTP ${_http_code}: unauthorized or forbidden)")
             else
-                WARNINGS+=("${_label} '${_image_ref}' requires registry authentication (HTTP ${_http_code}); no REGISTRY_PULL_SECRET is set, so preflight could not validate pull permission")
+                WARNINGS+=("${_label} '${_image_ref}' requires registry authentication (HTTP ${_http_code}); preflight has no credentials for registry '${_registry}', so pull permission could not be validated")
             fi
             ;;
         404)
-            ERRORS+=("${_label} '${_image_ref}' was not found (HTTP 404) - check NICO_IMAGE_REGISTRY, NICO_CORE_IMAGE_TAG, and repository access")
+            if [[ -n "${_host_secret}" ]]; then
+                ERRORS+=("${_label} '${_image_ref}' was not found (HTTP 404) - check NICO_IMAGE_REGISTRY, NICO_CORE_IMAGE_TAG, and repository access")
+            else
+                WARNINGS+=("${_label} '${_image_ref}' was not found (HTTP 404); setup may still work if the image is preloaded")
+            fi
             ;;
         5??)
-            ERRORS+=("${_label} '${_image_ref}' registry returned HTTP ${_http_code}; setup would likely fail while pulling this image")
+            if [[ -n "${_host_secret}" ]]; then
+                ERRORS+=("${_label} '${_image_ref}' registry returned HTTP ${_http_code}; setup would likely fail while pulling this image")
+            else
+                WARNINGS+=("${_label} '${_image_ref}' registry returned HTTP ${_http_code}; setup may fail while pulling this image unless it is preloaded")
+            fi
             ;;
         000)
-            _record_registry_transport_issue "${_label}" "${_image_ref}" "connection failed" ""
+            _record_registry_transport_issue "${_label}" "${_image_ref}" "connection failed" "" "${_host_secret}"
             ;;
         *)
             ERRORS+=("${_label} '${_image_ref}' registry returned unexpected HTTP ${_http_code}")
@@ -896,9 +931,13 @@ fi  # _CLUSTER_REACHABLE
 # ---------------------------------------------------------------------------
 if [[ -n "${NICO_IMAGE_REGISTRY:-}" ]] && command -v curl &>/dev/null; then
     _reg_host="${NICO_IMAGE_REGISTRY%%/*}"
-    _http_code=$(curl --connect-timeout 5 --max-time 10 \
+    # curl already prints 000 on transport failure, so an appended fallback
+    # would corrupt the value ("000\n000") and skip the unreachable path.
+    if ! _http_code=$(curl --connect-timeout 5 --max-time 10 \
         -o /dev/null -w "%{http_code}" \
-        "https://${_reg_host}/v2/" 2>/dev/null || echo "000")
+        "https://${_reg_host}/v2/" 2>/dev/null); then
+        _http_code="000"
+    fi
     if [[ "${_http_code}" == "000" ]]; then
         # Air-gapped/preloaded environments legitimately have no registry
         # access, so an unreachable host stays a warning and the per-image
