@@ -515,6 +515,12 @@ pub(crate) async fn discover_machine(
     }
 
     txn.commit().await?;
+    // Release the admission permit at the transaction boundary: the advisory
+    // locks are released by the commit, and everything below (certificate
+    // provisioning, attestation) never touches an admin segment. Holding the
+    // permit across that work would throttle other lock-taking flows for no
+    // benefit.
+    drop(_admin_admission);
 
     let machine_certificate = if attest_key_challenge.is_none() {
         if std::env::var("UNSUPPORTED_CERTIFICATE_PROVIDER").is_ok() {
