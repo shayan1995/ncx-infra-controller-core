@@ -2811,6 +2811,13 @@ pub async fn reconcile_admin_addresses_for_host(
     host_machine_id: &MachineId,
 ) -> DatabaseResult<bool> {
     let mut txn = Transaction::begin_inner(txn).await?;
+    // #3721 instrumentation: this function is the hot critical section for
+    // fleet ingestion — it holds every admin-segment advisory lock while it
+    // works, so its duration is the serialization quantum for ALL host
+    // operations. Time each phase so the fix can be aimed rather than guessed.
+    let _phase_start = std::time::Instant::now();
+    let mut _t_lock = std::time::Duration::ZERO;
+    let mut _t_read = std::time::Duration::ZERO;
 
     // Lock all admin segments up front instead of doing a precise pre-read of
     // this host's segment set. The precise approach would need a locked re-read
@@ -2820,7 +2827,9 @@ pub async fn reconcile_admin_addresses_for_host(
     //
     // This matches allocator lock ordering: segment advisory lock first, then
     // machine interface/address row locks.
+    let _lock_t0 = std::time::Instant::now();
     let segments = load_and_lock_all_admin_segments(&mut txn).await?;
+    _t_lock = _lock_t0.elapsed();
     let segments_by_id = segments
         .iter()
         .map(|segment| (segment.id, segment))
@@ -2828,13 +2837,25 @@ pub async fn reconcile_admin_addresses_for_host(
 
     // Start from all host admin interfaces so a non-DPU primary admin NIC can remain the active
     // config source while DPU-backed links are treated as dormant.
+    let _read_t0 = std::time::Instant::now();
     let mut interfaces =
         find_host_admin_interfaces_for_update(txn.as_pgconn(), host_machine_id).await?;
+    _t_read = _read_t0.elapsed();
     if !interfaces
         .iter()
         .any(|interface| interface.is_dpu_backed_host_link)
     {
         txn.commit().await?;
+        tracing::info!(
+            target: "carbide::lock_profile",
+            phase = "reconcile_admin_addresses",
+            outcome = "no_dpu_backed_link",
+            segments = segments.len(),
+            lock_ms = _t_lock.as_millis() as u64,
+            read_ms = _t_read.as_millis() as u64,
+            total_ms = _phase_start.elapsed().as_millis() as u64,
+            "admin reconcile finished"
+        );
         return Ok(false);
     }
 
@@ -3048,6 +3069,22 @@ pub async fn reconcile_admin_addresses_for_host(
     }
 
     txn.commit().await?;
+    // #3721: the serialization quantum for every host operation. lock_ms is
+    // time to load+lock all admin segments; read_ms is the host-interface
+    // read; total_ms is the whole critical section. Compare across fleet
+    // sizes to see which phase grows.
+    tracing::info!(
+        target: "carbide::lock_profile",
+        phase = "reconcile_admin_addresses",
+        outcome = "reconciled",
+        segments = segments.len(),
+        interfaces = interfaces.len(),
+        changed = active_config_changed,
+        lock_ms = _t_lock.as_millis() as u64,
+        read_ms = _t_read.as_millis() as u64,
+        total_ms = _phase_start.elapsed().as_millis() as u64,
+        "admin reconcile finished"
+    );
     Ok(active_config_changed)
 }
 
