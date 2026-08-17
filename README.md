@@ -47,9 +47,9 @@ export NICO_REST_IMAGE_TAG=NICO_REST_TAG             # e.g. 2.0.0-pr-58-g38a54a3
 
 # DPF (DOCA Platform Framework) DPU provisioning installs BY DEFAULT.
 # Set these three variables, or pass --skip-dpf to opt out:
-export NICO_DPF_DPU_INTERFACE=<nic-facing-dpus>     # controller NIC for the DPU cluster VIP
-export NICO_DPF_DPU_CLUSTER_VIP=<free-routable-ip>  # floating IP the DPUs use to reach their control plane
-export NICO_DPF_BMC_ROOT_PASSWORD=<bmc-password>    # site-wide BMC root password
+export NICO_DPF_DPU_INTERFACE=NIC_FACING_DPUS       # controller NIC for the DPU cluster VIP, e.g. enp1s0f0np0
+export NICO_DPF_DPU_CLUSTER_VIP=FREE_ROUTABLE_IP    # floating IP the DPUs use to reach their control plane
+export NICO_DPF_BMC_ROOT_PASSWORD=BMC_ROOT_PASSWORD # site-wide BMC root password
 # Refer to helm-prereqs/README.md §DPF for full variable reference.
 
 # 3. Customize site-specific values
