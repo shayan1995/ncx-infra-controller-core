@@ -523,7 +523,7 @@ fi
 # ---------------------------------------------------------------------------
 # 2. Required tools
 # ---------------------------------------------------------------------------
-for _tool in helm helmfile kubectl jq ssh-keygen; do
+for _tool in helm helmfile kubectl jq ssh-keygen envsubst; do
     command -v "${_tool}" &>/dev/null || \
         WARNINGS+=("'${_tool}' not found in PATH — install it before running setup.sh")
 done
