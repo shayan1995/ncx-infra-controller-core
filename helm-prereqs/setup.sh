@@ -2248,7 +2248,7 @@ _wait_for_secret() {
 echo "Waiting for Flow DB credentials..."
 _wait_for_secret "flow.nico.nico-pg-cluster.credentials" \
     "${NICO_FLOW_NAMESPACE}" \
-    "Synced by the flow-db-eso ClusterExternalSecret in nico-prereqs. Check 'kubectl describe clusterexternalsecret flow-db-eso'."
+    "Synced by the flow-db-eso ClusterExternalSecret in nico-prereqs. Check 'kubectl describe clusterexternalsecret flow-db-eso'. Flow is mandatory: sites running an external PostgreSQL (helm-prereqs postgresql.enabled=false) must provision a flow database and create this Secret in the '${NICO_FLOW_NAMESPACE}' namespace themselves before running setup.sh."
 
 echo "Installing flow helm chart..."
 helm upgrade --install flow "${NICO_FLOW_CHART}" \

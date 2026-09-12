@@ -399,7 +399,7 @@ if kc get ns "${FLOW_NS}" &>/dev/null; then
     _check_secret_exists "${FLOW_NS}" "${_S}"
   done
 else
-  skip "flow namespace not present — flow disabled or not yet deployed"
+  fail "flow namespace not present — Flow is mandatory (setup.sh phase 7h); the deployment is missing"
 fi
 
 section "RMS (Rack Manager Service)"

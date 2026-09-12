@@ -308,6 +308,12 @@ Once the writer is Postgres, the KEK backup above belongs in every pre-upgrade c
 
 ## Version-specific upgrade notes
 
+### 2.2 → 2.3: Core components are mandatory
+
+**Impact:** The core NICo subcharts (`nico-api`, `nico-bmc-proxy`, `nico-dhcp`, `nico-dns`, `nico-hardware-health`, `nico-pxe`, `nico-ssh-console-rs`) no longer have `<chart>.enabled` toggles — they are unconditional dependencies in `helm/Chart.yaml` and always install. A site values file (including one passed via `setup.sh --core-values`) that sets e.g. `nico-bmc-proxy.enabled: false` is **silently ignored**: Helm accepts the dead key without warning and installs the component anyway. Before upgrading, audit your site values files and remove any `enabled:` overrides for core subcharts; if a site previously disabled a core component (for example, a DHCP or BMC proxy provided externally), plan for the in-cluster component to appear after the upgrade. Optional services (`nico-dsx-exchange-consumer`, `nico-ntp`, `unbound`) keep their toggles.
+
+NICo Flow is also mandatory: `--skip-flow` and the helm-prereqs `flow.enabled` value were removed, phase 7h always runs, and the Flow chart moved from `helm/charts/nico-flow` to `helm/nico-flow`. Sites running an external PostgreSQL (`postgresql.enabled: false` in helm-prereqs values) must provision the flow database and the `flow.nico.nico-pg-cluster.credentials` Secret in the `flow` namespace before running `setup.sh`, or phase 7h fails after its 120s credential wait.
+
 ### 2.0 → 2.1: MetalLB CRD ownership migration
 
 **Impact:** This upgrade path requires special handling that `setup.sh` performs automatically. If you skip MetalLB's phase in your upgrade (for example, by removing it from the helmfile run), your site config objects (`IPAddressPool`, `BGPPeer`, `BGPAdvertisement`) will be deleted.

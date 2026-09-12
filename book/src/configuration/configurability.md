@@ -1454,7 +1454,7 @@ on or off.
 | Component | Layer | Knob | Default | When to enable |
 |-----------|-------|------|---------|----------------|
 | `nico-ntp` | Helm | `nico-ntp.enabled` | on | Leave on unless upstream NTP is reachable from the provisioning network. |
-| `nico-dsx-exchange-consumer` | Helm | `nico-dsx-exchange-consumer.enabled` | off | Enable when the site has an MQTT broker and you want BMS metadata + managed-host events. |
+| `nico-dsx-exchange-consumer` | Helm | `nico-dsx-exchange-consumer.enabled` | on | Disable when the site has no MQTT broker; provides BMS metadata + managed-host events. |
 | `unbound` | Helm | `unbound.enabled` | off | Enable when DPUs need the `.forge` compatibility zone and no external DNS serves it. |
 | SSH-console Loki sidecar | Helm | `nico-ssh-console-rs.lokiLogCollector.enabled` | off | Enable when shipping SSH session logs to Loki. |
 | ServiceMonitor (per chart) | Helm | `<chart>.serviceMonitor.enabled` | off | Enable when the Prometheus Operator is installed. |
