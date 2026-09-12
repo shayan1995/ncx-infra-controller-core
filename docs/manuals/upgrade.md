@@ -223,7 +223,6 @@ If a phase fails, `setup.sh` prints `SETUP FAILED` and offers: `Run clean.sh to 
 | ---- | ----------- |
 | `--skip-core` | Skip Phase 6 only. Prerequisites and the REST stack still upgrade; NICo Core is left on its current image. Useful when the Core image did not change. |
 | `--skip-rest` | Skip Phase 7 only. Prerequisites and NICo Core still upgrade; the REST stack is left untouched. |
-| `--skip-flow` | Skip the Flow upgrade (Phase 7h). It does not bypass the initial guard for bundled PSM/NSM containers or an incomplete Flow-only rollout. Follow the [preserve-or-overwrite guidance](../../helm-prereqs/README.md#upgrading-deployments-that-bundled-psm-and-nsm). |
 | `--skip-rms` | Skip the Rack Management Service upgrade (Phase 5c). RMS installs **by default** (like DPF); `NICO_RMS_IMAGE_TAG` is required unless this flag is passed. Skipping leaves an existing RMS release untouched. |
 | `--skip-dpf` | Use **only** if DPF is not enabled at this site. This is not a pure skip: it clears `INSTALL_DPF`, which drops phases 5b and 6b *and* redeploys NICo Core with the `[dpf]` block disabled — on a DPF-enabled site that is a config change, not a skip. |
 | `--core-values <file>` | Use a per-site NICo Core values file (same as initial install). |
@@ -367,7 +366,7 @@ For DPF, rolling back to a prior DPF version is not supported by NVIDIA. If DPF 
 
 ## Using setup.sh for individual component upgrades
 
-You can narrow an upgrade to particular components with the `--skip-*` flags. `--skip-core`, `--skip-rest`, and `--skip-flow` skip exactly the phase they name — **none of them skip the prerequisite stack**, and there is no `--skip-prereqs`. (`--skip-dpf` is the exception: refer to its caveat in the flag table above. `--skip-core` also suppresses the `imagepullsecret` upsert that the Core migration Job uses.)
+You can narrow an upgrade to particular components with the `--skip-*` flags. `--skip-core` and `--skip-rest` skip exactly the phase they name — **none of them skip the prerequisite stack**, and there is no `--skip-prereqs`. NICo Flow (Phase 7h) has no skip flag — it's mandatory and always upgrades along with the rest of REST. (`--skip-dpf` is the exception: refer to its caveat in the flag table above. `--skip-core` also suppresses the `imagepullsecret` upsert that the Core migration Job uses.)
 
 ```bash
 # Prerequisites + NICo Core; leave the REST stack untouched (skips Phase 7)

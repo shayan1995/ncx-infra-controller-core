@@ -4,7 +4,7 @@ NCX Infra Controller (NICo) -- Kubernetes Deployment
 
 ## Overview
 
-NICo (also known as NCX Infra Controller) is a platform for provisioning, managing, and monitoring bare metal GPU servers, including DGX and HGX systems. This Helm chart deploys NICo services into a Kubernetes cluster as a single umbrella chart with independently toggleable subcharts.
+NICo (also known as NCX Infra Controller) is a platform for provisioning, managing, and monitoring bare metal GPU servers, including DGX and HGX systems. This Helm chart deploys NICo services into a Kubernetes cluster as a single umbrella chart. Core components are mandatory and always installed; the remaining, optional services are independently toggleable subcharts.
 
 The chart is designed for production environments where NICo manages the full lifecycle of bare metal infrastructure: DHCP/PXE-based OS provisioning, DNS resolution, hardware health monitoring, SSH console access, and a unified REST/gRPC API.
 
@@ -17,7 +17,7 @@ The chart is designed for production environments where NICo manages the full li
 | 3  | **nico-dhcp** | Kea DHCP server for bare-metal PXE boot and IP assignment. |
 | 4  | **nico-dns** | Authoritative DNS server (StatefulSet) for managed machines and VPCs. |
 | 5  | **nico-dsx-exchange-consumer** | Consumes DSX exchange messages for machine telemetry and state updates. Disabled by default. |
-| 6  | **nico-flow** | Task, policy, and automation service. Installed separately by `setup.sh` unless `--skip-flow` is used; not rendered by the umbrella chart. |
+| 6  | **nico-flow** | Task, policy, and automation service. Mandatory. Installed separately by `setup.sh` (lives at `helm/nico-flow`); not rendered by the umbrella chart. |
 | 7  | **nico-hardware-health** | Collects and reports hardware health metrics from managed machines. |
 | 8  | **nico-ntp** | chrony NTP servers (3-replica StatefulSet, per-pod LoadBalancer VIPs). DPUs and bare-metal hosts sync against these per the kea DHCP `ntpServer` advertisement. |
 | 9  | **nico-pxe** | PXE boot server (HTTP-based) for OS provisioning workflows. |
@@ -480,10 +480,12 @@ helm plugin install https://github.com/helm-unittest/helm-unittest.git
 helm unittest helm --with-subchart
 
 # Disabled-by-default subcharts must be tested separately
-helm unittest helm/charts/nico-flow
 helm unittest helm/charts/nico-machine-a-tron
 helm unittest helm/charts/nico-machine-a-tron/charts/mat-k8s-controller
 helm unittest helm/charts/unbound
+
+# nico-flow is a standalone chart (not an umbrella dependency) — test it separately too
+helm unittest helm/nico-flow
 ```
 
 Test files live in `tests/` directories within each chart. CI runs these tests automatically on every PR.
