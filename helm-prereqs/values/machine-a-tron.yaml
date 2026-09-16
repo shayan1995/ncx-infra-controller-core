@@ -1,9 +1,7 @@
 # =============================================================================
 # machine-a-tron.yaml — site values template
 #
-# Copy this file and fill in site-specific values before deploying, OR let
-# setup-machine-a-tron.sh consume it directly (it fills the site-specific
-# fields from the running nico-core site config).
+# Copy this file and fill in the site-specific values before deploying.
 # See docs/development/machine-a-tron-deployment.md for the full guide.
 #
 # Deployment mode: Override Mode (nginxBmcProxy.enabled: false)
@@ -16,18 +14,16 @@
 #   bmc_proxy = "nico-machine-a-tron-default-bmc-mock.nico-mat.svc.cluster.local:1266"
 # (Field is `bmc_proxy`, a single "host:port" string. The older
 #  override_target_ip/override_target_port fields are DEPRECATED, and
-#  override_target_host was never a valid field. setup-machine-a-tron.sh sets
-#  bmc_proxy for you.)  The FQDN is REQUIRED: site-explorer runs in nico-system
-#  and cannot resolve the bare service name (which resolves against its own
-#  namespace) — a bare name yields a Redfish "connection refused". Setting
+#  override_target_host was never a valid field.) The FQDN is REQUIRED:
+#  site-explorer runs in nico-system and cannot resolve the bare service name
+#  (which resolves against its own namespace) - a bare name yields a Redfish
+#  "connection refused". Setting
 #  bmc_proxy at launch also makes allow_changing_bmc_proxy default to true,
 #  which is what lets configureBmcProxyHost (below) work at runtime.
 # =============================================================================
 
-## Registry-agnostic (like the NICo REST values): setup-machine-a-tron.sh
-## injects image.repository = ${NICO_IMAGE_REGISTRY}/machine-a-tron and
-## image.tag = ${MAT_IMAGE_TAG} at install time. Set them here only for
-## direct helm installs without the script.
+## Registry-agnostic (like the NICo REST values): set image.repository and
+## image.tag here or with --set at install time.
 image:
   repository: ""
   tag: ""
@@ -83,7 +79,6 @@ pods:
         # prefix ..." and machines never register.
         #   e.g. a /28 pool with a gateway and a few reserved addresses yields
         #   ~10 usable → hostCount:3 * dpuPerHostCount:2 = 9 fits; 5*2=15 does not.
-        # setup-machine-a-tron.sh estimates the pool size and warns if you overflow.
         hostCount: 3
         dpuPerHostCount: 2
         dpuRebootDelay: 1
@@ -93,7 +88,7 @@ pods:
         runIntervalIdle: "10s"
         networkStatusRunInterval: "20s"
         # Gateway of the BMC (OOB) network in nico-core site config; relay for BMC DHCP.
-        # (setup-machine-a-tron.sh fills both relays from the running nico-core config.)
+        # (Both relays are [networks.*] gateways from the nico-core site config.)
         bmcDhcpRelayAddress: "FILL_IN"
         # Gateway of the underlay segment that serves DPU OOB and switch NVOS DHCP
         # (simulated-underlay in scale mode).

@@ -13,17 +13,18 @@
 #
 # OOB demand is 3 addresses per host -- one per simulated BMC -- so 4,500 hosts
 # need 13,500 and a /18 fits. Do not widen these prefixes casually: address
-# allocation cost scales with subnet size (see the note in
-# setup-machine-a-tron.sh), so an oversized prefix reduces throughput.
+# allocation cost scales with subnet size, so an oversized prefix reduces
+# throughput.
 #
 # Single pod on purpose: the chart emits one `-bmc-mock` Service per entry in
 # `pods`, so a single routable proxy host requires a single pod. Resources are
 # sized for the whole fleet in one process accordingly.
 #
-# Run with:
-#   MAT_MODE=scale HOST_COUNT=4500 DPU_PER_HOST=2 \
-#     VALUES_FILE=.../machine-a-tron-scale-4500-proxy.yaml ./setup-machine-a-tron.sh -y
-# and WITHOUT MAT_MULTIPOD=1 -- that variable is what selects controller mode.
+# Deploy with the chart alone; see "Helm-only Deployment" in
+# helm/charts/nico-machine-a-tron/README.md for the namespace and pull-secret
+# flags. The nico-core site config must set [site_explorer] bmc_proxy to the
+# configureBmcProxyHost Service below (port 1266) and define [networks.*]
+# segments whose gateways are the two relay addresses under pods.default.
 image:
   repository: ""
   tag: ""
@@ -96,13 +97,11 @@ pods:
   default:
     machines:
       rack-machines: null
-      # MUST be keyed `dell-hosts`. setup-machine-a-tron.sh appends a second
-      # values file defining machines.dell-hosts with HOST_COUNT, and Helm
-      # deep-merges by KEY -- so a different key here makes Helm ADD a second
-      # machine group rather than override this one, and the fleet renders at
-      # twice the requested size. That doubles simulated address demand and can
-      # exhaust the configured prefixes. The render gate in
-      # setup-machine-a-tron.sh fails the run if it ever happens again.
+      # Helm deep-merges `machines` by KEY: an override file that sizes this
+      # group under a different key makes Helm ADD a second machine group rather
+      # than replace this one, and the fleet renders at twice the requested
+      # size. That doubles simulated address demand and can exhaust the
+      # configured prefixes, so keep overrides keyed `dell-hosts`.
       dell-hosts:
         hwType: dell_poweredge_r750
         hostCount: 4500
@@ -113,7 +112,8 @@ pods:
         runIntervalWorking: "5s"
         runIntervalIdle: "60s"
         networkStatusRunInterval: "120s"
-        # Simulated networks (Phase 5/6 constants), not Service CIDR carve-outs.
+        # Gateways of the simulated OOB and underlay [networks.*] segments in the
+        # nico-core site config, not Service CIDR carve-outs.
         bmcDhcpRelayAddress: "10.96.64.1"
         underlayDhcpRelayAddress: "10.104.0.1"
         dpusInNicMode: false
