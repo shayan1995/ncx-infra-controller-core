@@ -27,11 +27,9 @@ as nico-machine-a-tron. The controller does not support a separate namespace.
 
 ## Helm-only Deployment
 
-The chart creates the Kubernetes resources that
-`helm-prereqs/setup-machine-a-tron.sh` otherwise creates: the namespace, its
-`nico.nvidia.com/managed` label and the image pull Secret. Those resources need
-no setup script once helm-prereqs (cert-manager ClusterIssuer, ESO) is
-installed:
+Once helm-prereqs (cert-manager ClusterIssuer, ESO) is installed, the chart
+creates the remaining Kubernetes resources itself: the namespace, its
+`nico.nvidia.com/managed` label and the image pull Secret.
 
 - `global.namespaceOverride` with `createNamespace: true` creates the namespace
   and labels it `nico.nvidia.com/managed: "true"`, so the `nico-roots`
@@ -43,10 +41,14 @@ installed:
   `machines.rack-machines: null`) still gets the bare `[machines]` table that
   machine-a-tron requires at startup.
 
-The chart does not seed the site-default Vault credentials or write the
-nico-core site configuration; follow the
-[deployment guide](../../../docs/development/machine-a-tron-deployment.md) for
-those steps.
+The chart does not seed the Vault credentials (factory-default and site BMC
+root, `site_default` UEFI), write the nico-core site configuration (simulated
+`[networks.*]` segments, `allow_insecure_discovery`, pool sizes,
+`[site_explorer]` knobs), deploy the DPF operator simulator, or remove the
+simulated inventory from NICo on uninstall. The
+[deployment guide](../../../docs/development/machine-a-tron-deployment.md)
+describes those steps; the remaining Helm-path gaps are tracked in
+[#6164](https://github.com/dsx-ai-factory/infra-controller/issues/6164).
 
 ```bash
 helm upgrade --install mat ./helm/charts/nico-machine-a-tron \

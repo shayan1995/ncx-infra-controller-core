@@ -123,17 +123,19 @@ compatible. `crates/dpf/crds/` is that version.
 
 ## Quick start (against a machine-a-tron cluster)
 
-**The usual path is automatic:** `helm-prereqs/setup-machine-a-tron.sh`
-deploys this simulator by default (Phase 4b) whenever the nico-core config
-has `[dpf] enabled = true`, using the `DPF_SIM_IMAGE`
-(or `${NICO_IMAGE_REGISTRY}/dpf-sim-controller:latest`). This includes the
-DPF CRDs, the `nico-api-dpf` RBAC, and the `CARBIDE_API_ALLOW_INSECURE_DISCOVERY`
-flag.
+Deploying this simulator is not yet covered by the `nico-machine-a-tron` chart
+(see [#6164](https://github.com/dsx-ai-factory/infra-controller/issues/6164));
+run `make deploy` below whenever the nico-core config has
+`[dpf] enabled = true`. Two prerequisites the simulator relies on are owned
+elsewhere: the `nico-api-dpf` Role comes from the `nico-api` chart
+(`dpf.rbacCreate: true`), and discovery from a shared pod IP needs
+`allow_insecure_discovery = true` in the nico-api site config (or the
+`CARBIDE_API_ALLOW_INSECURE_DISCOVERY` environment variable, see below).
 
-On a site without DPF enabled, the phase is a no-op, and it hard-fails if
-the REAL DPF operator is deployed (both would drive `DPU.status.phase` —
-remove the operator, or pass `--skip-dpf-sim` to keep it). The manual
-steps below remain for iterating on the simulator itself.
+Never run the simulator beside the REAL DPF operator: both would drive
+`DPU.status.phase`. Remove the operator first, or leave the simulator out and
+accept that ingested hosts park in `dpuinit`. The manual steps below also
+serve for iterating on the simulator itself.
 
 **Installing NICo alongside this simulator: use `setup.sh --skip-dpf`.**
 The simulator applies the DPF CRDs itself (`make install-crds`), so letting

@@ -11,7 +11,7 @@ the effect of each throughput knob in isolation. Companion to
 
 ## Knob inventory
 
-| # | Knob (TOML path) | Default | Scale-script value | Consumed in |
+| # | Knob (TOML path) | Default | Scale-run value | Consumed in |
 |---|------------------|---------|--------------------|-------------|
 | K1 | `site_explorer.run_interval` | 120s | *(not overridden)* | `crates/site-explorer/src/lib.rs` — period of the explore→identify→create cycle |
 | K2 | `site_explorer.concurrent_explorations` | 30 | 100 | `lib.rs:2294` — semaphore width for parallel Redfish probes per cycle |
@@ -30,12 +30,14 @@ hosts/h → ~3.75 h floor for 4,500 hosts, consistent with observed runs.
 
 - **Fleet**: 1000 hosts × 2 DPUs (3000 endpoints) for iteration speed; confirm
   the winning combination at 4500×2 = 13,500.
-- **One knob per run.** Full `cleanup-machine-a-tron.sh -y` between runs so
-  every run starts from an identical state.
-- **Instrumentation first (run 0)**: sample the four pipeline counters
-  (explored / preingestion-complete / hosts / machines) plus site-explorer
-  cycle duration every 30–60 s into a CSV from the verification loop, so each
-  run yields per-phase rate curves, not just total wall clock.
+- **One knob per run.** A full cleanup between runs (`helm uninstall` plus
+  removing the simulated inventory from NICo) so every run starts from an
+  identical state; a Helm-only cleanup path is not yet covered, see
+  [#6164](https://github.com/dsx-ai-factory/infra-controller/issues/6164).
+- **Instrumentation first (run 0)**: `helm-prereqs/ingestion-rate-report.sh`
+  derives per-minute machine and interface creation curves from the
+  database's own timestamps, so each run yields per-phase rate curves, not
+  just total wall clock.
 - **Record per run**: knob values, end-to-end wall clock, per-phase windows
   (DHCP / exploration / preingestion / creation / init), postgres CPU, any
   AvoidLockout or error storms, whether explore cycles complete within
@@ -66,5 +68,8 @@ at 13.5k scale.
   become configurable before pushing K7 toward 100.
 - `site_explorer.run_interval`'s doc comment says "5 Minutes" but the default
   is 120 s — fix the comment while we're in there.
-- Add env-var overrides in `setup-machine-a-tron.sh` for K1/K5/K6/K7 (K2–K4
-  already have them) so runs are scriptable.
+- Carry K1-K7 in the nico-core site values
+  (`nico-api.siteConfig.nicoApiSiteConfig`) so each run's knobs are
+  reproducible from the values file; shipping the scale knobs as documented
+  values is tracked in
+  [#6164](https://github.com/dsx-ai-factory/infra-controller/issues/6164).

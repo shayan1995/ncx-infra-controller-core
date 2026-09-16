@@ -6,23 +6,38 @@
 
 ```bash
 export KUBECONFIG=/path/to/site/kubeconfig
-helm-prereqs/cleanup-machine-a-tron.sh -y
-MAT_MODE=scale HOST_COUNT=1000 helm-prereqs/setup-machine-a-tron.sh -y
+helm upgrade --install nico-machine-a-tron helm/charts/nico-machine-a-tron \
+  --set global.namespaceOverride=nico-mat \
+  --set imagePullSecret.create=true \
+  --set imagePullSecret.dockerconfigjson="$(base64 < ~/.docker/config.json | tr -d '\n')" \
+  --set image.repository="${NICO_IMAGE_REGISTRY}/machine-a-tron" \
+  --set image.tag="${MAT_IMAGE_TAG}" \
+  --set mat-k8s-controller.image.repository="${NICO_IMAGE_REGISTRY}/mat-k8s-controller" \
+  --set mat-k8s-controller.image.tag="${MAT_K8S_CONTROLLER_TAG}" \
+  -f helm-prereqs/values/machine-a-tron-scale.yaml
 ```
 
-## What this work delivers
+The Vault credentials, the nico-core site values (`allow_insecure_discovery`,
+the `[networks.*]` segments whose gateways are the relay addresses in the
+values file, pool sizes, `[site_explorer]` knobs) and, with DPF enabled, the
+simulator are outside the chart; the
+[deployment guide](machine-a-tron-deployment.md#quick-path-helm) lists them.
+Cleanup between runs (`helm uninstall` plus removing the simulated inventory
+from NICo) is not yet covered by a Helm path; see
+[#6164](https://github.com/dsx-ai-factory/infra-controller/issues/6164).
 
-1. **`helm-prereqs/setup-machine-a-tron.sh`** — one idempotent script that
-   takes a running NICo site from nothing to created machines: namespace,
-   pull secret, CA/Vault secret refresh, the full BMC/UEFI credential chain,
-   nico-core site-config changes, DHCP pool sizing with auto-fit, DB safety
-   checks, helm deploy, and a verification loop that actively shepherds the
-   ingestion pipeline.
-1. **`helm-prereqs/cleanup-machine-a-tron.sh`** — the full inverse, so
-   from-scratch runs are reproducible.
-1. **`MAT_MODE=scale`** — a scale profile
-   (`helm-prereqs/values/machine-a-tron-scale.yaml`) using Controller Mode
-   with the `mat-k8s-controller` for dynamic per-BMC ClusterIP Services.
+## What the scale path consists of
+
+1. The `nico-machine-a-tron` chart in Controller Mode with the
+   `mat-k8s-controller` for per-BMC ClusterIP Services, installed with plain
+   `helm upgrade --install`.
+1. Scale values files under `helm-prereqs/values/`:
+   `machine-a-tron-scale.yaml` (Controller Mode template),
+   `machine-a-tron-scale-4500.yaml` (4,500 hosts over three pods),
+   `machine-a-tron-scale-4500-proxy.yaml` (4,500 hosts through one shared
+   proxy) and `machine-a-tron-multipod.yaml`.
+1. The nico-core site values (`nico-api.siteConfig`) as the single owner of
+   the simulated networks, pool sizes and `[site_explorer]` throughput knobs.
 
 ## Architecture: Controller Mode
 
@@ -51,8 +66,12 @@ mtu = 1500
 
 ## Complete issue log
 
-Every issue below was found live on dev6 and is fixed on the branch, encoded
-in the scripts/charts with explanatory comments.
+Every issue below was found live on a development site. Fixes attributed to
+the script were carried by the setup and cleanup scripts that the Helm chart
+has since replaced
+([#6164](https://github.com/dsx-ai-factory/infra-controller/issues/6164));
+the chart and nico-api fixes remain in place, and the site-configuration
+items (segments, pools, knobs) are owned by the nico-core site values.
 
 ### Baseline (override-mode) end-to-end
 
@@ -81,14 +100,17 @@ in the scripts/charts with explanatory comments.
 | 16 | Managed hosts identified but machines never created; cycles never finish | `explorations_per_run` was raised to 400 "for throughput" — but identification and creation only run **at the end of a completed explore cycle**, and 400 deep scans per cycle meant cycles stopped completing | Default lowered to 120: cycles complete in ~1–2 min and creation runs every cycle |
 | 17 | `Resource pool lo-ip is empty` on the 3rd machine | Machine creation allocates one loopback IP per machine; pool **definitions are seed-once** ("Declaration has drifted since seed … not re-applying") so config widening is ignored; dev6 ships **3** lo-ip addresses | Script inserts free `resource_pool` rows directly for a simulated range (16k) when the pool is smaller than the machine target |
 
-### A note on the verification loop
+### A note on lockout latches
 
-The script's final phase doesn't just poll — it actively shepherds:
-re-clears `AvoidLockout`/`Unauthorized` latches (they are one-way by design;
-on real hardware an operator runs `nico-admin-cli site-explorer refresh`) and
-unparks healthy endpoints. On a simulation cluster with hundreds of
-concurrent resets/explorations, transient races are guaranteed; the loop is
-the "operator". Mocks have no lockout threshold, so this is safe here.
+The retired setup script's verification loop re-cleared `AvoidLockout` and
+`Unauthorized` latches (they are one-way by design; on real hardware an
+operator runs `nico-admin-cli site-explorer refresh`) and unparked endpoints
+whose reports had come back clean, because hundreds of concurrent resets and
+explorations on a simulation cluster guarantee transient races. The Helm path
+has no such loop: pin the mock passwords to the site root
+(`hostBmcPassword`/`dpuBmcPassword`, issue 14 above) so the latches do not
+occur, and clear a latched endpoint with
+`nico-admin-cli site-explorer refresh <bmc-ip>`.
 
 ## Where we are today
 
@@ -127,18 +149,20 @@ Additional issue found at stage 3:
 ## Open questions — feedback wanted
 
 1. **RBAC**: is granting `Machineatron` → `AddExpectedMachine` acceptable
-   (commit `9a9ba072a`)? Until a nico-api image with it is deployed, the
-   script registers expected machines via direct DB insert — okay as a
-   documented simulation-only fallback?
+   (commit `9a9ba072a`)? Without it, machine-a-tron's auto-registration is
+   403'd and the rows must be inserted directly (see the multi-pod section of
+   the deployment guide).
 1. **Seed-once reconcile semantics**: networks, and resource-pool
    definitions are all create-once; config changes on established sites are
-   silently ignored (or warn-only). The script works around this with direct
-   DB writes (segment clone-insert, pool row insertion). Should NICo support
+   silently ignored (or warn-only). The retired setup script worked around
+   this with direct DB writes (segment clone-insert, pool row insertion); the
+   Helm path relies on the site values being right before the first nico-api
+   start on a fresh database. Should NICo support
    declarative updates for these instead?
 1. **AvoidLockout at scale**: one-way latches are right for real BMCs, but
    simulation fleets guarantee latch storms during resets. Worth a
    site-config escape hatch (e.g. `site_explorer.lockout_protection = false`)
-   instead of the script's DB-level clearing?
+   instead of DB-level clearing?
 1. **Mock fidelity**: the mock returns to its configured password after a
    BMC reset. Real BMCs persist a rotated password across resets. Should
    bmc-mock persist rotated credentials so the rotation path can be exercised

@@ -6,7 +6,7 @@ guide documents everything needed to build the container image and deploy it on 
 cluster.
 
 <Note title="Version availability">
-Everything in this guide — the `nico-machine-a-tron` Helm chart, `helm-prereqs/setup-machine-a-tron.sh`, and the values files it references — is available as of NVIDIA Infra Controller v2.1.
+The `nico-machine-a-tron` Helm chart and the values files under `helm-prereqs/values/` are available as of NVIDIA Infra Controller v2.1.
 </Note>
 
 ## Overview
@@ -15,38 +15,70 @@ machine-a-tron runs in **Override Mode**: site-explorer redirects all Redfish tr
 to the mock BMC server running inside the pod. It is only suitable for
 simulation-only clusters (no real hardware).
 
-## Quick path: setup-machine-a-tron.sh
+## Quick path: Helm
 
-For a running NICo Core site, the fastest and most reliable way to deploy is the
-end-to-end script, which performs every step in this guide (namespace, pull
-secret, CA/Vault secret refresh, BMC credential seeding, `bmc_proxy`
-configuration, DHCP-pool sizing, cert reissue, deploy, and verification) and is
-idempotent:
+For a running NICo Core site (nico-api, Postgres, Vault, ESO and cert-manager
+from `setup.sh`), machine-a-tron deploys from the chart alone. The chart
+creates the `nico-mat` namespace with its `nico.nvidia.com/managed` label (so
+the `nico-roots` ClusterExternalSecret syncs the site CA into it) and the
+`machine-a-tron-pull` Secret; see the
+[Helm-only Deployment](https://github.com/dsx-ai-factory/infra-controller/blob/main/helm/charts/nico-machine-a-tron/README.md#helm-only-deployment)
+section of the chart README. Nothing registry-specific is committed: the image
+location, tag and pull credentials come from the environment, exactly like
+`setup.sh`.
 
 ```bash
 export KUBECONFIG=/path/to/kubeconfig
-export REGISTRY_PULL_SECRET=<NVIDIA_API_KEY>   # only if the pull secret is absent
-helm-prereqs/setup-machine-a-tron.sh           # add -y for non-interactive
-```
-
-## Quick start with 4500-host simulated fleet
-
-Build and push the image to the registry of your choice, then run the setup
-script in scale mode. Nothing registry-specific is committed — the image
-location, tag, and pull credentials all come from the environment, exactly
-like `setup.sh`:
-
-```bash
-export KUBECONFIG=/path/to/site/kubeconfig
 export NICO_IMAGE_REGISTRY=<registry>/<repo>     # e.g. registry.example.com/nico
-export MAT_IMAGE_TAG=<tag>                       # tag you built and pushed (see §2)
-export REGISTRY_PULL_SECRET=<api-key>            # omit if the pull secret already exists
+export MAT_IMAGE_TAG=<tag>                       # tag you built and pushed (see below)
 
-MAT_MODE=scale HOST_COUNT=4500 helm-prereqs/setup-machine-a-tron.sh -y
+helm upgrade --install nico-machine-a-tron helm/charts/nico-machine-a-tron \
+  --set global.namespaceOverride=nico-mat \
+  --set imagePullSecret.create=true \
+  --set imagePullSecret.dockerconfigjson="$(base64 < ~/.docker/config.json | tr -d '\n')" \
+  --set image.repository="${NICO_IMAGE_REGISTRY}/machine-a-tron" \
+  --set image.tag="${MAT_IMAGE_TAG}" \
+  -f helm-prereqs/values/machine-a-tron.yaml
 ```
 
-That is the whole procedure. The script exits after its bounded verification
-window while ingestion continues in-cluster; progress is visible with:
+For a 4,500-host fleet use `helm-prereqs/values/machine-a-tron-scale-4500.yaml`
+(Controller Mode, three pods) or `machine-a-tron-scale-4500-proxy.yaml` (one
+shared proxy) instead, and set the `mat-k8s-controller.image` values the
+Controller Mode file requires.
+
+The chart owns the Kubernetes resources only. The following steps are outside
+it; the remaining Helm-path gaps are tracked in
+[#6164](https://github.com/dsx-ai-factory/infra-controller/issues/6164):
+
+1. **Vault credentials.** Seed the factory-default and site BMC credentials
+   and the two `site_default` UEFI passwords listed under
+   [BMC credentials in Vault](#bmc-credentials-in-vault-required-for-site-explorer);
+   the chart does not seed them.
+1. **nico-core site configuration.** Put the simulated `[networks.*]`
+   segments (one gateway per DHCP relay address in the values file),
+   `allow_insecure_discovery = true`, the `[pools.lo-ip]` and `[pools.fnn-asn]`
+   ranges and the `[site_explorer]` throughput knobs in
+   `nico-api.siteConfig.nicoApiSiteConfig` of the nico-core values
+   (`helm-prereqs/values/nico-core.yaml`) and upgrade nico-core. nico-api
+   seeds `[networks.*]` at start only while the site has exactly one forward
+   domain, and both network and pool definitions are seeded once (a later
+   change is logged, not applied), so size them before the first start.
+   Override Mode additionally needs
+   [`site_explorer.bmc_proxy`](#configuring-override-mode). Example site
+   values for the scale cases are not yet shipped with the chart.
+1. **DPF operator simulator.** When the nico-core config has
+   `[dpf] enabled = true`, deploy `dev/k8s/dpf-sim-controller` with
+   `make deploy` as its
+   [README](https://github.com/dsx-ai-factory/infra-controller/blob/main/dev/k8s/dpf-sim-controller/README.md)
+   describes, and set `nico-api.dpf.rbacCreate: true` so the nico-api chart
+   creates the `nico-api-dpf` Role. The simulator is not part of the chart.
+1. **Cleanup.** `helm uninstall nico-machine-a-tron` removes the pods and
+   Services but leaves the simulated machines, expected records, explored
+   endpoints and their pool allocations in NICo, and the per-BMC credentials
+   site-explorer wrote to Vault. A supported path for removing them is not yet
+   covered by the chart.
+
+Ingestion continues in-cluster after the install; progress is visible with:
 
 ```bash
 kubectl exec -n postgres <patroni-primary> -- su postgres -c \
@@ -69,15 +101,14 @@ The following is measured on a 3-node dev cluster, with dev-sized Postgres.
 | Identification + creation | final ~2–3 h | hosts identify in waves; creation drains at ~150–300 machines per explore cycle |
 | **End to end** | **~6–9 h, unattended** | 100 hosts ≈ 12 min and 1000 hosts ≈ 25 min, for calibration |
 
-The pipeline is autonomous once the script completes — it has run through
-multi-hour client connectivity outages without intervention. Occasional
-nico-api restarts under peak ingestion load are absorbed by the pipeline
-(machines resume within a cycle). Re-running the script is always safe
-(idempotent) and re-registers any expected machines that arrived late.
+The pipeline is autonomous once the chart is installed and the site
+configuration is in place: it has run through multi-hour client connectivity
+outages without intervention, and occasional nico-api restarts under peak
+ingestion load are absorbed (machines resume within a cycle).
 
-The rest of this document explains what that script does and why, and is the
-reference for manual deployment or debugging. The script's header comments
-enumerate the non-obvious failure modes it guards against.
+The rest of this document is the step-by-step reference for those steps and
+for debugging; the [Non-Obvious Fixes](#non-obvious-fixes) table lists the
+failure modes behind them.
 
 ## Prerequisites
 
@@ -87,7 +118,8 @@ enumerate the non-obvious failure modes it guards against.
 - A cluster where machine-a-tron can reach `nico-api.nico-system.svc.cluster.local:1079`
 - The `nico-machine-a-tron` Helm chart (`helm/charts/nico-machine-a-tron`)
 - The image pull secret `machine-a-tron-pull` in the `nico-mat` namespace
-  (created automatically by the setup script from `REGISTRY_PULL_SECRET`)
+  (created by the chart when `imagePullSecret.create` is set, or by hand as
+  in [Cluster Prerequisites](#cluster-prerequisites))
 
 ## Building the Container Image
 
@@ -205,7 +237,9 @@ must be re-seeded with any non-empty password. `machines/bmc/site/root` is not
 seeded at all; without it every run aborts with `MissingCredentials`.
 
 For the default BlueField-3 simulation, the **credential rotation flow**
-requires this exact chain, which `setup-machine-a-tron.sh` Phase 4 handles:
+requires this exact chain. The chart does not seed it; write each entry like
+the `vault.kvSeeds` entries in `helm-prereqs/values.yaml` (a
+`UsernamePassword` object with `username` and `password`):
 
 | Vault path | Value | Why |
 |------------|-------|-----|
@@ -217,10 +251,10 @@ requires this exact chain, which `setup-machine-a-tron.sh` Phase 4 handles:
 The machine-a-tron hardware types `dell_poweredge_r760_bf4` and `nvidia_dgx_vr`
 use BlueField-4 DPUs with `admin`/`0penBmc` factory credentials. site-explorer
 checks the model-specific entry, then the `root` catch-all, then the built-in
-per-model default. Because Phase 4 seeds the catch-all but not the model entry,
-seed `machines/all_dpus/factory_default/bmc-metadata-items/bf4` with the BF4
-credentials before using either type. Otherwise, site-explorer attempts the
-`root` username and a `401 Unauthorized` latches `AvoidLockout`.
+per-model default. The table above seeds the catch-all but not the model
+entry, so also seed `machines/all_dpus/factory_default/bmc-metadata-items/bf4`
+with the BF4 credentials before using either type. Otherwise, site-explorer
+attempts the `root` username and a `401 Unauthorized` latches `AvoidLockout`.
 </Note>
 
 site-explorer logs into each BMC with its factory default, rotates the password
@@ -292,9 +326,10 @@ bmc_proxy = "nico-machine-a-tron-default-bmc-mock.nico-mat.svc.cluster.local:126
 ("connection refused" on every Redfish call) because the mock's Service lives
 in `nico-mat`.
 
-**This setting does not survive a nico-core `helm upgrade`** — the ConfigMap
-is chart-owned, so an upgrade silently reverts it. Re-run
-`setup-machine-a-tron.sh` (idempotent) after any nico-core upgrade.
+**Set it in the nico-core values** (`nico-api.siteConfig.nicoApiSiteConfig` in
+`helm-prereqs/values/nico-core.yaml`), not by patching the ConfigMap: the
+ConfigMap is chart-owned, so a nico-core `helm upgrade` silently reverts a
+patch.
 
 **Field name matters.** The config field is `bmc_proxy` — a single
 `"host:port"` string (`crates/site-explorer/src/config.rs`). The older
@@ -476,7 +511,7 @@ The `machine_dhcp_records` view inner-joins the singleton control row `machine_i
 | Problem | Root cause | Fix |
 |---------|------------|-----|
 | `--load` fails for cross-platform builds | Docker limitation | Use `--push` directly to registry |
-| All endpoints latch `AvoidLockout` (NICO-SITEEXPLORER-144) after a cred fix | A previous Unauthorized is self-perpetuating in the exploration report | `nico-admin-cli site-explorer refresh <bmc-ip>` per endpoint (or re-run setup-machine-a-tron.sh, which clears it) |
+| All endpoints latch `AvoidLockout` (NICO-SITEEXPLORER-144) after a cred fix | A previous Unauthorized is self-perpetuating in the exploration report | `nico-admin-cli site-explorer refresh <bmc-ip>` per endpoint |
 | `client error (Connect)` on every nico-api call after a reprovision | Stale `nico-roots` CA + client cert signed by the old CA | Re-copy `nico-roots` from nico-system; delete `nico-machine-a-tron-certificate` so cert-manager reissues from the current CA |
 | `DiscoverDhcp`: `no rows ... expected to return at least one row` | `machine_interfaces_deletion` singleton (id=1) deleted; breaks `machine_dhcp_records` view | `INSERT INTO machine_interfaces_deletion (id) VALUES (1) ON CONFLICT DO NOTHING;` — never hand-delete lease rows |
 | DPU explorations stuck at `403 Factory-default password must be changed` | Site root password equals the factory password → rotation is a no-op | Seed `machines/bmc/site/root` with a password distinct from both factory defaults |
@@ -485,12 +520,12 @@ The `machine_dhcp_records` view inner-joins the singleton control row `machine_i
 | `git fetch ... (exit status: 127)` | `libredfish` is a git dependency, `git` not in slim image | Add `git` to builder stage |
 | Host BMCs 401 while DPUs explore fine | Host and DPU factory passwords differ (`factory_password` vs `0penBmc`); host factory cred missing or wrong | Seed `machines/all_hosts/factory_default/bmc-metadata-items/dell` = `root`/`factory_password` (lowercase `dell`) |
 | HTTP 403 on every gRPC call | machine-a-tron cert SPIFFE URI not in nico-api's `service_base_paths` | Set `certificate.uris: ["spiffe://nico.local/nico-system/sa/machine-a-tron"]` in values |
-| Machine creation fails `No IP addresses left in prefix <admin-cidr>` | Admin pool too small: creation needs one host-PF IP per DPU | Fit `hostCount×dpuPerHostCount` ≤ usable admin-pool IPs (the script auto-fits) |
+| Machine creation fails `No IP addresses left in prefix <admin-cidr>` | Admin pool too small: creation needs one host-PF IP per DPU | Fit `hostCount×dpuPerHostCount` ≤ usable admin-pool IPs |
 | `No IP addresses left in prefix ...`; machines stuck in `BmcInit` | OOB DHCP pool too small for host×DPU count | Sizing: `hostCount + hostCount×dpuPerHostCount` ≤ usable pool IPs; use ≥ /27 or reduce counts |
 | Redfish `connection refused` on every endpoint despite bmc_proxy set | Bare service name resolves against nico-system, not nico-mat | Use the cross-namespace FQDN in `bmc_proxy` |
 | Redfish redirect ignored; `endpoint_explorations=0` | Wrong config field (`override_target_host` is not real) | Use `bmc_proxy = "nico-machine-a-tron-default-bmc-mock.nico-mat.svc.cluster.local:1266"` under `[site_explorer]` |
 | `Refusing to create managed host, expected machines entry not found` | No `expected_machines` row for the discovered BMC MAC | Set `machineATron.registerExpectedMachines: true` (default) so machine-a-tron auto-registers them |
-| `Refusing to create managed host`; machine-a-tron logs `PermissionDenied` on registration | nico-api build lacks the `Machineatron` → `AddExpectedMachine` RBAC grant | Rebuild nico-api with the grant (internal_rbac_rules.rs); the setup script also has a DB fallback |
+| `Refusing to create managed host`; machine-a-tron logs `PermissionDenied` on registration | nico-api build lacks the `Machineatron` → `AddExpectedMachine` RBAC grant | Rebuild nico-api with the grant (internal_rbac_rules.rs) |
 | `SIGSEGV` compiling `aws-lc-sys` | QEMU emulates the `.S` assembler, which crashes | True cross-compilation (native arm64 host → x86_64 target) instead of QEMU |
 | site-explorer aborts with `MissingCredentials .../uefi-metadata-items/auth` | kvSeeds create the UEFI creds with **empty** passwords, which fail validation | Re-seed both site_default UEFI creds with any non-empty password |
 | site-explorer aborts with `MissingCredentials machines/bmc/site/root` | Site BMC root cred not in default `kvSeeds` | Seed `secrets/machines/bmc/site/root` = `root`/&lt;non-factory password&gt; in Vault |
