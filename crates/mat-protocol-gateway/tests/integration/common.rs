@@ -16,8 +16,9 @@
  */
 
 //! Loopback fakes shared by the gateway wire tests: machine-a-tron instances whose inventory can
-//! be restarted or taken down, a `mat-k8s-controller` source list that can be edited while the
-//! gateway watches it, and helpers that query the UFM API the gateway serves.
+//! be restarted or taken down and which serve the RMS mock for the racks they declare, a
+//! `mat-k8s-controller` source list that can be edited while the gateway watches it, and helpers
+//! that query the UFM API the gateway serves.
 
 use std::future::Future;
 use std::net::SocketAddr;
@@ -32,6 +33,7 @@ use axum::routing::get;
 use axum::{Json, Router};
 use mat_protocol_gateway::{ControllerConfig, ExitReason, GatewayConfig, SourceListClient, run};
 use reqwest::header::AUTHORIZATION;
+use rms_mock::{RmsMock, RmsMockConfig, SimNode, StaticInventory};
 use serde_json::{Value, json};
 use tokio::net::TcpListener;
 use tokio::task::JoinHandle;
@@ -100,12 +102,16 @@ struct MachineATronState {
     generation: u64,
     /// InfiniBand port GUIDs advertised for the single machine.
     guids: Vec<String>,
-    /// False makes `/machines/status` answer 503, as a Service without endpoints would fail.
+    /// Rack ids reported by `/racks/status`.
+    racks: Vec<String>,
+    /// False makes the status routes answer 503, as a Service without endpoints would fail.
     available: bool,
 }
 
 /// One fake machine-a-tron exposing `/machines/status` in the shape of
-/// `machine_a_tron::status::DevicesStatusResponse`, including fields UFM ignores.
+/// `machine_a_tron::status::DevicesStatusResponse`, including fields UFM ignores, `/racks/status`
+/// with the racks it declares, and the RMS mock over the devices it simulates, all on one
+/// listener like the real one.
 #[derive(Clone)]
 pub(crate) struct FakeMachineATron {
     name: String,
@@ -114,8 +120,20 @@ pub(crate) struct FakeMachineATron {
 }
 
 impl FakeMachineATron {
-    /// Starts an instance called `name` advertising `guids` on one machine.
+    /// Starts an instance called `name` advertising `guids` on one machine and simulating no
+    /// racks.
     pub(crate) async fn start(name: &str, guids: &[&str]) -> Self {
+        Self::start_with_racks(name, guids, &[], Vec::new()).await
+    }
+
+    /// Starts an instance that also reports `racks` on `/racks/status` and answers RMS for
+    /// `devices`, which carry their own rack ids and BMC MACs.
+    pub(crate) async fn start_with_racks(
+        name: &str,
+        guids: &[&str],
+        racks: &[&str],
+        devices: Vec<SimNode>,
+    ) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let mat = Self {
@@ -124,18 +142,30 @@ impl FakeMachineATron {
                 epoch: 1,
                 generation: 1,
                 guids: guids.iter().map(ToString::to_string).collect(),
+                racks: racks.iter().map(ToString::to_string).collect(),
                 available: true,
             })),
             address,
         };
+        let rms = Arc::new(RmsMock::new(
+            Arc::new(StaticInventory::new(devices.into())),
+            RmsMockConfig::default(),
+        ));
         let router = Router::new()
             .route("/machines/status", get(machines_status))
+            .route("/racks/status", get(racks_status))
             .route("/", get(|| async { "machine-a-tron" }))
-            .with_state(mat.clone());
+            .with_state(mat.clone())
+            .merge(rms_mock::router(rms));
         tokio::spawn(async move {
             axum::serve(listener, router).await.unwrap();
         });
         mat
+    }
+
+    /// Changes the racks `/racks/status` reports from the next poll on.
+    pub(crate) fn set_racks(&self, racks: &[&str]) {
+        self.state.lock().unwrap().racks = racks.iter().map(ToString::to_string).collect();
     }
 
     /// `(name, address)` pair in the form [`FakeController`] publishes.
@@ -143,7 +173,7 @@ impl FakeMachineATron {
         (self.name.clone(), self.address)
     }
 
-    /// Makes `/machines/status` fail (503) or succeed again.
+    /// Makes the status routes fail (503) or succeed again.
     pub(crate) fn set_available(&self, available: bool) {
         self.state.lock().unwrap().available = available;
     }
@@ -186,6 +216,26 @@ async fn machines_status(State(mat): State<FakeMachineATron>) -> Response {
         }]
     }))
     .into_response()
+}
+
+async fn racks_status(State(mat): State<FakeMachineATron>) -> Response {
+    let state = mat.state.lock().unwrap();
+    if !state.available {
+        return (StatusCode::SERVICE_UNAVAILABLE, "no endpoints").into_response();
+    }
+    let racks = state
+        .racks
+        .iter()
+        .map(|rack_id| {
+            json!({
+                "rack_id": rack_id,
+                "rack_type": "wiwynn_gb200_nvl72",
+                "version": 1,
+                "members": [],
+            })
+        })
+        .collect::<Vec<_>>();
+    Json(json!({ "racks": racks })).into_response()
 }
 
 /// Fake `mat-k8s-controller` source list whose generation, readiness and sources can be changed
@@ -298,6 +348,9 @@ pub(crate) fn gateway_config(controller: SocketAddr, listen: SocketAddr) -> Gate
     };
     config.ufm.inventory.poll_interval = Duration::from_millis(50);
     config.ufm.inventory.request_timeout = Duration::from_secs(2);
+    config.ownership.poll_interval = Duration::from_millis(50);
+    config.ownership.request_timeout = Duration::from_secs(2);
+    config.ownership.stale_after = Duration::from_millis(400);
     config.validate().unwrap();
     config
 }

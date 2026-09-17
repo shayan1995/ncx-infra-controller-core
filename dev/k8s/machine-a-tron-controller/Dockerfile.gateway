@@ -48,7 +48,8 @@ ENV CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA}
 WORKDIR /workspace
 COPY rust-toolchain.toml ./
 
-# Select the Rust target triple and linker for TARGETARCH
+# Select the Rust target triple and linker for TARGETARCH. protoc runs on the
+# build host for the librms build script, whatever the target.
 RUN set -eu; \
     case "${TARGETARCH}" in \
       amd64) triple=x86_64-unknown-linux-gnu; cross="gcc-x86-64-linux-gnu libc6-dev-amd64-cross"; host=x86_64 ;; \
@@ -56,7 +57,7 @@ RUN set -eu; \
       *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
     apt-get update; \
-    apt-get install -y --no-install-recommends git pkg-config; \
+    apt-get install -y --no-install-recommends git pkg-config protobuf-compiler libprotobuf-dev; \
     if [ "$(uname -m)" != "${host}" ]; then \
       apt-get install -y --no-install-recommends ${cross}; \
       linker="${host}-linux-gnu-gcc"; \

@@ -1,19 +1,22 @@
 # mat-protocol-gateway
 
-Single-endpoint UFM front for a multi-pod machine-a-tron deployment.
+Single-endpoint UFM and RMS front for a multi-pod machine-a-tron deployment.
 
 The gateway runs as a second container in the `mat-k8s-controller` pod. The Go
 controller keeps all Kubernetes API access and publishes the machine-a-tron
 instances it discovered on a pod-local HTTP endpoint. The gateway consumes that
 list, points the `ufm-mock` reconciliation at every instance's
-`/machines/status`, and serves the aggregated UFM REST API.
+`/machines/status`, and serves the aggregated UFM REST API. It also serves the
+RMS gRPC API (`RackManager` and `RackManagerV2`), learns from every instance's
+`/racks/status` which racks it simulates, and forwards each RMS request to the
+instance owning the rack it names; see [RMS routing](#rms-routing).
 
 ## Listener layout
 
 There is exactly one service listener, `listen_address`. It serves the UFM
-routes and both probes on the same port, over TLS when `[tls]` is set and
-plain HTTP otherwise. There is no separate probe port; Kubernetes probes and
-API clients hit the same socket.
+routes, both RMS gRPC services and both probes on the same port, over TLS when
+`[tls]` is set and plain HTTP otherwise. There is no separate RMS or probe
+port; Kubernetes probes and API clients hit the same socket.
 
 The binary default is `0.0.0.0:9888` over plain HTTP, which is what you get
 when the gateway is started without a configuration file. A deployment that
@@ -23,9 +26,10 @@ configuration file.
 | Path | Purpose |
 |------|---------|
 | `/livez` | Process is running; 200 from the moment the listener is up |
-| `/readyz` | 503 until the source list is loaded and reconciliation started, then 200 |
+| `/readyz` | 503 until the source list is loaded, every source has answered `/racks/status` and reconciliation started; 503 again, one reason per line, while a source has never answered or two sources report one rack (see [rack ownership](#rack-ownership)) |
 | `/ufmRestV3/...` | UFM API from `ufm-mock`, token protected (`UFM_MOCK_AUTH_TOKEN`) |
 | injection management routes | Inherited from `ufm-mock` |
+| `/rack_manager.RackManager/*`, `/rack_manager_v2.RackManagerV2/*` | RMS gRPC services, routed per rack; no per-request authentication, like the per-pod RMS mock |
 
 `metrics_address` is the only other socket. It is optional, plain HTTP, and
 exposes Prometheus metrics for the gateway and the embedded UFM mock.
@@ -123,6 +127,59 @@ only once a later discovery pass, at least `--source-list-debounce` (default
 missing from one pass and back on the next never reaches the gateway, and
 several changes between two passes arrive as one exit.
 
+## Rack ownership
+
+Every `ownership.poll_interval` the gateway fetches `/racks/status` from every
+source of the startup list, concurrently and with the `[sources]` TLS
+settings, and rebuilds one `rack_id -> source` table from the latest answer of
+every source (`ownership.rs`). Routing never guesses:
+
+- A rack reported by exactly one source is routed there.
+- A rack reported by two sources is a conflict: it has no owner, requests for
+  it are refused, and `/readyz` fails with `rack <id> is reported by <a>, <b>`
+  until one source stops reporting it.
+- A source whose polls fail keeps its last answer for `ownership.stale_after`
+  and is then dropped: requests for its racks are `UNAVAILABLE` naming the
+  source and are never redirected to another instance. The next successful
+  poll restores it. `/readyz` stays 200; only the initial answer is required.
+- A source that has not answered since the gateway started fails `/readyz`
+  with `no rack status from source <name> yet: <error>` for `stale_after`
+  after its first failed poll, then is dropped like any other so one dead
+  instance cannot hold the fleet at not-ready. Its racks are unknown until it
+  answers.
+- A rack no source has ever reported is unknown.
+
+`Gateway::bootstrap` takes the first snapshot of every source before it marks
+the gateway ready, so `/readyz` never reports 200 without ownership having been
+polled once, and the poll loop keeps the readiness flag in step afterwards. The
+RMS proxy is created with the listener, before the source list exists, and
+answers `UNAVAILABLE` until bootstrap binds the map.
+
+## RMS routing
+
+The gateway implements both RMS services with the `librms` server bindings
+(`rms_proxy.rs`) and forwards to the instances of the bound source set over
+HTTP/2 (`rms_client.rs`), reaching each instance at its `base_url`, the TLS
+listener that also serves its simulated BMCs and status routes. It routes the
+RPCs the per-pod RMS mock implements; everything else is `UNIMPLEMENTED` with a
+message naming the RPC, as it would be on the instance.
+
+| RPC | Routing |
+|-----|---------|
+| `GetVersion` | Answered by the gateway; no instance is contacted |
+| `GetScaleUpFabricStatus`, `RackManagerV2.ConfigureScaleUpFabricManager` | Rack-scoped: forwarded unchanged to the owner of the rack the nodes name. Nodes naming two racks are `INVALID_ARGUMENT`, a rack whose owner was dropped is `UNAVAILABLE` naming the instance, a rack nobody reported is `NOT_FOUND` |
+| `BatchGetNodeDeviceInfo`, `BatchGetScaleUpFabricServiceStatus`, `ConfigureSwitchCertificate` | Node batch: nodes are grouped by the owner of their `rack_id`, each group is sent to its instance concurrently, and the per-node results, stats and jobs are merged back in request order (by node id while the ids in a group are distinct, by position otherwise). A node whose rack nobody owns or whose owner was dropped is a per-node failure saying so and is never sent anywhere; an instance that fails the call fails only its own nodes |
+| `GetJobStatus`, `GetConfigureSwitchCertificateJobStatus` | Resolved through the job table below; an empty id is `NOT_FOUND` |
+
+Job ids: every job id in a response is a gateway id (`gw-<process token>-<n>`)
+mapping to `(instance, instance job id)` in `rms_jobs.rs`. A batch whose nodes
+live on one instance keeps that instance's parent job behind one gateway id. A
+batch split across instances returns one aggregate parent id mapping to the
+per-instance parents; its status is the worst, least advanced of theirs (failed
+if any part failed, else queued before running before completed), it lists the
+per-instance parents as its children, and `include_child_job_states` appends
+their translated statuses. The table is in memory only, see below.
+
 ## In-memory state is lost on restart
 
 `ufm-mock` keeps partitions (pkeys), port memberships, and QoS settings in
@@ -133,6 +190,13 @@ first inventory poll completes, but anything created through the UFM write API
 accepted for the simulation use case. Callers that create partitions must be
 able to re-create them after `/readyz` returns 200 again, and scaling the
 fleet during a run causes a window in which UFM partitions are absent.
+
+The same applies to the RMS job table: an id neither issued nor polled for an
+hour is forgotten, and a restart forgets every id at once. A status poll for an
+id the gateway does not know is reported complete, as the per-pod RMS mock does
+for ids it never issued, so a NICo operation that persisted the id finishes
+instead of stranding; the per-instance jobs in the machine-a-tron pods are
+unaffected.
 
 Nothing is persisted or shared between gateway processes, so a fleet must be
 served by exactly one gateway.
@@ -149,7 +213,7 @@ parsed is a startup error. Every key can be overridden with
 is never part of the file.
 
 Unknown keys in the gateway-owned tables (top level, `[tls]`, `[controller]`,
-`[sources]`) fail startup with an error naming the key. That includes a
+`[sources]`, `[ownership]`, `[rms]`) fail startup with an error naming the key. That includes a
 misspelled `MAT_PROTOCOL_GATEWAY__` environment variable. Keys under `[ufm]`
 are deserialized by the shared `ufm-mock` config type, which cannot deny
 unknown fields because the standalone `ufm-mock` binary flattens it, so
@@ -161,7 +225,7 @@ Durations accept `duration-str` syntax (`15s`, `2m`, `500ms`).
 
 | Key | Type | Default | Notes |
 |-----|------|---------|-------|
-| `listen_address` | socket address | `0.0.0.0:9888` | UFM API, `/livez`, `/readyz` |
+| `listen_address` | socket address | `0.0.0.0:9888` | UFM API, RMS gRPC services, `/livez`, `/readyz` |
 | `metrics_address` | socket address | unset | Optional plain-HTTP Prometheus endpoint |
 | `tls.cert_path` | path | required when `[tls]` is present | PEM certificate chain |
 | `tls.key_path` | path | required when `[tls]` is present | PEM private key |
@@ -170,8 +234,12 @@ Durations accept `duration-str` syntax (`15s`, `2m`, `500ms`).
 | `controller.request_timeout` | duration | `5s` | Per-request timeout for `sources_url`; must be nonzero |
 | `controller.startup_attempts` | integer | `150` | Attempts to obtain a ready, non-empty list; must be at least 1 |
 | `controller.startup_retry_interval` | duration | `2s` | Delay between startup attempts |
-| `sources.ca_cert_path` | path | unset | Extra PEM root trusted for inventory requests |
-| `sources.insecure_skip_verify` | bool | `false` | Disables certificate verification for inventory requests |
+| `sources.ca_cert_path` | path | unset | Extra PEM root trusted for inventory and rack status requests; the only root trusted for RMS forwarding when set |
+| `sources.insecure_skip_verify` | bool | `false` | Disables certificate verification for inventory, rack status and RMS requests |
+| `ownership.poll_interval` | duration | `10s` | Interval between `/racks/status` polls of every source; must be nonzero |
+| `ownership.request_timeout` | duration | `5s` | Per-request timeout for `/racks/status`; must be nonzero |
+| `ownership.stale_after` | duration | `60s` | How long a failing source's last answer keeps routing; at least `ownership.poll_interval` |
+| `rms.request_timeout` | duration | `30s` | Deadline for each forwarded RMS request, connection setup included; must be nonzero |
 | `ufm.enabled` | bool | forced `true` | Ignored; the gateway always activates the mock |
 | `ufm.include_local_inventory` | bool | `false` | Must stay `false`; there is no in-process inventory |
 | `ufm.metrics_address` | socket address | unset | Must stay unset; use the top-level `metrics_address` |
@@ -208,6 +276,14 @@ startup_retry_interval = "2s"
 # ca_cert_path = "/certs/mat-ca.crt"
 insecure_skip_verify = false
 
+[ownership]
+poll_interval = "10s"
+request_timeout = "5s"
+stale_after = "60s"
+
+[rms]
+request_timeout = "30s"
+
 [ufm.fabric]
 ufm_version = "6.18.0"
 
@@ -223,3 +299,13 @@ failure_action = "mark_down"
 ```bash
 cargo test -p carbide-mat-protocol-gateway
 ```
+
+`tests/integration/rms_routing.rs` runs two fake machine-a-tron instances that
+declare their racks on `/racks/status` and serve the RMS mock, drives the
+gateway through `run`, and calls it with an unmodified `librms` client: a
+rack-scoped call reaches the rack's owner, a batch across both instances is
+merged back in request order with an unowned node failed in place, the
+aggregate certificate job polls to completion through gateway ids, a rack
+reported twice blocks readiness and routing until one instance withdraws, an
+instance that stops answering loses its racks after `stale_after` without them
+moving elsewhere, and one down at startup holds readiness only that long.

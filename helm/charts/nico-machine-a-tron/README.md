@@ -65,12 +65,15 @@ complete MAT configuration, including its `[ufm_mock]` section.
 In controller mode, `mat-k8s-controller.gateway.enabled: true` adds the
 `mat-protocol-gateway` container to the controller pod. The gateway takes the
 machine-a-tron instances the controller discovers and serves one UFM API whose
-InfiniBand inventory covers all of them, so a multi-pod deployment needs a
-single NICo fabric configuration. It listens over HTTPS behind the ClusterIP
+InfiniBand inventory covers all of them, and one RMS gRPC API that forwards
+each request to the instance simulating the rack it names (learned from every
+instance's `/racks/status`), so a multi-pod deployment needs a single NICo
+fabric and RMS configuration. It listens over HTTPS behind the ClusterIP
 Service `<release>-mat-k8s-controller-gateway`; for a release named
 `nico-machine-a-tron` in `nico-system` the endpoint is
 `https://nico-machine-a-tron-mat-k8s-controller-gateway.nico-system.svc.cluster.local:8443`
-with `/ufmRestV3` as the UFM API path. The gateway exits and is restarted by
+with `/ufmRestV3` as the UFM API path, and the same URL without a path is the
+NICo `[rms] api_url`. The gateway exits and is restarted by
 the kubelet whenever the set of discovered instances changes. Partitions and
 other state created through the UFM API are lost on that restart; ports return
 with the first inventory poll and callers must re-create partitions once
@@ -88,7 +91,7 @@ is set, which also skips verification for the gateway.
 | Value | Default | Description |
 |-------|---------|-------------|
 | `mat-k8s-controller.gateway.enabled` | `false` | Add the gateway container, Service, ConfigMap and Certificate |
-| `mat-k8s-controller.gateway.port` | `8443` | HTTPS port of the UFM API, the probes and the Service |
+| `mat-k8s-controller.gateway.port` | `8443` | HTTPS port of the UFM API, the RMS gRPC API, the probes and the Service |
 | `mat-k8s-controller.gateway.existingAuthSecret` | `""` | Secret with a `token` key for UFM HTTP Basic auth; empty uses the `nico-machine-a-tron-ufm-mock-auth` Secret this chart generates, so set it with `ufmMock.existingAuthSecret`, `ufmMock.enabled: false` or a `nameOverride` |
 | `mat-k8s-controller.gateway.resources` | 100m/256Mi requests, 1 CPU/1Gi limits | Gateway container resources |
 
