@@ -26,7 +26,8 @@ pub struct NvLinkConfig {
     #[serde(default)]
     pub enabled: bool,
 
-    /// Defaults to 1 Minute if not specified.
+    /// Defaults to 1 Minute if not specified. A site whose passes overrun
+    /// the interval can use 2 minutes; partition owners accept that staleness.
     #[serde(
         default = "NvLinkConfig::default_monitor_run_interval",
         deserialize_with = "deserialize_duration",
@@ -57,11 +58,26 @@ pub struct NvLinkConfig {
     #[serde(default)]
     pub nmx_c_certificate_rotation: NmxCCertificateRotationConfig,
 
-    /// Maximum number of NMX-C machine groups (chassis or rack) processed concurrently
-    /// during a partition monitor iteration. Bounds DB pool usage and gRPC fan-out.
-    /// Defaults to 16. Must be non-zero; deserialization rejects 0.
+    /// Maximum number of NMX-C machine groups (chassis or rack) reconciled
+    /// concurrently during a partition monitor iteration. Each group in flight
+    /// holds one NMX-C client and at most one database connection at a time,
+    /// so this bounds the monitor's gRPC fan-out and its share of the pool.
+    /// Defaults to 16. The documented range is 1 to 256; larger values are
+    /// accepted with a warning at startup. Deserialization rejects 0.
     #[serde(default = "NvLinkConfig::default_partition_monitor_max_concurrent_groups")]
     pub partition_monitor_max_concurrent_groups: std::num::NonZeroUsize,
+
+    /// How often a machine group is fully reconciled against NMX-C even when
+    /// nothing changed. Between full checks, a group whose database inputs
+    /// are unchanged since its last successful check and whose instances all
+    /// have their NVLink config applied is skipped. Defaults to 10 minutes.
+    /// Zero (`"0s"`) disables skipping, so every group is reconciled every iteration.
+    #[serde(
+        default = "NvLinkConfig::default_partition_monitor_full_check_interval",
+        deserialize_with = "deserialize_duration",
+        serialize_with = "as_std_duration"
+    )]
+    pub partition_monitor_full_check_interval: std::time::Duration,
 }
 
 impl NvLinkConfig {
@@ -71,6 +87,13 @@ impl NvLinkConfig {
 
     pub const fn default_partition_monitor_max_concurrent_groups() -> std::num::NonZeroUsize {
         std::num::NonZeroUsize::new(16).expect("16 is non-zero")
+    }
+
+    /// Upper end of the documented `partition_monitor_max_concurrent_groups` range.
+    pub(crate) const MAX_DOCUMENTED_PARTITION_MONITOR_CONCURRENT_GROUPS: usize = 256;
+
+    pub const fn default_partition_monitor_full_check_interval() -> std::time::Duration {
+        std::time::Duration::from_secs(10 * 60)
     }
 }
 
@@ -145,12 +168,16 @@ impl Default for NvLinkConfig {
             nmx_c_certificate_rotation: NmxCCertificateRotationConfig::default(),
             partition_monitor_max_concurrent_groups:
                 Self::default_partition_monitor_max_concurrent_groups(),
+            partition_monitor_full_check_interval:
+                Self::default_partition_monitor_full_check_interval(),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use carbide_test_support::value_scenarios;
+
     use super::*;
 
     #[test]
@@ -173,6 +200,27 @@ mod test {
                 nmx_c_certificate_rotation: NmxCCertificateRotationConfig::default(),
                 partition_monitor_max_concurrent_groups:
                     NvLinkConfig::default_partition_monitor_max_concurrent_groups(),
+                partition_monitor_full_check_interval:
+                    NvLinkConfig::default_partition_monitor_full_check_interval(),
+            }
+        );
+    }
+
+    #[test]
+    fn full_check_interval_defaults_to_ten_minutes_and_accepts_zero() {
+        value_scenarios!(run = |json: &str| {
+            serde_json::from_str::<NvLinkConfig>(json)
+                .unwrap()
+                .partition_monitor_full_check_interval
+        };
+            "default" {
+                r#"{"allow_insecure":false}"# => std::time::Duration::from_secs(600),
+            }
+            "explicit" {
+                r#"{"allow_insecure":false,"partition_monitor_full_check_interval":"2m"}"# =>
+                    std::time::Duration::from_secs(120),
+                r#"{"allow_insecure":false,"partition_monitor_full_check_interval":"0s"}"# =>
+                    std::time::Duration::ZERO,
             }
         );
     }
