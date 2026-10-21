@@ -340,6 +340,18 @@ impl AnnotatedSqlxError {
             source,
         }
     }
+
+    /// Returns `true` for a Postgres deadlock (`40P01`) or serialization
+    /// failure (`40001`). Postgres has already rolled the transaction back, so
+    /// a fresh attempt is safe.
+    pub fn is_retryable_transaction_error(&self) -> bool {
+        match &self.source {
+            sqlx::Error::Database(database_error) => {
+                matches!(database_error.code().as_deref(), Some("40P01" | "40001"))
+            }
+            _ => false,
+        }
+    }
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -477,6 +489,12 @@ impl DatabaseError {
             },
             _ => false,
         }
+    }
+
+    /// Whether the wrapped query error is a Postgres deadlock or serialization
+    /// failure (`AnnotatedSqlxError::is_retryable_transaction_error`).
+    pub(crate) fn is_retryable_transaction_error(&self) -> bool {
+        matches!(self, DatabaseError::Sqlx(error) if error.is_retryable_transaction_error())
     }
 }
 
@@ -925,6 +943,40 @@ mod tests {
 
     use super::*;
     use crate::ip_allocator::DhcpError;
+
+    /// Two transactions that request each other's advisory key end in a
+    /// detected deadlock on one side, and that error is the one the
+    /// classifier admits for a retry.
+    #[crate::sqlx_test]
+    async fn retryable_transaction_error_classifies_a_detected_deadlock(
+        pool: PgPool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        async fn lock(conn: &mut sqlx::PgConnection, key: i64) -> DatabaseResult<()> {
+            let query = "SELECT pg_advisory_xact_lock($1)";
+            sqlx::query_scalar::<_, ()>(query)
+                .bind(key)
+                .fetch_one(conn)
+                .await
+                .map_err(|e| DatabaseError::query(query, e))
+        }
+
+        let mut first = pool.begin().await?;
+        let mut second = pool.begin().await?;
+        lock(&mut first, 1).await?;
+        lock(&mut second, 2).await?;
+        let (first_result, second_result) = tokio::join!(lock(&mut first, 2), lock(&mut second, 1));
+        let deadlock = [first_result, second_result]
+            .into_iter()
+            .find_map(Result::err)
+            .expect("one side must be aborted with a deadlock");
+
+        assert!(deadlock.is_retryable_transaction_error(), "{deadlock}");
+        assert!(
+            !DatabaseError::FailedPrecondition("not a lock conflict".to_string())
+                .is_retryable_transaction_error()
+        );
+        Ok(())
+    }
 
     const TRANSACTION_ROLLBACK_FAILURES_METRIC: &str =
         "carbide_database_transaction_rollback_failures_total";

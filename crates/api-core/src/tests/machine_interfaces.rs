@@ -19,7 +19,9 @@ use std::borrow::Borrow;
 use std::collections::HashSet;
 use std::net::IpAddr;
 use std::str::FromStr;
+use std::time::Duration;
 
+use carbide_instrument::testing::MetricsCapture;
 use carbide_network::ip::IpAddressFamily;
 use carbide_uuid::machine::{MachineId, MachineInterfaceId};
 use common::api_fixtures::network_segment::{
@@ -40,14 +42,17 @@ use model::machine::machine_id::from_hardware_info;
 use model::machine_interface::InterfaceType;
 use model::machine_interface_address::MachineInterfaceAssociation;
 use model::network_segment::NetworkSegmentType;
+use model::test_support::ManagedHostConfig;
 use rpc::forge::InterfaceSearchQuery;
 use rpc::forge::forge_server::Forge;
 use tokio::sync::broadcast;
 use tonic::Code;
 
 use crate::DatabaseError;
+use crate::test_support::fixture_config::{FixtureDefault as _, ManagedHostConfigExt as _};
 use crate::tests::common;
-use crate::tests::common::api_fixtures::dpu::create_dpu_machine;
+use crate::tests::common::api_fixtures::dpu::{create_dpu_machine, dpu_discover_machine};
+use crate::tests::common::postgres::wait_for_blocked_query;
 
 /// Adds an older BMC row so tests can prove topology selection wins over row
 /// age.
@@ -360,6 +365,315 @@ async fn reconcile_admin_addresses_requires_an_existing_address_on_reserved_segm
     txn.commit().await?;
 
     Ok(())
+}
+
+/// A change made to a reconciled two-DPU host before the reconcile under test.
+#[derive(Clone, Copy, Debug)]
+enum HostChange {
+    None,
+    /// The dormant link becomes the primary, so the address must move to it.
+    MovePrimaryFlag,
+    /// The dormant link gains a DHCP address row that must be deleted.
+    DhcpRowOnDormantLink,
+    /// The addressless dormant link gains a domain that must be cleared.
+    DomainOnDormantLink,
+    /// The primary loses its domain and must get its segment's subdomain back.
+    PrimaryDomainCleared,
+    /// No interface of the host is primary any more.
+    ClearPrimaryFlag,
+}
+
+/// What `reconcile_admin_addresses_for_host` does for a host state, judged
+/// from outside: whether it takes the admin segment locks, and what the
+/// locked pass then reports.
+#[derive(Clone, Copy, Debug)]
+enum ReconcileExpectation {
+    /// The unlocked pass answers: no segment lock, no change, `Ok(false)`.
+    NoRepair,
+    /// The locked pass writes and reports whether the active config changed.
+    Repairs { active_config_changed: bool },
+    /// The locked pass fails.
+    Fails,
+}
+
+/// The unlocked pass must send every host the locked pass would write to or
+/// fail on into the locked pass, and keep every other host off the admin
+/// segment locks. An exclusive gate on the segments makes the difference
+/// observable: the locked pass waits for it, the unlocked pass does not.
+#[crate::sqlx_test]
+async fn reconcile_admin_addresses_locks_segments_only_for_a_repair(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    struct Case {
+        change: HostChange,
+        expect: ReconcileExpectation,
+    }
+    let cases = [
+        Case {
+            change: HostChange::None,
+            expect: ReconcileExpectation::NoRepair,
+        },
+        Case {
+            change: HostChange::MovePrimaryFlag,
+            expect: ReconcileExpectation::Repairs {
+                active_config_changed: true,
+            },
+        },
+        Case {
+            change: HostChange::DhcpRowOnDormantLink,
+            expect: ReconcileExpectation::Repairs {
+                active_config_changed: false,
+            },
+        },
+        Case {
+            change: HostChange::DomainOnDormantLink,
+            expect: ReconcileExpectation::Repairs {
+                active_config_changed: false,
+            },
+        },
+        Case {
+            change: HostChange::PrimaryDomainCleared,
+            expect: ReconcileExpectation::Repairs {
+                active_config_changed: true,
+            },
+        },
+        Case {
+            change: HostChange::ClearPrimaryFlag,
+            expect: ReconcileExpectation::Fails,
+        },
+    ];
+
+    let env = create_test_env(pool).await;
+    let admin_subdomain = admin_segment_subdomain(&env).await?;
+    assert!(
+        admin_subdomain.is_some(),
+        "the domain checks need an admin segment with a subdomain"
+    );
+    for Case { change, expect } in cases {
+        let mh = create_managed_host_multi_dpu(&env, 2).await;
+        apply_host_change(&env, &mh, change).await?;
+        let before = host_interface_state(&env, &mh).await?;
+
+        let mut gate = env.pool.begin().await?;
+        db::machine_interface::lock_all_admin_segments(&mut gate).await?;
+        let gate_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+            .fetch_one(&mut *gate)
+            .await?;
+
+        let mut txn = env.pool.begin().await?;
+        let result = {
+            let reconcile =
+                db::machine_interface::reconcile_admin_addresses_for_host(&mut txn, &mh.id);
+            tokio::pin!(reconcile);
+            match expect {
+                ReconcileExpectation::NoRepair => {
+                    let result = tokio::time::timeout(Duration::from_secs(10), &mut reconcile)
+                        .await
+                        .unwrap_or_else(|_| {
+                            panic!("{change:?}: a host with nothing to repair waited on the admin segment locks")
+                        });
+                    gate.rollback().await?;
+                    result
+                }
+                ReconcileExpectation::Repairs { .. } | ReconcileExpectation::Fails => {
+                    tokio::select! {
+                        result = &mut reconcile => {
+                            panic!("{change:?}: a pending repair bypassed the admin segment locks: {result:?}")
+                        }
+                        _ = wait_for_blocked_query(&env.pool, gate_pid, "pg_advisory_xact_lock") => {}
+                    }
+                    gate.rollback().await?;
+                    reconcile.await
+                }
+            }
+        };
+
+        match expect {
+            ReconcileExpectation::NoRepair => {
+                assert!(!result?, "{change:?}");
+                txn.commit().await?;
+                assert_eq!(host_interface_state(&env, &mh).await?, before, "{change:?}");
+            }
+            ReconcileExpectation::Repairs {
+                active_config_changed,
+            } => {
+                assert_eq!(result?, active_config_changed, "{change:?}");
+                txn.commit().await?;
+                let after = host_interface_state(&env, &mh).await?;
+                assert_ne!(after, before, "{change:?}");
+                let (primary, dormant): (Vec<_>, Vec<_>) = after
+                    .into_iter()
+                    .partition(|interface| interface.primary_interface);
+                assert_eq!(primary.len(), 1, "{change:?}");
+                assert!(!primary[0].addresses.is_empty(), "{change:?}");
+                assert_eq!(primary[0].domain_id, admin_subdomain, "{change:?}");
+                assert!(
+                    dormant
+                        .iter()
+                        .all(|interface| interface.addresses.is_empty()
+                            && interface.domain_id.is_none()),
+                    "{change:?}"
+                );
+            }
+            ReconcileExpectation::Fails => {
+                assert!(result.is_err(), "{change:?}");
+                txn.rollback().await?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// A DPU rediscovery whose post-commit reconcile fails still answers with its
+/// machine id: the failure is counted and the host's rows are left as they
+/// were.
+#[crate::sqlx_test]
+async fn dpu_rediscovery_counts_a_failed_admin_address_reconcile(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = create_test_env(pool).await;
+    let host_config = ManagedHostConfig::default().with_dpu_count(2);
+    let mh = create_managed_host_with_config(&env, host_config.clone()).await;
+    apply_host_change(&env, &mh, HostChange::ClearPrimaryFlag).await?;
+    let before = host_interface_state(&env, &mh).await?;
+    let dpu = &host_config.dpus[0];
+    let dpu_interface = db::machine_interface::find_by_mac_address(&env.pool, dpu.oob_mac_address)
+        .await?
+        .into_iter()
+        .find(|interface| {
+            interface
+                .machine_id
+                .is_some_and(|machine_id| machine_id.machine_type().is_dpu())
+        })
+        .expect("the DPU OOB interface should belong to the DPU machine");
+    let dpu_machine_id = dpu_interface
+        .machine_id
+        .expect("the OOB interface was selected by its DPU machine id");
+
+    let metrics = MetricsCapture::start();
+    assert_eq!(
+        dpu_discover_machine(&env, dpu, dpu_interface.id).await,
+        dpu_machine_id
+    );
+    assert_eq!(
+        metrics.counter_delta(
+            "carbide_api_host_admin_address_reconcile_failures_total",
+            &[]
+        ),
+        1.0
+    );
+    assert_eq!(host_interface_state(&env, &mh).await?, before);
+
+    Ok(())
+}
+
+/// Reconciles `mh`, a two-DPU host, then applies `change` to its DPU-backed
+/// admin links.
+async fn apply_host_change(
+    env: &common::api_fixtures::TestEnv,
+    mh: &common::api_fixtures::TestManagedHost,
+    change: HostChange,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut txn = env.pool.begin().await?;
+    db::machine_interface::reconcile_admin_addresses_for_host(&mut txn, &mh.id).await?;
+    txn.commit().await?;
+    let mut txn = env.pool.begin().await?;
+    let mut interface_map = db::machine_interface::find_by_machine_ids(&mut txn, &[mh.id]).await?;
+    let interfaces = interface_map.remove(&mh.id).unwrap();
+    let dpu_admin_interface = |primary: bool| {
+        interfaces
+            .iter()
+            .find(|interface| {
+                interface.network_segment_type == Some(NetworkSegmentType::Admin)
+                    && interface.attached_dpu_machine_id.is_some()
+                    && interface.primary_interface == primary
+            })
+            .cloned()
+            .unwrap()
+    };
+    let primary = dpu_admin_interface(true);
+    let dormant = dpu_admin_interface(false);
+    match change {
+        HostChange::None => {}
+        HostChange::MovePrimaryFlag => {
+            db::machine_interface::set_primary_interface(&primary.id, false, &mut txn).await?;
+            db::machine_interface::set_primary_interface(&dormant.id, true, &mut txn).await?;
+        }
+        HostChange::DhcpRowOnDormantLink => {
+            db::machine_interface_address::insert(
+                &mut txn,
+                dormant.id,
+                "198.51.100.77".parse()?,
+                AllocationType::Dhcp,
+            )
+            .await?;
+        }
+        HostChange::DomainOnDormantLink => {
+            sqlx::query("UPDATE machine_interfaces SET domain_id = $1 WHERE id = $2")
+                .bind(env.domain)
+                .bind(dormant.id)
+                .execute(&mut *txn)
+                .await?;
+        }
+        HostChange::PrimaryDomainCleared => {
+            sqlx::query("UPDATE machine_interfaces SET domain_id = NULL WHERE id = $1")
+                .bind(primary.id)
+                .execute(&mut *txn)
+                .await?;
+        }
+        HostChange::ClearPrimaryFlag => {
+            db::machine_interface::set_primary_interface(&primary.id, false, &mut txn).await?;
+        }
+    }
+    txn.commit().await?;
+    Ok(())
+}
+
+/// The subdomain the fixture admin segment publishes its primaries under.
+async fn admin_segment_subdomain(
+    env: &common::api_fixtures::TestEnv,
+) -> Result<Option<carbide_uuid::domain::DomainId>, Box<dyn std::error::Error>> {
+    let mut txn = env.pool.begin().await?;
+    let admin_segment = db::network_segment::admin(&mut txn)
+        .await?
+        .into_iter()
+        .next()
+        .expect("the test env should have an admin segment");
+    txn.commit().await?;
+    Ok(admin_segment.config.subdomain_id)
+}
+
+/// The DPU-backed admin links of `mh`, as the fields the reconcile may write.
+#[derive(Debug, PartialEq, Eq)]
+struct AdminLinkState {
+    primary_interface: bool,
+    hostname: String,
+    domain_id: Option<carbide_uuid::domain::DomainId>,
+    addresses: Vec<std::net::IpAddr>,
+}
+
+async fn host_interface_state(
+    env: &common::api_fixtures::TestEnv,
+    mh: &common::api_fixtures::TestManagedHost,
+) -> Result<Vec<AdminLinkState>, Box<dyn std::error::Error>> {
+    let mut txn = env.pool.begin().await?;
+    let mut interface_map = db::machine_interface::find_by_machine_ids(&mut txn, &[mh.id]).await?;
+    let mut interfaces = interface_map.remove(&mh.id).unwrap_or_default();
+    interfaces.sort_by_key(|interface| interface.id);
+    Ok(interfaces
+        .into_iter()
+        .filter(|interface| {
+            interface.network_segment_type == Some(NetworkSegmentType::Admin)
+                && interface.attached_dpu_machine_id.is_some()
+        })
+        .map(|interface| AdminLinkState {
+            primary_interface: interface.primary_interface,
+            hostname: interface.hostname,
+            domain_id: interface.domain_id,
+            addresses: interface.addresses,
+        })
+        .collect())
 }
 
 #[crate::sqlx_test]
