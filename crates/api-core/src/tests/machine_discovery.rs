@@ -18,12 +18,15 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
+use std::time::Duration;
 
 use carbide_authn::middleware::ConnectionAttributes;
-use carbide_uuid::machine::{HostMachineId, MachineInterfaceId, StableHostMachineId};
+use carbide_uuid::machine::{HostMachineId, MachineId, MachineInterfaceId, StableHostMachineId};
 use carbide_uuid::network::NetworkSegmentId;
-use common::api_fixtures::dpu::create_dpu_machine;
-use common::api_fixtures::host::{host_discover_dhcp, host_discover_machine_with_reporter};
+use common::api_fixtures::dpu::{create_dpu_machine, dpu_discover_dhcp, dpu_discover_machine};
+use common::api_fixtures::host::{
+    host_discover_dhcp, host_discover_machine, host_discover_machine_with_reporter,
+};
 use common::api_fixtures::{
     FIXTURE_DHCP_RELAY_ADDRESS, create_managed_host, create_managed_host_with_config,
     create_test_env,
@@ -710,6 +713,429 @@ async fn test_discover_dpu_not_create_machine(
     let response = env.api.discover_machine(req).await;
 
     assert_eq!(response.unwrap_err().code(), Code::PermissionDenied);
+
+    Ok(())
+}
+
+/// The mode of the advisory lock `pid` is waiting for.
+async fn pending_advisory_lock_mode(pool: &sqlx::PgPool, pid: i32) -> Result<String, sqlx::Error> {
+    sqlx::query_scalar(
+        "SELECT mode FROM pg_locks WHERE pid = $1 AND locktype = 'advisory' AND NOT granted",
+    )
+    .bind(pid)
+    .fetch_one(pool)
+    .await
+}
+
+/// Whether the transaction on `pid` has neither written nor locked a row:
+/// Postgres assigns its transaction id on the first of either.
+async fn has_written_nothing(pool: &sqlx::PgPool, pid: i32) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar("SELECT backend_xid IS NULL FROM pg_stat_activity WHERE pid = $1")
+        .bind(pid)
+        .fetch_one(pool)
+        .await
+}
+
+/// The OOB interface of `dpu`, which the DPU agent registers from.
+async fn dpu_oob_interface(
+    env: &common::api_fixtures::TestEnv,
+    dpu: &model::test_support::DpuConfig,
+    dpu_machine_id: MachineId,
+) -> Result<model::machine::MachineInterfaceSnapshot, Box<dyn std::error::Error>> {
+    Ok(
+        db::machine_interface::find_by_mac_address(&env.pool, dpu.oob_mac_address)
+            .await?
+            .into_iter()
+            .find(|interface| interface.machine_id == Some(dpu_machine_id))
+            .expect("the DPU OOB interface should belong to the DPU machine"),
+    )
+}
+
+/// Re-registering a DPU of an ingested host must not wait on the admin
+/// segment locks: the discovery transaction no longer takes them, and the
+/// admin address reconcile that follows its commit finds nothing to repair.
+#[crate::sqlx_test]
+async fn test_dpu_rediscovery_does_not_wait_on_admin_segment_locks(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = create_test_env(pool).await;
+    let host_config = env.managed_host_config();
+    let mh = create_managed_host_with_config(&env, host_config.clone()).await;
+    let dpu = host_config.get_and_assert_single_dpu();
+    let dpu_machine_id = MachineId::from(mh.dpu_ids[0]);
+    let dpu_interface = dpu_oob_interface(&env, dpu, dpu_machine_id).await?;
+
+    // Nothing is pending on the host, so the reconcile after the rediscovery
+    // has no reason to wait on the gate either.
+    let mut txn = env.pool.begin().await?;
+    assert!(!db::machine_interface::reconcile_admin_addresses_for_host(&mut txn, &mh.id).await?);
+    txn.commit().await?;
+
+    let mut gate = env.pool.begin().await?;
+    db::machine_interface::lock_all_admin_segments(&mut gate).await?;
+
+    let rediscovered_machine_id = tokio::time::timeout(
+        Duration::from_secs(30),
+        dpu_discover_machine(&env, dpu, dpu_interface.id),
+    )
+    .await
+    .expect("DPU rediscovery must not wait on the admin segment locks");
+    assert_eq!(rediscovered_machine_id, dpu_machine_id);
+    gate.rollback().await?;
+
+    // The lock-free discovery still reattached the DPU's host link.
+    let host_link = db::machine_interface::find_by_mac_address(&env.pool, dpu.host_mac_address)
+        .await?
+        .into_iter()
+        .find(|interface| interface.attached_dpu_machine_id == Some(mh.dpu_ids[0]))
+        .expect("the DPU should back a host link");
+    assert_eq!(host_link.machine_id, Some(MachineId::from(mh.id)));
+
+    Ok(())
+}
+
+/// A repeat discovery of a host that already carries its stable machine id
+/// renames nothing, so it takes no admin segment lock and completes while an
+/// exclusive holder has them.
+#[crate::sqlx_test]
+async fn test_repeat_host_discovery_does_not_wait_on_admin_segment_locks(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = create_test_env(pool).await;
+    let host_config = env.managed_host_config();
+    let mh = create_managed_host_with_config(&env, host_config.clone()).await;
+    let mut txn = env.pool.begin().await?;
+    let host_interface = db::machine_interface::find_by_machine_ids(&mut txn, &[mh.id])
+        .await?
+        .remove(&mh.id)
+        .unwrap_or_default()
+        .into_iter()
+        .find(|interface| interface.primary_interface)
+        .expect("the ingested host should have a primary interface");
+    txn.commit().await?;
+
+    // Nothing is pending on the host, so the reconcile after the rediscovery
+    // has no reason to wait on the gate either.
+    let mut txn = env.pool.begin().await?;
+    assert!(!db::machine_interface::reconcile_admin_addresses_for_host(&mut txn, &mh.id).await?);
+    txn.commit().await?;
+
+    let mut gate = env.pool.begin().await?;
+    db::machine_interface::lock_all_admin_segments(&mut gate).await?;
+
+    let rediscovered_machine_id = tokio::time::timeout(
+        Duration::from_secs(30),
+        host_discover_machine(&env, &host_config, host_interface.id),
+    )
+    .await
+    .expect("a repeat host discovery must not wait on the admin segment locks");
+    assert_eq!(
+        MachineId::from(rediscovered_machine_id),
+        MachineId::from(mh.id)
+    );
+    gate.rollback().await?;
+
+    // The lock-free discovery left the primary interface on the stable host.
+    let host_interface = db::machine_interface::find_one(&env.pool, host_interface.id).await?;
+    assert_eq!(host_interface.machine_id, Some(MachineId::from(mh.id)));
+
+    Ok(())
+}
+
+/// A host's first discovery requests the admin segments shared, and before
+/// its row pre-lock, so an exclusive holder parks it with nothing locked or
+/// written.
+#[crate::sqlx_test]
+async fn test_first_host_discovery_requests_the_admin_segments_shared_before_its_row_locks(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = create_test_env(pool).await;
+    let host_config = env.managed_host_config();
+    let dpu_machine_id = create_dpu_machine(&env, &host_config).await;
+    let host_interface_id = host_discover_dhcp(&env, &host_config, &dpu_machine_id).await;
+    let expected_machine_id = from_hardware_info(&HardwareInfo::from(&host_config))?;
+
+    let mut gate = env.pool.begin().await?;
+    db::machine_interface::lock_all_admin_segments(&mut gate).await?;
+    let gate_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *gate)
+        .await?;
+
+    let discovery = host_discover_machine(&env, &host_config, host_interface_id);
+    tokio::pin!(discovery);
+    let discovery_pid = tokio::select! {
+        result = &mut discovery => {
+            panic!("a host's first discovery bypassed the admin segment locks: {result:?}")
+        }
+        blocked = wait_for_blocked_query(
+            &env.pool,
+            gate_pid,
+            "pg_advisory_xact_lock_shared(",
+        ) => blocked,
+    };
+    assert_eq!(
+        pending_advisory_lock_mode(&env.pool, discovery_pid).await?,
+        "ShareLock"
+    );
+    assert!(
+        has_written_nothing(&env.pool, discovery_pid).await?,
+        "the segment lock request must precede the row pre-lock"
+    );
+    gate.rollback().await?;
+
+    assert_eq!(MachineId::from(discovery.await), expected_machine_id);
+    let host_interface = db::machine_interface::find_one(&env.pool, host_interface_id).await?;
+    assert_eq!(host_interface.machine_id, Some(expected_machine_id));
+
+    Ok(())
+}
+
+/// A host's first discovery requests the host's interface rows, ascending,
+/// before it locks or writes anything else, holding the admin segments
+/// shared: an allocation-mode request for them is admitted beside it and an
+/// exclusive one waits.
+#[crate::sqlx_test]
+async fn test_first_host_discovery_locks_host_rows_first_under_shared_segment_locks(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = create_test_env(pool).await;
+    let host_config = env.managed_host_config();
+    let dpu_machine_id = create_dpu_machine(&env, &host_config).await;
+    let host_interface_id = host_discover_dhcp(&env, &host_config, &dpu_machine_id).await;
+    let expected_machine_id = from_hardware_info(&HardwareInfo::from(&host_config))?;
+    let host_interface = db::machine_interface::find_one(&env.pool, host_interface_id).await?;
+    let predicted_host_id = host_interface
+        .machine_id
+        .expect("the DHCP-discovered host interface should belong to the predicted host");
+    let admin_segment_count = env.admin_segments.len();
+
+    // A second row of the predicted host whose id sorts below the caller
+    // interface's, so a holder of it parks the discovery on its first row lock.
+    let lowest_interface_id: MachineInterfaceId = sqlx::query_scalar(
+        "INSERT INTO machine_interfaces
+             (id, machine_id, association_type, segment_id, mac_address,
+              primary_interface, hostname)
+         VALUES ('00000000-0000-0000-0000-000000000001', $1, 'Machine', $2, $3::macaddr,
+                 false, 'lowest-host-row')
+         RETURNING id",
+    )
+    .bind(predicted_host_id)
+    .bind(host_interface.segment_id)
+    .bind("02:00:00:00:00:01")
+    .fetch_one(&env.pool)
+    .await?;
+
+    let mut blocker = env.pool.begin().await?;
+    let blocker_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *blocker)
+        .await?;
+    sqlx::query("SELECT id FROM machine_interfaces WHERE id = $1 FOR UPDATE")
+        .bind(lowest_interface_id)
+        .fetch_one(&mut *blocker)
+        .await?;
+
+    let discovery = host_discover_machine(&env, &host_config, host_interface_id);
+    tokio::pin!(discovery);
+    let discovery_pid = tokio::select! {
+        result = &mut discovery => {
+            panic!("the discovery finished while a row of the host was held: {result:?}")
+        }
+        blocked = wait_for_blocked_query(
+            &env.pool,
+            blocker_pid,
+            "WHERE machine_id = $1 ORDER BY id FOR UPDATE",
+        ) => blocked,
+    };
+    assert!(
+        has_written_nothing(&env.pool, discovery_pid).await?,
+        "the row pre-lock must precede every other row lock and write"
+    );
+    let advisory_locks: Vec<String> = sqlx::query_scalar(
+        "SELECT mode FROM pg_locks
+         WHERE pid = $1 AND locktype = 'advisory' AND granted
+         ORDER BY mode",
+    )
+    .bind(discovery_pid)
+    .fetch_all(&env.pool)
+    .await?;
+    assert_eq!(
+        advisory_locks,
+        vec!["ShareLock".to_string(); admin_segment_count],
+        "a host's first discovery must hold every admin segment shared"
+    );
+
+    let mut probe = env.pool.begin().await?;
+    sqlx::query("SET LOCAL lock_timeout = '1s'")
+        .execute(&mut *probe)
+        .await?;
+    db::machine_interface::lock_all_admin_segments_for_allocation(&mut probe).await?;
+    probe.rollback().await?;
+
+    let mut probe = env.pool.begin().await?;
+    sqlx::query("SET LOCAL lock_timeout = '1s'")
+        .execute(&mut *probe)
+        .await?;
+    let error = db::machine_interface::lock_all_admin_segments(&mut probe)
+        .await
+        .expect_err("an exclusive request must wait for the discovery's shared locks");
+    let db::DatabaseError::Sqlx(error) = error else {
+        panic!("expected wrapped SQLx error, got {error:?}");
+    };
+    assert_eq!(
+        error
+            .source
+            .as_database_error()
+            .and_then(sqlx::error::DatabaseError::code)
+            .as_deref(),
+        Some("55P03"),
+        "{error}"
+    );
+    probe.rollback().await?;
+
+    blocker.rollback().await?;
+    assert_eq!(MachineId::from(discovery.await), expected_machine_id);
+    for interface_id in [host_interface_id, lowest_interface_id] {
+        let interface = db::machine_interface::find_one(&env.pool, interface_id).await?;
+        assert_eq!(interface.machine_id, Some(expected_machine_id));
+    }
+
+    Ok(())
+}
+
+/// Where Site Explorer does not create machines, a DPU's first discovery may
+/// create the host machine row its sibling DPUs share, so it takes the admin
+/// segment locks exclusively, and before its first row write.
+#[crate::sqlx_test]
+async fn test_legacy_first_dpu_discovery_waits_on_admin_segment_locks_before_writing(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    check_legacy_first_dpu_discovery_waits_on_admin_segment_locks(pool, false).await
+}
+
+/// A host NIC that leased before its DPU registered leaves a link row with no
+/// machine. The DPU's first discovery still creates the host machine, so the
+/// unattached link does not let it skip the exclusive lock.
+#[crate::sqlx_test]
+async fn test_legacy_first_dpu_discovery_keeps_the_exclusive_lock_with_an_unattached_host_link(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    check_legacy_first_dpu_discovery_waits_on_admin_segment_locks(pool, true).await
+}
+
+async fn check_legacy_first_dpu_discovery_waits_on_admin_segment_locks(
+    pool: sqlx::PgPool,
+    host_nic_leases_first: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = create_test_env(pool).await;
+    assert!(
+        !env.config
+            .site_explorer
+            .create_machines
+            .load(Ordering::Relaxed),
+        "this test needs the DPU agent to create machines"
+    );
+    let host_config = env.managed_host_config();
+    let dpu = host_config.get_and_assert_single_dpu();
+    if host_nic_leases_first {
+        // The host NIC leases on the admin segment like any unknown MAC.
+        dpu_discover_dhcp(&env, &dpu.host_mac_address.to_string()).await;
+        let host_links =
+            db::machine_interface::find_by_mac_address(&env.pool, dpu.host_mac_address).await?;
+        assert_eq!(host_links.len(), 1);
+        assert!(host_links[0].machine_id.is_none());
+    }
+    let dpu_interface_id = dpu_discover_dhcp(&env, &dpu.oob_mac_address.to_string()).await;
+    let expected_dpu_machine_id = from_hardware_info(&HardwareInfo::from(dpu))?;
+
+    let mut gate = env.pool.begin().await?;
+    db::machine_interface::lock_all_admin_segments(&mut gate).await?;
+    let gate_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *gate)
+        .await?;
+
+    let discovery = dpu_discover_machine(&env, dpu, dpu_interface_id);
+    tokio::pin!(discovery);
+    let discovery_pid = tokio::select! {
+        result = &mut discovery => {
+            panic!("a first DPU discovery bypassed the admin segment locks: {result:?}")
+        }
+        blocked = wait_for_blocked_query(&env.pool, gate_pid, "pg_advisory_xact_lock(") => blocked,
+    };
+    assert_eq!(
+        pending_advisory_lock_mode(&env.pool, discovery_pid).await?,
+        "ExclusiveLock"
+    );
+    assert!(
+        has_written_nothing(&env.pool, discovery_pid).await?,
+        "the lock request must precede the first row write"
+    );
+    gate.rollback().await?;
+
+    assert_eq!(discovery.await, expected_dpu_machine_id);
+    let host_links =
+        db::machine_interface::find_by_mac_address(&env.pool, dpu.host_mac_address).await?;
+    assert_eq!(host_links.len(), 1);
+    assert!(host_links[0].machine_id.is_some());
+
+    Ok(())
+}
+
+/// While a DPU rediscovery holds its row locks mid-transaction it holds no
+/// advisory lock, so a creation-mode request for the admin segments is
+/// admitted beside it instead of queueing behind the fleet.
+#[crate::sqlx_test]
+async fn test_creation_lock_request_is_admitted_while_dpu_rediscovery_is_in_flight(
+    pool: sqlx::PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = create_test_env(pool).await;
+    let host_config = env.managed_host_config();
+    let mh = create_managed_host_with_config(&env, host_config.clone()).await;
+    let dpu = host_config.get_and_assert_single_dpu();
+    let dpu_machine_id = MachineId::from(mh.dpu_ids[0]);
+    let dpu_interface = dpu_oob_interface(&env, dpu, dpu_machine_id).await?;
+
+    // Park the rediscovery on its first row write, the caller interface row.
+    let mut blocker = env.pool.begin().await?;
+    let blocker_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *blocker)
+        .await?;
+    sqlx::query("SELECT id FROM machine_interfaces WHERE id = $1 FOR UPDATE")
+        .bind(dpu_interface.id)
+        .fetch_one(&mut *blocker)
+        .await?;
+
+    let rediscovery = dpu_discover_machine(&env, dpu, dpu_interface.id);
+    tokio::pin!(rediscovery);
+    let rediscovery_pid = tokio::select! {
+        result = &mut rediscovery => {
+            panic!("the rediscovery finished while its caller interface row was held: {result:?}")
+        }
+        blocked = wait_for_blocked_query(
+            &env.pool,
+            blocker_pid,
+            "UPDATE machine_interfaces SET machine_id",
+        ) => blocked,
+    };
+    let advisory_locks: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM pg_locks WHERE pid = $1 AND locktype = 'advisory'",
+    )
+    .bind(rediscovery_pid)
+    .fetch_one(&env.pool)
+    .await?;
+    assert_eq!(
+        advisory_locks, 0,
+        "a DPU rediscovery must hold no segment lock"
+    );
+
+    let mut probe = env.pool.begin().await?;
+    sqlx::query("SET LOCAL lock_timeout = '1s'")
+        .execute(&mut *probe)
+        .await?;
+    db::machine_interface::lock_all_admin_segments_for_allocation(&mut probe).await?;
+    probe.rollback().await?;
+
+    blocker.rollback().await?;
+    assert_eq!(rediscovery.await, dpu_machine_id);
 
     Ok(())
 }

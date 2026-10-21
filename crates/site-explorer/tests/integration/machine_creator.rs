@@ -16,7 +16,9 @@
  */
 
 use std::sync::Arc;
+use std::time::Duration;
 
+use carbide_instrument::testing::MetricsCapture;
 use carbide_site_explorer::config::SiteExplorerConfig;
 use carbide_test_harness::network::segment::TestNetworkSegment;
 use carbide_test_harness::prelude::*;
@@ -27,10 +29,14 @@ use carbide_uuid::machine::{HostMachineId, MachineId, StableHostMachineId};
 use carbide_uuid::rack::{RackId, RackProfileId};
 use component_manager::TestMachineInfoProvider;
 use db::ObjectFilter;
+use db::test_support::postgres::wait_for_blocked_query;
 use mac_address::MacAddress;
 use model::expected_machine::{ExpectedMachineData, HostDpuPolicy};
+use model::machine::MachineInterfaceSnapshot;
 use model::machine::machine_search_config::MachineSearchConfig;
 use model::machine_boot_interface::{MachineBootInterface, MachineBootInterfaceTarget};
+use model::machine_interface_address::MachineInterfaceAssociation;
+use model::network_segment::NetworkSegmentType;
 use model::rack::RackConfig;
 use model::site_explorer::ExploredManagedHost;
 use model::test_support::{DpuConfig, ManagedHostConfig};
@@ -453,6 +459,286 @@ async fn test_dpu_interface_predictions_apply_when_dhcp_follows_multi_dpu_machin
     }
     txn.commit().await?;
 
+    Ok(())
+}
+
+/// Creating a multi-DPU host takes the admin segment locks in the allocators'
+/// mode, before it writes a row: another shared holder lets the creation
+/// through, an exclusive holder makes it wait. The admin address reconcile
+/// that follows the commit leaves one addressed primary and addressless
+/// dormant links either way.
+#[sqlx_test]
+async fn test_machine_creator_takes_admin_segment_locks_in_allocation_mode(
+    pool: PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    const NUM_DPUS: usize = 2;
+
+    let env = Env::new(pool).await;
+    let creator = machine_creator(&env, machine_creator_config());
+
+    // A shared holder (another IPv4 allocator) does not delay creation.
+    let shared_host = ManagedHostConfig::default().with_dpu_count(NUM_DPUS);
+    let mut fixture = explored_host_fixture(&env, &shared_host).await;
+    let mut gate = env.pool.begin().await?;
+    let admin_segment_ids =
+        db::network_segment::list_segment_ids(gate.as_mut(), Some(NetworkSegmentType::Admin))
+            .await?;
+    db::machine_interface::lock_network_segments_shared(gate.as_mut(), &admin_segment_ids).await?;
+    let created = tokio::time::timeout(
+        Duration::from_secs(30),
+        creator.create_managed_host(
+            &fixture.host,
+            &mut fixture.host_report,
+            Some(&expected_machine(&shared_host)),
+            &env.pool,
+        ),
+    )
+    .await
+    .expect("creation must not wait on a shared admin segment holder")?;
+    assert!(created);
+    gate.rollback().await?;
+    assert_host_links_reconciled(&env.pool, &shared_host, NUM_DPUS).await?;
+
+    // An exclusive holder makes creation wait for the segments, then it completes.
+    let gated_host = ManagedHostConfig::default().with_dpu_count(NUM_DPUS);
+    let mut fixture = explored_host_fixture(&env, &gated_host).await;
+    let mut gate = env.pool.begin().await?;
+    db::machine_interface::lock_all_admin_segments(gate.as_mut()).await?;
+    let gate_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(gate.as_mut())
+        .await?;
+    let expected = expected_machine(&gated_host);
+    let creation = creator.create_managed_host(
+        &fixture.host,
+        &mut fixture.host_report,
+        Some(&expected),
+        &env.pool,
+    );
+    tokio::pin!(creation);
+    let creation_pid = tokio::select! {
+        result = &mut creation => {
+            panic!("creation finished while the admin segments were held exclusively: {result:?}")
+        }
+        blocked = wait_for_blocked_query(&env.pool, gate_pid, "pg_advisory_xact_lock_shared(") => blocked,
+    };
+    // The request is shared and precedes the first row write: Postgres
+    // assigns a transaction id on the first write, and no host link exists.
+    let (wrote_nothing, pending_mode): (bool, String) = sqlx::query_as(
+        "SELECT activity.backend_xid IS NULL, lock.mode \
+         FROM pg_stat_activity activity \
+         JOIN pg_locks lock ON lock.pid = activity.pid \
+         WHERE activity.pid = $1 AND lock.locktype = 'advisory' AND NOT lock.granted",
+    )
+    .bind(creation_pid)
+    .fetch_one(&env.pool)
+    .await?;
+    assert!(
+        wrote_nothing,
+        "the lock request must precede the first row write"
+    );
+    assert_eq!(pending_mode, "ShareLock");
+    assert!(host_links(&env.pool, &gated_host).await?.is_empty());
+    gate.rollback().await?;
+    assert!(creation.await?);
+    assert_host_links_reconciled(&env.pool, &gated_host, NUM_DPUS).await?;
+
+    Ok(())
+}
+
+/// A zero-DPU host allocates no admin address, so its creation takes no admin
+/// segment lock and completes while an exclusive holder has them.
+#[sqlx_test]
+async fn test_zero_dpu_host_creation_does_not_wait_on_admin_segment_locks(
+    pool: PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let env = Env::new(pool).await;
+    let creator = machine_creator(&env, machine_creator_config());
+    let host = ManagedHostConfig {
+        dpus: vec![],
+        ..ManagedHostConfig::default()
+    }
+    .with_expected_machine_data(ExpectedMachineData {
+        dpu_policy: HostDpuPolicy::Ignore,
+        ..Default::default()
+    });
+    let mut fixture = explored_host_fixture(&env, &host).await;
+
+    let mut gate = env.pool.begin().await?;
+    db::machine_interface::lock_all_admin_segments(gate.as_mut()).await?;
+    let created = tokio::time::timeout(
+        Duration::from_secs(30),
+        creator.create_managed_host(
+            &fixture.host,
+            &mut fixture.host_report,
+            Some(&expected_machine(&host)),
+            &env.pool,
+        ),
+    )
+    .await
+    .expect("zero-DPU creation must not wait on the admin segment locks")?;
+    assert!(created);
+    gate.rollback().await?;
+
+    Ok(())
+}
+
+/// Running creation again for an ingested host takes the steady-state path,
+/// which locks no admin segment: it completes while an exclusive holder has
+/// them and reports no new machine.
+#[sqlx_test]
+async fn test_steady_state_host_repair_does_not_wait_on_admin_segment_locks(
+    pool: PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    const NUM_DPUS: usize = 2;
+
+    let env = Env::new(pool).await;
+    let creator = machine_creator(&env, machine_creator_config());
+    let host = ManagedHostConfig::default().with_dpu_count(NUM_DPUS);
+    let mut fixture = explored_host_fixture(&env, &host).await;
+    assert!(
+        creator
+            .create_managed_host(
+                &fixture.host,
+                &mut fixture.host_report,
+                Some(&expected_machine(&host)),
+                &env.pool,
+            )
+            .await?
+    );
+    // Nothing is pending on the host, so the reconcile after the steady-state
+    // commit has no reason to wait on the gate either.
+    assert_host_links_reconciled(&env.pool, &host, NUM_DPUS).await?;
+
+    let mut gate = env.pool.begin().await?;
+    db::machine_interface::lock_all_admin_segments(gate.as_mut()).await?;
+    let created = tokio::time::timeout(
+        Duration::from_secs(30),
+        creator.create_managed_host(
+            &fixture.host,
+            &mut fixture.host_report,
+            Some(&expected_machine(&host)),
+            &env.pool,
+        ),
+    )
+    .await
+    .expect("the steady-state repair must not wait on the admin segment locks")?;
+    assert!(!created);
+    gate.rollback().await?;
+
+    Ok(())
+}
+
+/// The steady-state path keeps its own commit when the admin address
+/// reconcile after it fails: the host stays and the failure is counted. A
+/// host without a primary admin interface fails for good, so its BMC
+/// endpoint is not flagged for exploration.
+#[sqlx_test]
+async fn test_steady_state_host_repair_counts_a_failed_admin_address_reconcile(
+    pool: PgPool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    const NUM_DPUS: usize = 2;
+
+    let env = Env::new(pool).await;
+    let creator = machine_creator(&env, machine_creator_config());
+    let host = ManagedHostConfig::default().with_dpu_count(NUM_DPUS);
+    let mut fixture = explored_host_fixture(&env, &host).await;
+    assert!(
+        creator
+            .create_managed_host(
+                &fixture.host,
+                &mut fixture.host_report,
+                Some(&expected_machine(&host)),
+                &env.pool,
+            )
+            .await?
+    );
+    let links = host_links(&env.pool, &host).await?;
+    let host_machine_id = links[0]
+        .machine_id
+        .expect("a host link belongs to the host");
+    let primary = links
+        .iter()
+        .find(|link| link.primary_interface)
+        .expect("one host link is the primary");
+
+    // The host as ingestion leaves it for the explorer: its BMC interface
+    // belongs to the machine and its endpoint row exists. Then no interface
+    // of the host is primary any more, which the locked pass fails on.
+    let host_bmc_ip = fixture.host.host_bmc_ip;
+    let bmc_interface = db::machine_interface::find_by_mac_address(&env.pool, host.bmc_mac_address)
+        .await?
+        .remove(0);
+    let mut txn = env.pool.begin().await?;
+    db::machine_interface::associate_bmc_interface(
+        &bmc_interface.id,
+        MachineInterfaceAssociation::Machine(host_machine_id),
+        txn.as_mut(),
+    )
+    .await?;
+    db::explored_endpoints::insert(host_bmc_ip, &fixture.host_report, false, txn.as_mut()).await?;
+    db::machine_interface::set_primary_interface(&primary.id, false, txn.as_mut()).await?;
+    txn.commit().await?;
+
+    let metrics = MetricsCapture::start();
+    let created = creator
+        .create_managed_host(
+            &fixture.host,
+            &mut fixture.host_report,
+            Some(&expected_machine(&host)),
+            &env.pool,
+        )
+        .await?;
+    assert!(!created);
+    assert_eq!(
+        metrics.counter_delta(
+            "carbide_site_explorer_host_admin_address_reconcile_failures_total",
+            &[]
+        ),
+        1.0
+    );
+    let exploration_requested: bool = sqlx::query_scalar(
+        "SELECT exploration_requested FROM explored_endpoints WHERE address = $1",
+    )
+    .bind(host_bmc_ip)
+    .fetch_one(&env.pool)
+    .await?;
+    assert!(
+        !exploration_requested,
+        "a reconcile failure that a retry cannot fix must not flag the host BMC for exploration"
+    );
+
+    Ok(())
+}
+
+/// The host-side links of every DPU of `host`.
+async fn host_links(
+    pool: &PgPool,
+    host: &ManagedHostConfig,
+) -> Result<Vec<MachineInterfaceSnapshot>, Box<dyn std::error::Error>> {
+    let mut host_links = Vec::new();
+    for dpu in &host.dpus {
+        host_links
+            .extend(db::machine_interface::find_by_mac_address(pool, dpu.host_mac_address).await?);
+    }
+    Ok(host_links)
+}
+
+/// Every DPU of `host` has a host-side link, exactly one of them is the
+/// addressed primary, and the others hold no address.
+async fn assert_host_links_reconciled(
+    pool: &PgPool,
+    host: &ManagedHostConfig,
+    dpu_count: usize,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let host_links = host_links(pool, host).await?;
+    assert_eq!(host_links.len(), dpu_count);
+    assert!(host_links.iter().all(|link| link.machine_id.is_some()));
+    let (primary, dormant): (Vec<_>, Vec<_>) =
+        host_links.iter().partition(|link| link.primary_interface);
+    assert_eq!(primary.len(), 1);
+    assert!(!primary[0].addresses.is_empty());
+    assert_eq!(dormant.len(), dpu_count - 1);
+    assert!(dormant.iter().all(|link| link.addresses.is_empty()));
     Ok(())
 }
 

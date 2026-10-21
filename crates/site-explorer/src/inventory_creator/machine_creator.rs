@@ -18,6 +18,7 @@ use std::collections::HashSet;
 use std::net::IpAddr;
 use std::sync::Arc;
 
+use carbide_instrument::emit;
 use carbide_utils::none_if_empty::NoneIfEmpty;
 use carbide_uuid::machine::{HostMachineId, MachineId, MachineIdSubtype, PredictedHostMachineId};
 use component_manager::MachineInfoProvider;
@@ -246,16 +247,11 @@ impl MachineCreator {
         let mut managed_host = ManagedHost::init(explored_host);
 
         // Admission permit BEFORE the transaction: waiters on the admin-segment
-        // advisory lock must queue in memory, not on open pool connections.
+        // advisory locks (the allocation locks taken below for a new host, and
+        // the reconcile transaction that follows the commit) must queue in
+        // memory, not on open pool connections.
         let _admin_admission = db::machine_interface::admin_lock_admission().await;
         let mut txn = Transaction::begin(pool).await?;
-
-        // Advisory-lock the admin segments before any machine-interface row
-        // writes (`attach_dpu_to_host` / `configure_dpu_interface`), so this
-        // transaction holds locks in the allocator order (segment advisory
-        // lock first, then interface rows) all the way to the reconcile
-        // pass -- which re-acquires the same locks as a no-op.
-        db::machine_interface::lock_all_admin_segments(txn.as_pgconn()).await?;
 
         // Zero-dpu case: If the explored host had no DPUs, we can create the machine now
         if managed_host.explored_host.dpus.is_empty() {
@@ -296,8 +292,8 @@ impl MachineCreator {
             // Steady state case: DPU's already exist, so site explorer must have already created
             // this managed host (since only site explorer would have created them.) Ensure they're
             // associated with this machine, then return early. `create_machines` gates this
-            // path with `needs_managed_host_transaction`, because
-            // reconcile_host_admin_addresses locks all admin segments.
+            // path with `needs_managed_host_transaction` so an ingested fleet does not re-run
+            // it for every host on every iteration.
 
             let existing_dpu_ids = existing_hosts_by_dpu_id
                 .keys()
@@ -339,15 +335,23 @@ impl MachineCreator {
                 self.configure_dpu_interface(&mut txn, dpu_report).await?;
             }
 
-            self.reconcile_host_admin_addresses(&mut txn, &host_machine_id)
-                .await?;
             // The primary on an existing host may predate source
             // tracking. Do not infer its historical selector from today's
             // exploration or ExpectedMachine data.
             reconcile_desired_boot_interface(&mut txn, &host_machine_id, None, None).await?;
 
             txn.commit().await?;
+            reconcile_host_admin_addresses_after_commit(pool, &host_machine_id).await;
             return Ok(false);
+        }
+
+        // Advisory-lock the admin segments, in the allocators' mode, before the
+        // first machine-interface row write (`attach_dpu_to_host` allocates
+        // each DPU-backed host link), so the allocator's own segment locks
+        // re-acquire held keys and this transaction never requests a segment
+        // lock after a row lock.
+        if !managed_host.explored_host.dpus.is_empty() {
+            db::machine_interface::lock_all_admin_segments_for_allocation(txn.as_pgconn()).await?;
         }
 
         for (dpu_report, dpu_machine_id) in
@@ -424,11 +428,6 @@ impl MachineCreator {
                 .await?;
         }
 
-        // Normalize host admin address ownership after all DPU-backed host
-        // interfaces have been attached and primary flags are final.
-        self.reconcile_host_admin_addresses(&mut txn, &host_machine_id)
-            .await?;
-
         reconcile_desired_boot_interface(
             &mut txn,
             // TODO: ManagedHost will eventually have a HostMachineId as its machine_id and
@@ -460,6 +459,10 @@ impl MachineCreator {
         }
 
         txn.commit().await?;
+
+        // Normalize host admin address ownership now that every DPU-backed
+        // host interface is attached and the primary flags are committed.
+        reconcile_host_admin_addresses_after_commit(pool, &host_machine_id).await;
 
         tracing::info!(
             host_bmc_ip_address = %explored_host.host_bmc_ip,
@@ -632,6 +635,11 @@ impl MachineCreator {
         };
 
         if let Some(machine_id) = existing_predicted_host_machine_id {
+            // The refresh writes this host's NIC rows and locks its machine
+            // row; the exclusive segment locks keep it ordered against the
+            // DHCP and admin repair flows that lock those rows under the
+            // segment locks.
+            db::machine_interface::lock_all_admin_segments(&mut *txn).await?;
             Self::reconcile_zero_dpu_host_interfaces(
                 txn,
                 &machine_id,
@@ -1294,39 +1302,6 @@ impl MachineCreator {
         Ok(())
     }
 
-    /// Reconciles host admin addresses and bumps visible host network config when needed.
-    ///
-    /// Returns whether the active admin config changed.
-    async fn reconcile_host_admin_addresses(
-        &self,
-        txn: &mut PgConnection,
-        host_machine_id: &HostMachineId,
-    ) -> SiteExplorerResult<bool> {
-        let active_config_changed =
-            db::machine_interface::reconcile_admin_addresses_for_host(txn, host_machine_id).await?;
-        if active_config_changed {
-            let (network_config, network_config_version) =
-                db::machine::get_network_config(&mut *txn, host_machine_id)
-                    .await?
-                    .take();
-            if let ConditionalWrite::NotApplied(MachineNetworkConfigNotCurrent) =
-                db::machine::try_update_network_config(
-                    txn,
-                    host_machine_id,
-                    network_config_version,
-                    &network_config,
-                )
-                .await?
-            {
-                return Err(db::DatabaseError::FailedPrecondition(format!(
-                    "network configuration for machine {host_machine_id} changed or is no longer available"
-                ))
-                .into());
-            }
-        }
-        Ok(active_config_changed)
-    }
-
     // configure_host_machine configures the host's machine with the specific interface. It returns the host's machine ID.
     //
     // Normally, a host will have a single machine interface because the majority of hosts (for now) have a single DPU.
@@ -1424,6 +1399,49 @@ impl MachineCreator {
 
         Ok(PredictedHostMachineId::try_from(predicted_machine_id)?)
     }
+}
+
+/// Reconciles host admin addresses in a transaction of its own, after the
+/// managed-host transaction has committed.
+///
+/// `reconcile_admin_addresses_for_host` takes the admin segment advisory
+/// locks before any row lock when it has a repair to make, so it cannot run
+/// inside the managed-host transaction, which locks interface and machine
+/// rows first.
+async fn reconcile_host_admin_addresses_after_commit(
+    pool: &PgPool,
+    host_machine_id: &HostMachineId,
+) {
+    if let Err(error) =
+        db::machine_interface::reconcile_admin_addresses_after_commit(pool, host_machine_id).await
+    {
+        emit(SiteExplorerHostAdminAddressReconcileFailed {
+            host_machine_id: *host_machine_id,
+            error: error.to_string(),
+        });
+    }
+}
+
+/// A managed host committed but its admin addresses could not be reconciled
+/// afterwards. After a transient failure the host's BMC endpoint is flagged
+/// for exploration, so the next Site Explorer iteration revisits the host
+/// and retries the repair. Until then a dormant link may keep a DHCP
+/// address and the host's network config version is not bumped.
+#[derive(carbide_instrument::Event)]
+#[event(
+    event_name = "site_explorer_host_admin_address_reconcile_failed",
+    metric_name = "carbide_site_explorer_host_admin_address_reconcile_failures_total",
+    component = "site-explorer",
+    log = warn,
+    metric = counter,
+    message = "Host admin address reconciliation failed after the managed host committed",
+    describe = "Number of host admin address reconciliations that failed after Site Explorer committed a managed host"
+)]
+struct SiteExplorerHostAdminAddressReconcileFailed {
+    #[context]
+    host_machine_id: HostMachineId,
+    #[context]
+    error: String,
 }
 
 /// Initializes the durable desired boot interface from Site Explorer's settled
