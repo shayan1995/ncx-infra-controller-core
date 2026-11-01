@@ -104,6 +104,7 @@ pub(crate) mod account_service;
 pub(crate) mod assembly;
 pub(crate) mod bios;
 pub(crate) mod boot_option;
+pub(crate) mod certificate_service;
 pub(crate) mod chassis;
 mod collection;
 pub(crate) mod component_integrity;
@@ -137,6 +138,7 @@ mod storage;
 pub(crate) mod task_service;
 pub(crate) mod telemetry_service;
 mod thermal_subsystem;
+pub(crate) mod tls_auth;
 pub(crate) mod update_service;
 pub(crate) mod virtual_media;
 

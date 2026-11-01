@@ -29,6 +29,7 @@ repository.workspace = true
 axum = { workspace = true }
 axum-extra = { features = ["typed-header"], workspace = true }
 axum-server = { features = ["tls-rustls"], workspace = true }
+base64 = { workspace = true }
 bytes = { workspace = true }
 carbide-axum-utils = { path = "../axum-utils" }
 chrono = { workspace = true }
@@ -51,6 +52,7 @@ nv-redfish = { workspace = true, features = [
 nv-redfish-server-core = { workspace = true }
 nix = { features = ["fs"], workspace = true }
 rand = { workspace = true }
+rcgen = { workspace = true }
 regex = { workspace = true }
 quick-xml = { features = ["serialize"], workspace = true }
 rustls = { workspace = true }
@@ -62,6 +64,7 @@ tar = { workspace = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+tokio-rustls = { workspace = true }
 tokio-util = { workspace = true }
 tower = { workspace = true }
 tower-http = { features = ["normalize-path"], workspace = true }
@@ -74,12 +77,11 @@ nv-redfish-csdl-compiler = { workspace = true }
 nv-redfish-schema = { workspace = true }
 
 [dev-dependencies]
-rcgen = { workspace = true }
+rcgen = { workspace = true, features = ["x509-parser"] }
 hyper = { workspace = true, features = ["client", "http2"] }
 hyper-util = { workspace = true, features = ["tokio"] }
 reqwest = { workspace = true, default-features = false, features = ["rustls"] }
 tokio = { features = ["test-util"], workspace = true }
-tokio-rustls = { workspace = true }
 
 [lints]
 workspace = true

@@ -47,6 +47,46 @@ pub(crate) struct FirmwareVersions {
 }
 
 impl Bluefield3<'_> {
+    const CARD_CHASSIS_ID: &'static str = "Card1";
+    const NETWORK_ADAPTER_ID: &'static str = "NvidiaNetworkAdapter";
+    /// Physical function 0 of the uplink, the port the DPF provisioning
+    /// controller reads the DPU's MAC from.
+    const PF0_FUNCTION_ID: &'static str = "eth0f0";
+
+    /// The ConnectX-7 adapter on the card with its first physical function
+    /// carrying the host-facing MAC.
+    fn network_adapters(&self) -> Vec<redfish::network_adapter::NetworkAdapter> {
+        let function = redfish::network_device_function::builder(
+            &redfish::network_device_function::chassis_resource(
+                Self::CARD_CHASSIS_ID,
+                Self::NETWORK_ADAPTER_ID,
+                Self::PF0_FUNCTION_ID,
+            ),
+        )
+        .ethernet(
+            redfish::schema::network_device_function::Ethernet::new()
+                .mac_address(self.host_mac_address.to_string()),
+        )
+        .build();
+        vec![
+            redfish::network_adapter::builder_from_nic(
+                &redfish::network_adapter::chassis_resource(
+                    Self::CARD_CHASSIS_ID,
+                    Self::NETWORK_ADAPTER_ID,
+                ),
+                &self.host_nic(),
+            )
+            .status(redfish::resource::Status::Ok.into())
+            .build_with_functions(
+                &redfish::network_device_function::chassis_collection(
+                    Self::CARD_CHASSIS_ID,
+                    Self::NETWORK_ADAPTER_ID,
+                ),
+                vec![function],
+            ),
+        ]
+    }
+
     fn sensor_layout() -> redfish::sensor::Layout {
         redfish::sensor::Layout {
             temperature: 4,
@@ -90,11 +130,11 @@ impl Bluefield3<'_> {
                     ..redfish::chassis::SingleChassisConfig::defaults()
                 },
                 redfish::chassis::SingleChassisConfig {
-                    id: "Card1".into(),
+                    id: Self::CARD_CHASSIS_ID.into(),
                     chassis_type: redfish::schema::chassis::ChassisType::Card,
                     manufacturer: Some("Nvidia".into()),
                     model: Some("BlueField-3 DPU".into()),
-                    network_adapters: Some(vec![]),
+                    network_adapters: Some(self.network_adapters()),
                     part_number: Some(self.part_number().into()),
                     pcie_devices: Some(vec![]),
                     serial_number: Some(self.product_serial_number.to_string().into()),
@@ -296,5 +336,62 @@ impl Bluefield3<'_> {
             Mode::SuperNIC { nic_mode: true } => "9009D3B400CCEA",
             Mode::SuperNIC { nic_mode: false } => "9009D3B600CVAA",
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::body::{Body, to_bytes};
+    use axum::http::Request;
+    use serde_json::Value;
+    use tower::ServiceExt;
+
+    use crate::test_support::{TestBmcConfig, create_test_bmc, dpu_info};
+    use crate::{HardwareType, MachineInfo, MachineRouterOptions};
+
+    /// The DPF provisioning controller reads the DPU's uplink MAC from this
+    /// function during discovery.
+    #[tokio::test]
+    async fn card_serves_the_uplink_function_with_the_host_mac() {
+        let info = dpu_info(HardwareType::WiwynnGB200Nvl);
+        let MachineInfo::Dpu(dpu) = &info else {
+            unreachable!()
+        };
+        let (router, _state) = create_test_bmc(
+            &info,
+            TestBmcConfig::default(),
+            "card1".into(),
+            false,
+            MachineRouterOptions::default(),
+        );
+        let get = |path: &str| {
+            let router = router.clone();
+            let path = path.to_owned();
+            async move {
+                let response = router
+                    .oneshot(Request::get(path).body(Body::empty()).unwrap())
+                    .await
+                    .unwrap();
+                assert_eq!(response.status(), 200);
+                serde_json::from_slice::<Value>(
+                    &to_bytes(response.into_body(), usize::MAX).await.unwrap(),
+                )
+                .unwrap()
+            }
+        };
+        let adapters = get("/redfish/v1/Chassis/Card1/NetworkAdapters").await;
+        assert_eq!(
+            adapters["Members"][0]["@odata.id"],
+            "/redfish/v1/Chassis/Card1/NetworkAdapters/NvidiaNetworkAdapter"
+        );
+        let function = get(
+            "/redfish/v1/Chassis/Card1/NetworkAdapters/NvidiaNetworkAdapter/NetworkDeviceFunctions/eth0f0",
+        )
+        .await;
+        assert_eq!(function["Id"], "eth0f0");
+        assert_eq!(
+            function["Ethernet"]["MACAddress"],
+            dpu.host_mac_address.to_string()
+        );
     }
 }

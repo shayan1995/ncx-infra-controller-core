@@ -23,7 +23,8 @@ use std::time::Duration;
 
 use bmc_mock::injection::InjectionStore;
 use bmc_mock::{
-    ActionError, BmcEvent, BmcState, Callbacks, HostnameQuerying, MachineInfo, ResourceResetType,
+    ActionError, BmcEvent, BmcState, Callbacks, DeviceEffect, HostnameQuerying, MachineInfo,
+    ResourceResetType,
 };
 use carbide_network::virtualization::build_dual_stack_list;
 use carbide_uuid::machine::{DpuMachineId, InvalidMachineType, MachineId, MachineInterfaceId};
@@ -196,11 +197,27 @@ impl LiveStateCallbacks {
 }
 
 impl Callbacks for LiveStateCallbacks {
+    fn supports_bmc_factory_reset(&self) -> bool {
+        true
+    }
+
     async fn computer_system_reset(
         &self,
         reset_type: ResourceResetType,
     ) -> Result<(), ActionError> {
         self.set_power_state(reset_type)
+    }
+
+    /// A factory reset restores the BMC's accounts and certificates without
+    /// touching system power. The BMC keeps its DHCP lease, so the outage
+    /// window the update starts is the only visible effect.
+    async fn device_effect(&self, effect: DeviceEffect) -> Result<(), ActionError> {
+        match effect {
+            DeviceEffect::ResetBmcToDefaults(update) => update.commit().await.map(|_| ()),
+            DeviceEffect::AuxPowerCycle => Err(ActionError::BadRequest(eyre::eyre!(
+                "machine-a-tron does not model an auxiliary power cycle"
+            ))),
+        }
     }
 
     fn state_refresh_indication(&self) {

@@ -20,9 +20,75 @@ use std::fmt;
 use std::path::Path;
 use std::sync::Arc;
 
-use rustls::ServerConfig;
-use rustls::pki_types::PrivateKeyDer;
+use rustls::client::danger::HandshakeSignatureValid;
+use rustls::crypto::CryptoProvider;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer, UnixTime};
+use rustls::server::danger::{ClientCertVerified, ClientCertVerifier};
+use rustls::{DigitallySignedStruct, DistinguishedName, ServerConfig, SignatureScheme};
 use rustls_pemfile::Item;
+
+/// Requests a client certificate and accepts any chain the client proves it
+/// holds the key for. One listener serves every BMC of a machine-a-tron pod
+/// and clients install their CA per BMC at runtime, so the trust decision is
+/// made per request by `redfish::tls_auth` from the forwarded peer
+/// certificate. Clients without a certificate still connect.
+#[derive(Debug)]
+struct AcceptAnyClientCertificate {
+    provider: Arc<CryptoProvider>,
+}
+
+impl ClientCertVerifier for AcceptAnyClientCertificate {
+    fn root_hint_subjects(&self) -> &[DistinguishedName] {
+        &[]
+    }
+
+    fn client_auth_mandatory(&self) -> bool {
+        false
+    }
+
+    fn verify_client_cert(
+        &self,
+        _end_entity: &CertificateDer<'_>,
+        _intermediates: &[CertificateDer<'_>],
+        _now: UnixTime,
+    ) -> Result<ClientCertVerified, rustls::Error> {
+        Ok(ClientCertVerified::assertion())
+    }
+
+    fn verify_tls12_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        rustls::crypto::verify_tls12_signature(
+            message,
+            cert,
+            dss,
+            &self.provider.signature_verification_algorithms,
+        )
+    }
+
+    fn verify_tls13_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        rustls::crypto::verify_tls13_signature(
+            message,
+            cert,
+            dss,
+            &self.provider.signature_verification_algorithms,
+        )
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
+        self.provider
+            .signature_verification_algorithms
+            .supported_schemes()
+    }
+}
 
 #[derive(Debug)]
 pub enum Error {
@@ -125,14 +191,13 @@ pub fn server_config(cert_path: Option<impl AsRef<OsStr>>) -> Result<ServerConfi
         .next()
         .ok_or(Error::NoKeysFound)??;
 
-    let mut server_config = ServerConfig::builder_with_provider(Arc::new(
-        rustls::crypto::aws_lc_rs::default_provider(),
-    ))
-    .with_safe_default_protocol_versions()
-    .unwrap()
-    .with_no_client_auth()
-    .with_single_cert(certs, key)
-    .map_err(Error::ConfigBuild)?;
+    let provider = Arc::new(rustls::crypto::aws_lc_rs::default_provider());
+    let mut server_config = ServerConfig::builder_with_provider(provider.clone())
+        .with_safe_default_protocol_versions()
+        .unwrap()
+        .with_client_cert_verifier(Arc::new(AcceptAnyClientCertificate { provider }))
+        .with_single_cert(certs, key)
+        .map_err(Error::ConfigBuild)?;
     // This is what axum is normally doing for you
     server_config.alpn_protocols = vec![b"h2".to_vec(), b"http/1.1".to_vec()];
     Ok(server_config)

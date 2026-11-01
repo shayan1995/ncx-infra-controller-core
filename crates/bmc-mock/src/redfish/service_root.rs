@@ -89,6 +89,11 @@ async fn get_service_root<C: Callbacks>(State(state): State<BmcState<C>>) -> Res
     } else {
         builder
     };
+    let builder = if state.tls_auth.is_some() {
+        builder.certificate_service(redfish::certificate_service::resource().odata_id.as_ref())
+    } else {
+        builder
+    };
     builder
         .managers(redfish::manager::collection().odata_id.as_ref())
         .update_service(redfish::update_service::resource().odata_id.as_ref())

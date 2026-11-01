@@ -43,15 +43,18 @@ pub(crate) fn resource() -> redfish::Resource<'static> {
 }
 
 pub(crate) fn add_routes<C: Callbacks>(r: Router<BmcState<C>>) -> Router<BmcState<C>> {
-    r.route(&resource().odata_id, get(get_root).patch(patch_root))
-        .route(
-            &ACCOUNTS_COLLECTION_RESOURCE.odata_id,
-            get(get_accounts::<C>).post(create_account),
-        )
-        .route(
-            format!("{}/{{account_id}}", ACCOUNTS_COLLECTION_RESOURCE.odata_id).as_str(),
-            get(get_account::<C>).patch(patch_account::<C>),
-        )
+    r.route(
+        &resource().odata_id,
+        get(get_root::<C>).patch(patch_root::<C>),
+    )
+    .route(
+        &ACCOUNTS_COLLECTION_RESOURCE.odata_id,
+        get(get_accounts::<C>).post(create_account),
+    )
+    .route(
+        format!("{}/{{account_id}}", ACCOUNTS_COLLECTION_RESOURCE.odata_id).as_str(),
+        get(get_account::<C>).patch(patch_account::<C>),
+    )
 }
 
 const ACCOUNTS_COLLECTION_RESOURCE: redfish::Collection<'static> = redfish::Collection {
@@ -357,7 +360,7 @@ impl Account {
     }
 }
 
-async fn get_root() -> Response {
+fn root_json<C: Callbacks>(state: &BmcState<C>) -> serde_json::Value {
     let service_attrs = json!({
         "AccountLockoutCounterResetAfter": 0,
         "AccountLockoutDuration": 0,
@@ -367,14 +370,45 @@ async fn get_root() -> Response {
         "MaxPasswordLength": 40,
         "MinPasswordLength": 0,
     });
-    service_attrs
+    let document = service_attrs
         .patch(resource())
-        .patch(ACCOUNTS_COLLECTION_RESOURCE.nav_property("Accounts"))
-        .into_ok_response()
+        .patch(ACCOUNTS_COLLECTION_RESOURCE.nav_property("Accounts"));
+    // OpenBMC lists its authentication methods; `TLS` is the client-certificate
+    // method the DPF provisioning controller enables after installing its CA.
+    match &state.tls_auth {
+        Some(tls_auth) => document.patch(json!({"Oem": {"OpenBMC": {"AuthMethods": {
+            "BasicAuth": true,
+            "Cookie": false,
+            "SessionToken": true,
+            "TLS": tls_auth.tls_enabled(),
+            "XToken": true,
+        }}}})),
+        None => document,
+    }
 }
 
-async fn patch_root() -> Response {
-    http::ok_no_content()
+async fn get_root<C: Callbacks>(State(state): State<BmcState<C>>) -> Response {
+    root_json(&state).into_ok_response()
+}
+
+/// Applies `Oem.OpenBMC.AuthMethods.TLS` on BMCs that model client-certificate
+/// authentication and answers with the resource, as OpenBMC does. Other
+/// account policy attributes are accepted without effect.
+async fn patch_root<C: Callbacks>(
+    State(state): State<BmcState<C>>,
+    body: Result<Json<serde_json::Value>, axum::extract::rejection::JsonRejection>,
+) -> Response {
+    let Ok(Json(body)) = body else {
+        return http::bad_request("invalid AccountService request");
+    };
+    if let Some(tls_auth) = &state.tls_auth
+        && let Some(enabled) = body
+            .pointer("/Oem/OpenBMC/AuthMethods/TLS")
+            .and_then(serde_json::Value::as_bool)
+    {
+        tls_auth.set_tls_enabled(enabled);
+    }
+    root_json(&state).into_ok_response()
 }
 
 fn account_resource(id: impl Display) -> redfish::Resource<'static> {

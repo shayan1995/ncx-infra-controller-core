@@ -49,6 +49,9 @@ pub struct BmcState<C: Callbacks> {
     /// Sequence of lifecycle Events this BMC has published.
     pub(crate) event_sequence: Arc<AtomicU64>,
     pub(crate) callbacks: Option<Arc<C>>,
+    /// TLS client-certificate authentication, `CertificateService` and the
+    /// manager Truststore, or `None` for a BMC that does not model them.
+    pub(crate) tls_auth: Option<Arc<redfish::tls_auth::TlsAuthState>>,
     /// Whether this BMC advertises and serves the `/redfish/v1/Systems`
     /// collection. Delta power shelves expose no `ComputerSystem` collection,
     /// so the service root omits the `Systems` link and the collection endpoint
@@ -78,6 +81,7 @@ impl<C: Callbacks> Clone for BmcState<C> {
             availability: self.availability.clone(),
             event_sequence: self.event_sequence.clone(),
             callbacks: self.callbacks.clone(),
+            tls_auth: self.tls_auth.clone(),
             exposes_computer_systems: self.exposes_computer_systems,
             component_integrities: self.component_integrities.clone(),
         }
@@ -114,6 +118,9 @@ impl<C: Callbacks> BmcState<C> {
                     _ => {}
                 }
                 state.session_service_state.clear();
+                if let Some(tls_auth) = &state.tls_auth {
+                    tls_auth.reset();
+                }
                 // A factory reset does not activate unrelated staged firmware.
                 Ok(state.begin_outage())
             }),

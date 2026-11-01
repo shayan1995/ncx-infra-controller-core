@@ -387,6 +387,17 @@ pub async fn bmc_for_machine(machine_info: MachineInfo) -> TestBmcHandle {
     .await
 }
 
+/// A DPU of the given host type with the profile's default settings.
+#[cfg(test)]
+pub(super) fn dpu_info(hw_type: HardwareType) -> MachineInfo {
+    let mut pool = TEST_MAC_POOL.lock().unwrap();
+    MachineInfo::Dpu(DpuMachineInfo::new(
+        hw_type,
+        &mut pool,
+        DpuSettings::default(),
+    ))
+}
+
 pub(super) fn host_info(hw_type: HardwareType) -> MachineInfo {
     let ndpu = hw_type.fixed_number_of_dpu().unwrap_or(0);
     let mut pool = TEST_MAC_POOL.lock().unwrap();

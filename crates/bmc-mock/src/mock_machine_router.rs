@@ -161,9 +161,9 @@ fn machine_router_inner<C: Callbacks>(
         .add_routes(crate::redfish::session_service::add_routes)
         .add_routes(crate::redfish::virtual_media::add_routes);
     let router = match machine_info {
-        MachineInfo::Dpu(_) => {
-            router.add_routes(crate::redfish::oem::nvidia::bluefield::add_routes)
-        }
+        MachineInfo::Dpu(_) => router
+            .add_routes(crate::redfish::oem::nvidia::bluefield::add_routes)
+            .add_routes(crate::redfish::certificate_service::add_routes),
         MachineInfo::Host(_) => router
             .add_routes(crate::redfish::oem::nvidia::chassis::add_routes)
             .add_routes(crate::redfish::oem::dell::idrac::add_routes)
@@ -192,6 +192,9 @@ fn machine_router_inner<C: Callbacks>(
         .bmc_reset_duration
         .filter(|d| !d.is_zero())
         .map(|d| Arc::new(crate::availability::BmcAvailabilityState::new(d)));
+    // Only DPU BMCs model the provisioning controller's mTLS set-up.
+    let tls_auth = matches!(machine_info, MachineInfo::Dpu(_))
+        .then(|| Arc::new(crate::redfish::tls_auth::TlsAuthState::new()));
     let state = BmcState {
         event_service: event_service_config.map(crate::EventServiceState::new),
         event_sequence: Arc::default(),
@@ -208,11 +211,13 @@ fn machine_router_inner<C: Callbacks>(
         injection: injection.clone(),
         availability: availability.clone(),
         callbacks: Some(callbacks.clone()),
+        tls_auth,
         exposes_computer_systems: machine_info.exposes_computer_systems(),
         component_integrities: machine_info.component_integrity_config(),
     };
     let account_service_state = state.account_service_state.clone();
     let session_service_state = state.session_service_state.clone();
+    let tls_auth = state.tls_auth.clone();
     let permit_factory_default_password = matches!(
         &machine_info,
         MachineInfo::Host(h) if matches!(
@@ -231,7 +236,8 @@ fn machine_router_inner<C: Callbacks>(
         Box::new(redfish::expander_router::append),
         Box::new(move |router| {
             if redfish_auth {
-                let authorizer = Authorizer::new(account_service_state, session_service_state);
+                let authorizer =
+                    Authorizer::new(account_service_state, session_service_state, tls_auth);
                 let authorizer = if permit_factory_default_password {
                     authorizer.permit_factory_default_password()
                 } else {

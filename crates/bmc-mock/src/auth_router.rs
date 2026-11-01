@@ -28,6 +28,7 @@ use tracing::instrument;
 
 use crate::redfish::account_service::AccountServiceState;
 use crate::redfish::session_service::SessionServiceState;
+use crate::redfish::tls_auth::{PEER_CERTIFICATE_HEADER, TlsAuthState, decode_peer_certificate};
 use crate::redfish::{account_service, service_root, session_service};
 
 const WWW_AUTHENTICATE_VALUE: HeaderValue = HeaderValue::from_static("Basic realm=\"bmc-mock\"");
@@ -161,6 +162,8 @@ impl AuthMiddleware {
 pub(super) struct Authorizer {
     account_service_state: Arc<AccountServiceState>,
     session_service_state: Arc<SessionServiceState>,
+    /// TLS client-certificate authentication, for BMCs that model it.
+    tls_auth: Option<Arc<TlsAuthState>>,
     forbid_factory_default_password: bool,
 }
 
@@ -169,10 +172,12 @@ impl Authorizer {
     pub(super) fn new(
         account_service_state: Arc<AccountServiceState>,
         session_service_state: Arc<SessionServiceState>,
+        tls_auth: Option<Arc<TlsAuthState>>,
     ) -> Self {
         Self {
             account_service_state,
             session_service_state,
+            tls_auth,
             forbid_factory_default_password: true,
         }
     }
@@ -193,6 +198,17 @@ impl Authorizer {
             .get(X_AUTH_TOKEN_HEADER)
             .and_then(|v| v.to_str().ok())
             && self.session_service_state.is_token_valid(token)
+        {
+            return AuthorizationResult::Authorized;
+        }
+
+        // The connection layer sets this header from the TLS peer certificate.
+        if let Some(tls_auth) = &self.tls_auth
+            && let Some(peer) = request
+                .headers()
+                .get(PEER_CERTIFICATE_HEADER)
+                .and_then(decode_peer_certificate)
+            && tls_auth.authenticates(&peer)
         {
             return AuthorizationResult::Authorized;
         }
@@ -226,4 +242,143 @@ enum AuthorizationResult {
     Authorized,
     Unauthorized,
     FactoryDefaultPasswordForbidden,
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::Router;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use axum::response::Response;
+    use serde_json::json;
+    use tower::ServiceExt;
+
+    use crate::redfish::tls_auth::test_certificates::authority;
+    use crate::redfish::tls_auth::{PEER_CERTIFICATE_HEADER, encode_peer_certificate};
+    use crate::test_support::{TestBmcConfig, create_test_bmc, dpu_info};
+    use crate::{HardwareType, MachineRouterOptions};
+
+    const PROBE: &str = "/redfish/v1/Systems/Bluefield/Oem/Nvidia";
+
+    async fn send(
+        router: &Router,
+        method: &str,
+        path: &str,
+        token: Option<&str>,
+        peer_certificate: Option<&str>,
+        body: serde_json::Value,
+    ) -> Response {
+        let mut request = Request::builder()
+            .method(method)
+            .uri(path)
+            .header("content-type", "application/json");
+        if let Some(token) = token {
+            request = request.header("x-auth-token", token);
+        }
+        if let Some(peer_certificate) = peer_certificate {
+            request = request.header(PEER_CERTIFICATE_HEADER, peer_certificate);
+        }
+        router
+            .clone()
+            .oneshot(request.body(Body::from(body.to_string())).unwrap())
+            .await
+            .unwrap()
+    }
+
+    /// The DPF provisioning controller's sequence against a BlueField-3 BMC:
+    /// install the CA, enable the method, then probe with the client
+    /// certificate and no credentials. The peer certificate header stands in
+    /// for the connection layer.
+    #[tokio::test]
+    async fn client_certificate_authorizes_only_enabled_chains_to_the_truststore() {
+        let (router, _state) = create_test_bmc(
+            &dpu_info(HardwareType::WiwynnGB200Nvl),
+            TestBmcConfig::default(),
+            "mtls".into(),
+            true,
+            MachineRouterOptions::default(),
+        );
+        let ours = authority("ours");
+        let theirs = authority("theirs");
+        let our_header = encode_peer_certificate(&ours.client_der).unwrap();
+        let their_header = encode_peer_certificate(&theirs.client_der).unwrap();
+        let (ours_peer, theirs_peer) =
+            (our_header.to_str().unwrap(), their_header.to_str().unwrap());
+
+        let session = send(
+            &router,
+            "POST",
+            "/redfish/v1/SessionService/Sessions",
+            None,
+            None,
+            json!({"UserName": "root", "Password": "0penBmc"}),
+        )
+        .await;
+        assert_eq!(session.status(), StatusCode::CREATED);
+        let token = session.headers()["x-auth-token"]
+            .to_str()
+            .unwrap()
+            .to_owned();
+
+        let response = send(&router, "GET", PROBE, None, Some(ours_peer), json!(null)).await;
+        assert_eq!(
+            response.status(),
+            StatusCode::UNAUTHORIZED,
+            "before any set-up"
+        );
+
+        let response = send(
+            &router,
+            "POST",
+            "/redfish/v1/Managers/Bluefield_BMC/Truststore/Certificates",
+            Some(&token),
+            None,
+            json!({"CertificateString": ours.ca_pem, "CertificateType": "PEM"}),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let response = send(&router, "GET", PROBE, None, Some(ours_peer), json!(null)).await;
+        assert_eq!(
+            response.status(),
+            StatusCode::UNAUTHORIZED,
+            "an installed CA alone does not authenticate"
+        );
+
+        let response = send(
+            &router,
+            "PATCH",
+            "/redfish/v1/AccountService",
+            Some(&token),
+            None,
+            json!({"Oem": {"OpenBMC": {"AuthMethods": {"TLS": true}}}}),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        for (scenario, peer, expected) in [
+            (
+                "certificate chaining to the installed CA",
+                Some(ours_peer),
+                StatusCode::OK,
+            ),
+            (
+                "certificate from a foreign CA",
+                Some(theirs_peer),
+                StatusCode::UNAUTHORIZED,
+            ),
+            (
+                "malformed header",
+                Some("not a certificate"),
+                StatusCode::UNAUTHORIZED,
+            ),
+            (
+                "no certificate and no credentials",
+                None,
+                StatusCode::UNAUTHORIZED,
+            ),
+        ] {
+            let response = send(&router, "GET", PROBE, None, peer, json!(null)).await;
+            assert_eq!(response.status(), expected, "{scenario}");
+        }
+    }
 }

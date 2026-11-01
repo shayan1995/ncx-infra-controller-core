@@ -1129,10 +1129,16 @@ impl UpdateServiceState {
         } else {
             boot.last_state.as_str()
         };
-        Some(json!({
+        let mut progress = json!({
             "LastState": last_state,
             "LastStateTime": boot.time,
-        }))
+        });
+        // The BlueField BMC's OEM name for a running OS, which the DPF
+        // provisioning controller polls after a BFB install.
+        if last_state == "OSRunning" {
+            progress["OemLastState"] = json!("OsIsRunning");
+        }
+        Some(progress)
     }
 
     /// Accept a BFB install and return its task. An install still in transfer
@@ -2506,16 +2512,20 @@ mod tests {
             "OSBootStarted"
         );
         state.on_dpu_boot_completed();
+        let running = state.dpu_boot_progress(true).unwrap();
+        assert_eq!(running["LastState"], "OSRunning");
         assert_eq!(
-            state.dpu_boot_progress(true).unwrap()["LastState"],
-            "OSRunning"
+            running["OemLastState"], "OsIsRunning",
+            "the BlueField OEM state the DPF controller polls"
         );
         assert_eq!(state.dpu_boot_progress(false).unwrap()["LastState"], "None");
         // An image change without a reboot leaves the running OS stale.
         state.record_dpu_os_image(Some(DpuOsImage::PreIngestion));
-        assert_eq!(
-            state.dpu_boot_progress(true).unwrap()["LastState"],
-            "OSBootStarted"
+        let stale = state.dpu_boot_progress(true).unwrap();
+        assert_eq!(stale["LastState"], "OSBootStarted");
+        assert!(
+            stale.get("OemLastState").is_none(),
+            "no OEM state before the OS runs"
         );
         // A boot with an empty disk never reaches a running OS.
         state.record_dpu_os_image(None);

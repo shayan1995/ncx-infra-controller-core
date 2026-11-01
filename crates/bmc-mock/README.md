@@ -183,6 +183,13 @@ the archive-backed `--targz` and `--ip-router` modes. With authentication
 enabled, rotate the profile's factory password through AccountService and
 supply Basic credentials or a session token to both SSE and control requests.
 
+DPU profiles also model BlueField BMC client-certificate authentication: the
+listener requests a TLS client certificate, `Managers/<id>/Truststore/Certificates`
+accepts a CA, `CertificateService` serves `GenerateCSR` and `ReplaceCertificate`,
+and `PATCH /redfish/v1/AccountService` with `Oem.OpenBMC.AuthMethods.TLS` enables
+the method. A request is then authenticated by a client certificate that chains
+to an installed CA, with no Basic credentials. A factory reset clears all of it.
+
 In another terminal, discover and subscribe (the stream stays open):
 
 ```bash

@@ -18,7 +18,7 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 
 use axum::body::Body;
-use axum::http::Request;
+use axum::http::{HeaderValue, Request};
 use axum::response::Response;
 use futures::future::BoxFuture;
 use hyper::body::Incoming;
@@ -29,6 +29,36 @@ use tokio_util::sync::{CancellationToken, WaitForCancellationFutureOwned};
 use tower::Service;
 
 use super::progress::ProgressBody;
+use crate::redfish::tls_auth::{PEER_CERTIFICATE_HEADER, encode_peer_certificate};
+
+/// The leaf certificate a TLS peer presented, when it presented one.
+pub(super) trait PeerCertificate {
+    fn peer_certificate(&self) -> Option<Vec<u8>>;
+}
+
+impl<IO> PeerCertificate for tokio_rustls::server::TlsStream<IO> {
+    fn peer_certificate(&self) -> Option<Vec<u8>> {
+        self.get_ref()
+            .1
+            .peer_certificates()
+            .and_then(|chain| chain.first())
+            .map(|leaf| leaf.to_vec())
+    }
+}
+
+/// Replace any client-supplied peer certificate header with the one the TLS
+/// layer observed, so handlers can trust its presence and value.
+pub(super) fn set_peer_certificate_header<B>(
+    request: &mut Request<B>,
+    peer_certificate: Option<&HeaderValue>,
+) {
+    request.headers_mut().remove(PEER_CERTIFICATE_HEADER);
+    if let Some(value) = peer_certificate {
+        request
+            .headers_mut()
+            .insert(PEER_CERTIFICATE_HEADER, value.clone());
+    }
+}
 
 /// Response extension: close the serving connection when an emitted body frame
 /// waits this long for Hyper to poll again, or when a transport write stays
@@ -105,6 +135,7 @@ impl<A> Acceptor<A> {
 impl<A, I, S> axum_server::accept::Accept<I, S> for Acceptor<A>
 where
     A: axum_server::accept::Accept<I, S>,
+    A::Stream: PeerCertificate,
     A::Future: Send + 'static,
 {
     type Stream = CancelledIo<A::Stream>;
@@ -115,6 +146,9 @@ where
         let accept = self.inner.accept(io, service);
         Box::pin(async move {
             let (inner, service) = accept.await?;
+            let peer_certificate = inner
+                .peer_certificate()
+                .and_then(|leaf| encode_peer_certificate(&leaf));
             let handle = TransportHandle::new();
             Ok((
                 CancelledIo {
@@ -126,6 +160,7 @@ where
                 ConnectionService {
                     inner: service,
                     handle,
+                    peer_certificate,
                 },
             ))
         })
@@ -215,11 +250,13 @@ impl<I: AsyncWrite + Unpin> AsyncWrite for CancelledIo<I> {
     }
 }
 
-/// Wraps the body of any response that asks for an [`OutputStallTimeout`].
+/// Stamps every request with the connection's peer certificate and wraps the
+/// body of any response that asks for an [`OutputStallTimeout`].
 #[derive(Clone)]
 pub(super) struct ConnectionService<S> {
     inner: S,
     handle: TransportHandle,
+    peer_certificate: Option<HeaderValue>,
 }
 
 impl<S> Service<Request<Incoming>> for ConnectionService<S>
@@ -236,7 +273,8 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, request: Request<Incoming>) -> Self::Future {
+    fn call(&mut self, mut request: Request<Incoming>) -> Self::Future {
+        set_peer_certificate_header(&mut request, self.peer_certificate.as_ref());
         let response = self.inner.call(request);
         let handle = self.handle.clone();
         Box::pin(async move {
@@ -249,5 +287,39 @@ where
             }
             Ok(response)
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn peer_certificate_header_is_server_owned() {
+        let observed = HeaderValue::from_static("b2JzZXJ2ZWQ=");
+        for (scenario, peer, expected) in [
+            (
+                "no certificate presented, spoofed header dropped",
+                None,
+                None,
+            ),
+            (
+                "certificate presented, spoofed header replaced",
+                Some(&observed),
+                Some(&observed),
+            ),
+        ] {
+            let mut request = Request::builder()
+                .uri("/redfish/v1/Systems/Bluefield/Oem/Nvidia")
+                .header(PEER_CERTIFICATE_HEADER, "c3Bvb2ZlZA==")
+                .body(())
+                .unwrap();
+            set_peer_certificate_header(&mut request, peer);
+            assert_eq!(
+                request.headers().get(PEER_CERTIFICATE_HEADER),
+                expected,
+                "{scenario}"
+            );
+        }
     }
 }
