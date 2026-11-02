@@ -66,6 +66,32 @@ pub(crate) fn registry_error(
     .into_response(status)
 }
 
+/// Treat a `text/plain` or untyped request body as JSON, as bmcweb does: it
+/// parses the body of every POST, PATCH and PUT as JSON whatever the header
+/// says, and clients such as the DPF provisioning controller send JSON strings
+/// without a content type. Typed bodies (multipart, octet-stream) are kept.
+pub(crate) async fn json_body_content_type(mut request: Request, next: Next) -> Response {
+    if matches!(
+        *request.method(),
+        Method::POST | Method::PATCH | Method::PUT
+    ) {
+        let plain = match request.headers().get(header::CONTENT_TYPE) {
+            None => true,
+            Some(value) => value
+                .to_str()
+                .map(|value| value.trim_start().starts_with("text/plain"))
+                .unwrap_or(false),
+        };
+        if plain {
+            request.headers_mut().insert(
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("application/json"),
+            );
+        }
+    }
+    next.run(request).await
+}
+
 /// Largest plain-text error body carried into the envelope's `message`.
 const ERROR_TEXT_LIMIT: usize = 16 * 1024;
 
@@ -112,11 +138,60 @@ pub async fn redfish_error_envelope(request: Request, next: Next) -> Response {
 mod tests {
     use axum::Router;
     use axum::body::Body;
-    use axum::routing::get;
+    use axum::routing::{get, post};
     use serde_json::Value;
     use tower::ServiceExt;
 
     use super::*;
+
+    #[tokio::test]
+    async fn plain_and_untyped_bodies_are_relabelled_as_json() {
+        let router = Router::new()
+            .route(
+                "/echo",
+                post(|request: Request| async move {
+                    request
+                        .headers()
+                        .get(header::CONTENT_TYPE)
+                        .map(|value| value.to_str().unwrap_or("?").to_owned())
+                        .unwrap_or_else(|| "none".to_owned())
+                }),
+            )
+            .layer(axum::middleware::from_fn(json_body_content_type));
+        for (scenario, sent, expected) in [
+            (
+                "resty string body",
+                Some("text/plain; charset=utf-8"),
+                "application/json",
+            ),
+            ("no content type", None, "application/json"),
+            ("json stays", Some("application/json"), "application/json"),
+            (
+                "multipart stays",
+                Some("multipart/form-data; boundary=x"),
+                "multipart/form-data; boundary=x",
+            ),
+            (
+                "firmware push stays",
+                Some("application/octet-stream"),
+                "application/octet-stream",
+            ),
+        ] {
+            let mut request = Request::builder().method(Method::POST).uri("/echo");
+            if let Some(sent) = sent {
+                request = request.header(header::CONTENT_TYPE, sent);
+            }
+            let response = router
+                .clone()
+                .oneshot(request.body(Body::from("{}")).unwrap())
+                .await
+                .unwrap();
+            let seen = axum::body::to_bytes(response.into_body(), 1024)
+                .await
+                .unwrap();
+            assert_eq!(std::str::from_utf8(&seen).unwrap(), expected, "{scenario}");
+        }
+    }
 
     #[tokio::test]
     async fn envelopes_bodiless_and_plain_text_errors_only() {

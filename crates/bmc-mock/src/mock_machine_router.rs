@@ -231,7 +231,13 @@ fn machine_router_inner<C: Callbacks>(
         .with_state(state.clone())
         .merge(crate::injection::management_router(injection.clone()));
     let router = ([
-        // Innermost, so `$expand` sees an already filtered and paged collection.
+        // Innermost: bodies arrive typed as JSON for the extractors, as on bmcweb.
+        Box::new(|router: Router| {
+            router.layer(axum::middleware::from_fn(
+                crate::http::json_body_content_type,
+            ))
+        }),
+        // `$expand` sees an already filtered and paged collection.
         Box::new(redfish::query_router::append),
         Box::new(redfish::expander_router::append),
         Box::new(move |router| {

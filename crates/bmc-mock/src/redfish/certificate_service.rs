@@ -744,6 +744,31 @@ mod tests {
         );
     }
 
+    /// The DPF controller's EnableMTLS PATCH carries a JSON string that its
+    /// HTTP client labels text/plain; the BMC must apply it all the same.
+    #[tokio::test]
+    async fn enable_mtls_patch_is_applied_without_a_json_content_type() {
+        let (router, state) = bluefield3();
+        let response = router
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("PATCH")
+                    .uri("/redfish/v1/AccountService")
+                    .header("content-type", "text/plain; charset=utf-8")
+                    .body(Body::from(
+                        r#"{"Oem": {"OpenBMC": {"AuthMethods": {"TLS": true}}}}"#,
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = json(response).await;
+        assert_eq!(body["Oem"]["OpenBMC"]["AuthMethods"]["TLS"], true);
+        assert!(state.tls_auth.as_ref().unwrap().tls_enabled());
+    }
+
     /// Over real TLS: the listener requests the client certificate, the
     /// connection layer forwards it, and the authorizer accepts it only after
     /// the DPF controller's set-up sequence ran against this BMC.
